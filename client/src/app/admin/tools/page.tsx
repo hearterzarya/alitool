@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { formatPrice, formatDate } from "@/lib/utils";
-import { Pencil, Plus, AlertCircle, CheckCircle } from "lucide-react";
+import { Pencil, Plus, AlertCircle, CheckCircle, Wrench } from "lucide-react";
 
 export default async function ToolsManagementPage() {
   const tools = await prisma.tool.findMany({
