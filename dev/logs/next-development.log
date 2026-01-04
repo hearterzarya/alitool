@@ -1,0 +1,97 @@
+[00:00:01.321] Server  LOG     ✓ Ready in 1102ms
+[00:00:05.670] Browser WARN    [locator-js] React instance (react-server-dom-turbopack v19.3.0-canary-f93b9fd4-20251217) is not supported
+[00:00:05.670] Browser WARN    [locator-js] React instance (react-dom v19.3.0-canary-f93b9fd4-20251217) is not supported
+[00:00:06.642] Browser ERROR   A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/login" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="/Desktop/g...">
+                      <SegmentTrieNode>
+                      <link>
+                      <script>
+                      <script>
+                      <script>
+                      <RootLayout>
+                        <html lang="en" suppressHydrationWarning={true}>
+                          <body
+                            className="inter_5972bc34-module__OU16Qa__className"
+-                           cz-shortcut-listen="true"
+                          >
+                  ...
+
+[00:00:07.285] Browser WARN    [locatorjs]: ok
+[00:01:35.561] Server  LOG     ✓ Compiled in 1035ms
+[00:04:19.775] Server  LOG     prisma:error "\nInvalid `__TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$growtools$2f$client$2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__[\"prisma\"].user.findUnique()` invocation in\n/Users/mohitkumarbhullan/Desktop/growtools/client/.next/dev/server/chunks/[root-of-the-server]__5eb6254c._.js:158:204\n\n  155 if (!credentials?.email || !credentials?.password) {\n  156     throw new Error(\"Invalid credentials\");\n  157 }\n→ 158 const user = await __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$growtools$2f$client$2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__[\"prisma\"].user.findUnique(\nTimed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 17)"
+[00:05:51.662] Server  LOG     prisma:error "Error in PostgreSQL connection: Error { kind: Closed, cause: None }"
+[00:07:09.745] Browser WARN    [locator-js] React instance (react-server-dom-turbopack v19.3.0-canary-f93b9fd4-20251217) is not supported
+[00:07:09.748] Browser WARN    [locator-js] React instance (react-dom v19.3.0-canary-f93b9fd4-20251217) is not supported
+[00:07:10.592] Browser WARN    [locatorjs]: ok
+[00:07:12.477] Server  LOG     prisma:query "SELECT COUNT(*) FROM (SELECT \"public\".\"tools\".\"id\" FROM \"public\".\"tools\" WHERE (\"public\".\"tools\".\"cookiesEncrypted\" IS NULL OR \"public\".\"tools\".\"cookiesExpiryDate\" <= $1) OFFSET $2) AS \"sub\""
+[00:07:12.486] Server  LOG     prisma:query "SELECT \"public\".\"tool_subscriptions\".\"id\", \"public\".\"tool_subscriptions\".\"userId\", \"public\".\"tool_subscriptions\".\"toolId\", \"public\".\"tool_subscriptions\".\"status\"::text, \"public\".\"tool_subscriptions\".\"stripeSubscriptionId\", \"public\".\"tool_subscriptions\".\"stripeCustomerId\", \"public\".\"tool_subscriptions\".\"currentPeriodStart\", \"public\".\"tool_subscriptions\".\"currentPeriodEnd\", \"public\".\"tool_subscriptions\".\"cancelAtPeriodEnd\", \"public\".\"tool_subscriptions\".\"canceledAt\", \"public\".\"tool_subscriptions\".\"createdAt\", \"public\".\"tool_subscriptions\".\"updatedAt\" FROM \"public\".\"tool_subscriptions\" WHERE \"public\".\"tool_subscriptions\".\"status\" = CAST($1::text AS \"public\".\"SubscriptionStatus\") OFFSET $2"
+[00:07:12.489] Server  LOG     prisma:query "SELECT COUNT(*) FROM (SELECT \"public\".\"tool_subscriptions\".\"id\" FROM \"public\".\"tool_subscriptions\" WHERE \"public\".\"tool_subscriptions\".\"status\" = CAST($1::text AS \"public\".\"SubscriptionStatus\") OFFSET $2) AS \"sub\""
+[00:07:12.541] Server  LOG     prisma:query "SELECT COUNT(*) FROM (SELECT \"public\".\"tools\".\"id\" FROM \"public\".\"tools\" WHERE 1=1 OFFSET $1) AS \"sub\""
+[00:07:12.546] Server  LOG     prisma:query "SELECT COUNT(*) FROM (SELECT \"public\".\"users\".\"id\" FROM \"public\".\"users\" WHERE 1=1 OFFSET $1) AS \"sub\""
+[00:07:12.961] Server  LOG     prisma:query "SELECT \"public\".\"users\".\"id\", \"public\".\"users\".\"email\", \"public\".\"users\".\"name\", \"public\".\"users\".\"createdAt\" FROM \"public\".\"users\" WHERE 1=1 ORDER BY \"public\".\"users\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+[00:07:22.557] Server  LOG     prisma:query "SELECT \"public\".\"users\".\"id\", \"public\".\"users\".\"email\", \"public\".\"users\".\"passwordHash\", \"public\".\"users\".\"name\", \"public\".\"users\".\"role\"::text, \"public\".\"users\".\"emailVerified\", \"public\".\"users\".\"createdAt\", \"public\".\"users\".\"updatedAt\" FROM \"public\".\"users\" WHERE (\"public\".\"users\".\"email\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+[00:12:20.255] Browser WARN    [locator-js] React instance (react-server-dom-turbopack v19.3.0-canary-f93b9fd4-20251217) is not supported
+[00:12:20.255] Browser WARN    [locator-js] React instance (react-dom v19.3.0-canary-f93b9fd4-20251217) is not supported
+[00:12:21.019] Browser WARN    [locatorjs]: ok
+[00:12:22.237] Browser WARN    [locator-js] React instance (react-server-dom-turbopack v19.3.0-canary-f93b9fd4-20251217) is not supported
+[00:12:22.237] Browser WARN    [locator-js] React instance (react-dom v19.3.0-canary-f93b9fd4-20251217) is not supported
+[00:12:22.553] Server  LOG     prisma:query "SELECT COUNT(*) FROM (SELECT \"public\".\"tools\".\"id\" FROM \"public\".\"tools\" WHERE (\"public\".\"tools\".\"cookiesEncrypted\" IS NULL OR \"public\".\"tools\".\"cookiesExpiryDate\" <= $1) OFFSET $2) AS \"sub\""
+[00:12:22.553] Server  LOG     prisma:query "SELECT COUNT(*) FROM (SELECT \"public\".\"tool_subscriptions\".\"id\" FROM \"public\".\"tool_subscriptions\" WHERE \"public\".\"tool_subscriptions\".\"status\" = CAST($1::text AS \"public\".\"SubscriptionStatus\") OFFSET $2) AS \"sub\""
+[00:12:22.673] Server  LOG     prisma:query "SELECT \"public\".\"tool_subscriptions\".\"id\", \"public\".\"tool_subscriptions\".\"userId\", \"public\".\"tool_subscriptions\".\"toolId\", \"public\".\"tool_subscriptions\".\"status\"::text, \"public\".\"tool_subscriptions\".\"stripeSubscriptionId\", \"public\".\"tool_subscriptions\".\"stripeCustomerId\", \"public\".\"tool_subscriptions\".\"currentPeriodStart\", \"public\".\"tool_subscriptions\".\"currentPeriodEnd\", \"public\".\"tool_subscriptions\".\"cancelAtPeriodEnd\", \"public\".\"tool_subscriptions\".\"canceledAt\", \"public\".\"tool_subscriptions\".\"createdAt\", \"public\".\"tool_subscriptions\".\"updatedAt\" FROM \"public\".\"tool_subscriptions\" WHERE \"public\".\"tool_subscriptions\".\"status\" = CAST($1::text AS \"public\".\"SubscriptionStatus\") OFFSET $2"
+[00:12:22.674] Server  LOG     prisma:query "SELECT \"public\".\"users\".\"id\", \"public\".\"users\".\"email\", \"public\".\"users\".\"name\", \"public\".\"users\".\"createdAt\" FROM \"public\".\"users\" WHERE 1=1 ORDER BY \"public\".\"users\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+[00:12:22.674] Server  LOG     prisma:query "SELECT COUNT(*) FROM (SELECT \"public\".\"tools\".\"id\" FROM \"public\".\"tools\" WHERE 1=1 OFFSET $1) AS \"sub\""
+[00:12:22.674] Server  LOG     prisma:query "SELECT COUNT(*) FROM (SELECT \"public\".\"users\".\"id\" FROM \"public\".\"users\" WHERE 1=1 OFFSET $1) AS \"sub\""
+[00:12:23.651] Browser WARN    [locatorjs]: ok
+[00:14:29.811] Server  LOG     ✓ Compiled in 966ms
+[00:14:54.393] Server  LOG     ✓ Compiled in 267ms
+[00:15:23.188] Server  LOG     prisma:query "SELECT 1"
+[00:15:23.882] Server  LOG     prisma:query "SELECT \"public\".\"users\".\"id\", \"public\".\"users\".\"email\", \"public\".\"users\".\"passwordHash\", \"public\".\"users\".\"name\", \"public\".\"users\".\"role\"::text, \"public\".\"users\".\"emailVerified\", \"public\".\"users\".\"createdAt\", \"public\".\"users\".\"updatedAt\" FROM \"public\".\"users\" WHERE (\"public\".\"users\".\"email\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+[00:15:24.460] Server  LOG     prisma:query "SELECT 1"
+[00:15:24.464] Server  LOG     prisma:query "SELECT 1"
+[00:15:24.464] Server  LOG     prisma:query "SELECT 1"
+[00:15:24.464] Server  LOG     prisma:query "SELECT 1"
+[00:15:24.464] Server  LOG     prisma:query "SELECT 1"
+[00:15:24.745] Server  LOG     prisma:query "SELECT COUNT(*) FROM (SELECT \"public\".\"tools\".\"id\" FROM \"public\".\"tools\" WHERE (\"public\".\"tools\".\"cookiesEncrypted\" IS NULL OR \"public\".\"tools\".\"cookiesExpiryDate\" <= $1) OFFSET $2) AS \"sub\""
+[00:15:24.751] Server  LOG     prisma:query "SELECT \"public\".\"tool_subscriptions\".\"id\", \"public\".\"tool_subscriptions\".\"userId\", \"public\".\"tool_subscriptions\".\"toolId\", \"public\".\"tool_subscriptions\".\"status\"::text, \"public\".\"tool_subscriptions\".\"stripeSubscriptionId\", \"public\".\"tool_subscriptions\".\"stripeCustomerId\", \"public\".\"tool_subscriptions\".\"currentPeriodStart\", \"public\".\"tool_subscriptions\".\"currentPeriodEnd\", \"public\".\"tool_subscriptions\".\"cancelAtPeriodEnd\", \"public\".\"tool_subscriptions\".\"canceledAt\", \"public\".\"tool_subscriptions\".\"createdAt\", \"public\".\"tool_subscriptions\".\"updatedAt\" FROM \"public\".\"tool_subscriptions\" WHERE \"public\".\"tool_subscriptions\".\"status\" = CAST($1::text AS \"public\".\"SubscriptionStatus\") OFFSET $2"
+[00:15:24.752] Server  LOG     prisma:query "SELECT COUNT(*) FROM (SELECT \"public\".\"tool_subscriptions\".\"id\" FROM \"public\".\"tool_subscriptions\" WHERE \"public\".\"tool_subscriptions\".\"status\" = CAST($1::text AS \"public\".\"SubscriptionStatus\") OFFSET $2) AS \"sub\""
+[00:15:24.752] Server  LOG     prisma:query "SELECT COUNT(*) FROM (SELECT \"public\".\"users\".\"id\" FROM \"public\".\"users\" WHERE 1=1 OFFSET $1) AS \"sub\""
+[00:15:24.753] Server  LOG     prisma:query "SELECT \"public\".\"users\".\"id\", \"public\".\"users\".\"email\", \"public\".\"users\".\"name\", \"public\".\"users\".\"createdAt\" FROM \"public\".\"users\" WHERE 1=1 ORDER BY \"public\".\"users\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+[00:15:25.043] Server  LOG     prisma:query "SELECT COUNT(*) FROM (SELECT \"public\".\"tools\".\"id\" FROM \"public\".\"tools\" WHERE 1=1 OFFSET $1) AS \"sub\""
+[00:15:26.948] Server  LOG     prisma:query "SELECT \"public\".\"users\".\"id\", \"public\".\"users\".\"email\", \"public\".\"users\".\"name\", \"public\".\"users\".\"createdAt\" FROM \"public\".\"users\" WHERE 1=1 ORDER BY \"public\".\"users\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+[00:15:26.950] Server  LOG     prisma:query "SELECT COUNT(*) FROM (SELECT \"public\".\"tools\".\"id\" FROM \"public\".\"tools\" WHERE 1=1 OFFSET $1) AS \"sub\""
+[00:15:26.953] Server  LOG     prisma:query "SELECT COUNT(*) FROM (SELECT \"public\".\"tool_subscriptions\".\"id\" FROM \"public\".\"tool_subscriptions\" WHERE \"public\".\"tool_subscriptions\".\"status\" = CAST($1::text AS \"public\".\"SubscriptionStatus\") OFFSET $2) AS \"sub\""
+[00:15:26.954] Server  LOG     prisma:query "SELECT \"public\".\"tool_subscriptions\".\"id\", \"public\".\"tool_subscriptions\".\"userId\", \"public\".\"tool_subscriptions\".\"toolId\", \"public\".\"tool_subscriptions\".\"status\"::text, \"public\".\"tool_subscriptions\".\"stripeSubscriptionId\", \"public\".\"tool_subscriptions\".\"stripeCustomerId\", \"public\".\"tool_subscriptions\".\"currentPeriodStart\", \"public\".\"tool_subscriptions\".\"currentPeriodEnd\", \"public\".\"tool_subscriptions\".\"cancelAtPeriodEnd\", \"public\".\"tool_subscriptions\".\"canceledAt\", \"public\".\"tool_subscriptions\".\"createdAt\", \"public\".\"tool_subscriptions\".\"updatedAt\" FROM \"public\".\"tool_subscriptions\" WHERE \"public\".\"tool_subscriptions\".\"status\" = CAST($1::text AS \"public\".\"SubscriptionStatus\") OFFSET $2"
+[00:15:26.961] Server  LOG     prisma:query "SELECT COUNT(*) FROM (SELECT \"public\".\"users\".\"id\" FROM \"public\".\"users\" WHERE 1=1 OFFSET $1) AS \"sub\""
+[00:15:26.961] Server  LOG     prisma:query "SELECT COUNT(*) FROM (SELECT \"public\".\"tools\".\"id\" FROM \"public\".\"tools\" WHERE (\"public\".\"tools\".\"cookiesEncrypted\" IS NULL OR \"public\".\"tools\".\"cookiesExpiryDate\" <= $1) OFFSET $2) AS \"sub\""
+[00:15:36.497] Server  LOG     prisma:query "SELECT \"public\".\"tools\".\"id\", \"public\".\"tools\".\"name\", \"public\".\"tools\".\"slug\", \"public\".\"tools\".\"description\", \"public\".\"tools\".\"shortDescription\", \"public\".\"tools\".\"category\"::text, \"public\".\"tools\".\"icon\", \"public\".\"tools\".\"toolUrl\", \"public\".\"tools\".\"priceMonthly\", \"public\".\"tools\".\"cookiesEncrypted\", \"public\".\"tools\".\"cookiesUpdatedAt\", \"public\".\"tools\".\"cookiesExpiryDate\", \"public\".\"tools\".\"isActive\", \"public\".\"tools\".\"sortOrder\", \"public\".\"tools\".\"stripePriceId\", \"public\".\"tools\".\"createdAt\", \"public\".\"tools\".\"updatedAt\" FROM \"public\".\"tools\" WHERE 1=1 ORDER BY \"public\".\"tools\".\"sortOrder\" ASC OFFSET $1"
+[00:15:37.091] Server  LOG     prisma:query "SELECT \"public\".\"tool_subscriptions\".\"id\", \"public\".\"tool_subscriptions\".\"userId\", \"public\".\"tool_subscriptions\".\"toolId\", \"public\".\"tool_subscriptions\".\"status\"::text, \"public\".\"tool_subscriptions\".\"stripeSubscriptionId\", \"public\".\"tool_subscriptions\".\"stripeCustomerId\", \"public\".\"tool_subscriptions\".\"currentPeriodStart\", \"public\".\"tool_subscriptions\".\"currentPeriodEnd\", \"public\".\"tool_subscriptions\".\"cancelAtPeriodEnd\", \"public\".\"tool_subscriptions\".\"canceledAt\", \"public\".\"tool_subscriptions\".\"createdAt\", \"public\".\"tool_subscriptions\".\"updatedAt\" FROM \"public\".\"tool_subscriptions\" WHERE (\"public\".\"tool_subscriptions\".\"status\" = CAST($1::text AS \"public\".\"SubscriptionStatus\") AND \"public\".\"tool_subscriptions\".\"toolId\" IN ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11)) OFFSET $12"
+[00:15:41.834] Server  LOG     prisma:query "SELECT 1"
+[00:15:42.543] Server  LOG     prisma:query "SELECT \"public\".\"tools\".\"id\", \"public\".\"tools\".\"name\", \"public\".\"tools\".\"slug\", \"public\".\"tools\".\"description\", \"public\".\"tools\".\"shortDescription\", \"public\".\"tools\".\"category\"::text, \"public\".\"tools\".\"icon\", \"public\".\"tools\".\"toolUrl\", \"public\".\"tools\".\"priceMonthly\", \"public\".\"tools\".\"cookiesEncrypted\", \"public\".\"tools\".\"cookiesUpdatedAt\", \"public\".\"tools\".\"cookiesExpiryDate\", \"public\".\"tools\".\"isActive\", \"public\".\"tools\".\"sortOrder\", \"public\".\"tools\".\"stripePriceId\", \"public\".\"tools\".\"createdAt\", \"public\".\"tools\".\"updatedAt\" FROM \"public\".\"tools\" WHERE (\"public\".\"tools\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+[00:17:01.176] Server  LOG     prisma:query "SELECT 1"
+[00:17:01.190] Server  LOG     prisma:query "SELECT 1"
+[00:17:01.204] Server  LOG     prisma:query "SELECT 1"
+[00:17:01.484] Server  LOG     prisma:query "SELECT \"public\".\"tools\".\"id\", \"public\".\"tools\".\"name\", \"public\".\"tools\".\"slug\", \"public\".\"tools\".\"description\", \"public\".\"tools\".\"shortDescription\", \"public\".\"tools\".\"category\"::text, \"public\".\"tools\".\"icon\", \"public\".\"tools\".\"toolUrl\", \"public\".\"tools\".\"priceMonthly\", \"public\".\"tools\".\"cookiesEncrypted\", \"public\".\"tools\".\"cookiesUpdatedAt\", \"public\".\"tools\".\"cookiesExpiryDate\", \"public\".\"tools\".\"isActive\", \"public\".\"tools\".\"sortOrder\", \"public\".\"tools\".\"stripePriceId\", \"public\".\"tools\".\"createdAt\", \"public\".\"tools\".\"updatedAt\" FROM \"public\".\"tools\" WHERE (\"public\".\"tools\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+[00:17:01.792] Server  LOG     prisma:query "SELECT \"public\".\"tools\".\"id\", \"public\".\"tools\".\"name\", \"public\".\"tools\".\"slug\", \"public\".\"tools\".\"description\", \"public\".\"tools\".\"shortDescription\", \"public\".\"tools\".\"category\"::text, \"public\".\"tools\".\"icon\", \"public\".\"tools\".\"toolUrl\", \"public\".\"tools\".\"priceMonthly\", \"public\".\"tools\".\"cookiesEncrypted\", \"public\".\"tools\".\"cookiesUpdatedAt\", \"public\".\"tools\".\"cookiesExpiryDate\", \"public\".\"tools\".\"isActive\", \"public\".\"tools\".\"sortOrder\", \"public\".\"tools\".\"stripePriceId\", \"public\".\"tools\".\"createdAt\", \"public\".\"tools\".\"updatedAt\" FROM \"public\".\"tools\" WHERE (\"public\".\"tools\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+[00:17:01.792] Server  LOG     prisma:query "SELECT \"public\".\"tools\".\"id\", \"public\".\"tools\".\"name\", \"public\".\"tools\".\"slug\", \"public\".\"tools\".\"description\", \"public\".\"tools\".\"shortDescription\", \"public\".\"tools\".\"category\"::text, \"public\".\"tools\".\"icon\", \"public\".\"tools\".\"toolUrl\", \"public\".\"tools\".\"priceMonthly\", \"public\".\"tools\".\"cookiesEncrypted\", \"public\".\"tools\".\"cookiesUpdatedAt\", \"public\".\"tools\".\"cookiesExpiryDate\", \"public\".\"tools\".\"isActive\", \"public\".\"tools\".\"sortOrder\", \"public\".\"tools\".\"stripePriceId\", \"public\".\"tools\".\"createdAt\", \"public\".\"tools\".\"updatedAt\" FROM \"public\".\"tools\" WHERE (\"public\".\"tools\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"

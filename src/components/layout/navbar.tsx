@@ -1,0 +1,204 @@
+'use client';
+
+import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
+import { Button } from "@/components/ui/button";
+import { Sparkles, User, Wrench, DollarSign, Star, FileText, HelpCircle, Menu, X, Home } from "lucide-react";
+import { useState } from "react";
+
+export function Navbar() {
+  const { data: session, status } = useSession();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const navLinks = [
+    { href: '/', label: 'Home', icon: Home },
+    { href: '/tools', label: 'Tools', icon: Wrench },
+    { href: '/pricing', label: 'Pricing', icon: DollarSign },
+    { href: '/about', label: 'Features', icon: Star },
+    { href: '/reviews', label: 'Reviews/Proofs', icon: FileText },
+    { href: '/faq', label: 'FAQ', icon: HelpCircle },
+  ];
+
+  return (
+    <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/10 backdrop-blur-xl bg-slate-950/80">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
+          <Link 
+            href="/" 
+            className="flex items-center space-x-2 group transition-all duration-300 hover:scale-105"
+          >
+            <div className="relative">
+              <Sparkles className="h-6 w-6 text-purple-400 group-hover:text-purple-300 transition-colors" />
+              <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent animate-gradient">
+              GrowTools
+            </span>
+          </Link>
+
+          {/* Desktop Navigation Links */}
+          <div className="hidden lg:flex items-center space-x-1">
+            {navLinks.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300 group relative"
+                >
+                  <Icon className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                  <span>{link.label}</span>
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 rounded-full" />
+                </Link>
+              );
+            })}
+            {session && (
+              <Link
+                href="/dashboard"
+                className="flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300 group relative"
+              >
+                <User className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                <span>Dashboard</span>
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 rounded-full" />
+              </Link>
+            )}
+          </div>
+
+          {/* Auth Buttons */}
+          <div className="hidden md:flex items-center space-x-3">
+            {status === "loading" ? (
+              <div className="h-9 w-20 bg-white/10 animate-pulse rounded-lg" />
+            ) : session ? (
+              <>
+                <Button 
+                  asChild 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-gray-300 hover:text-white hover:bg-white/10 border-0"
+                >
+                  <Link href="/dashboard" className="flex items-center space-x-2">
+                    <User className="h-4 w-4" />
+                    <span className="hidden lg:inline">{session.user?.name || session.user?.email?.split('@')[0]}</span>
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="bg-transparent border-white/20 text-gray-300 hover:bg-white/10 hover:border-white/40 hover:text-white transition-all"
+                >
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  asChild 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-gray-300 hover:text-white hover:bg-white/10 border-0"
+                >
+                  <Link href="/login">Sign In</Link>
+                </Button>
+                <Button 
+                  asChild 
+                  size="sm"
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white border-0 shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105"
+                >
+                  <Link href="/register">Get Started</Link>
+                </Button>
+              </>
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition-all"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden py-4 border-t border-white/10 animate-fade-in-up">
+            <div className="flex flex-col space-y-2">
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300"
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{link.label}</span>
+                  </Link>
+                );
+              })}
+              {session && (
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300"
+                >
+                  <User className="h-4 w-4" />
+                  <span>Dashboard</span>
+                </Link>
+              )}
+              <div className="pt-4 border-t border-white/10 space-y-2">
+                {status === "loading" ? (
+                  <div className="h-10 w-full bg-white/10 animate-pulse rounded-lg" />
+                ) : session ? (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        signOut({ callbackUrl: "/" });
+                      }}
+                      className="w-full justify-start text-gray-300 hover:text-white hover:bg-white/10"
+                    >
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button 
+                      asChild 
+                      variant="ghost" 
+                      size="sm"
+                      className="w-full justify-start text-gray-300 hover:text-white hover:bg-white/10"
+                    >
+                      <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                        Sign In
+                      </Link>
+                    </Button>
+                    <Button 
+                      asChild 
+                      size="sm"
+                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white border-0"
+                    >
+                      <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
+                        Get Started
+                      </Link>
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+}
