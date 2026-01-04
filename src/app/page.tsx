@@ -59,11 +59,11 @@ export default async function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-blue-50">
       {/* Hero Section */}
       <section className="relative overflow-hidden gradient-bg pt-32 pb-20 sm:pt-40 sm:pb-32">
         {/* Animated Background Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 via-blue-900/20 to-slate-900/20 animate-gradient" />
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-100/30 via-blue-100/30 to-slate-100/30 animate-gradient" />
         
         {/* Floating Tool Icons */}
         {floatingIcons.map((item, idx) => (
@@ -77,26 +77,26 @@ export default async function HomePage() {
         ))}
 
         {/* Grid Pattern Overlay */}
-        <div className="absolute inset-0 bg-grid-slate-400/[0.02] bg-[size:75px_75px]" />
+        <div className="absolute inset-0 bg-grid-slate-300/[0.03] bg-[size:75px_75px]" />
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             {/* Badge */}
-            <div className="inline-flex items-center rounded-full px-4 py-1.5 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 text-purple-300 text-sm font-medium mb-8 animate-fade-in-up">
-              <CheckCircle2 className="w-4 h-4 mr-2 text-green-400" />
+            <div className="inline-flex items-center rounded-full px-4 py-1.5 bg-gradient-to-r from-purple-100 to-blue-100 border border-purple-300 text-purple-700 text-sm font-medium mb-8 animate-fade-in-up">
+              <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
               India's #1 Premium Tools Provider
-              <span className="ml-2 text-green-400">Verified</span>
+              <span className="ml-2 text-green-600">Verified</span>
             </div>
 
             {/* Main Heading */}
-            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl mb-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl md:text-6xl lg:text-7xl mb-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
               Premium AI Tools at
               <br />
               <span className="gradient-text animate-gradient">Unbeatable Prices</span>
             </h1>
             
             {/* Subheading */}
-            <p className="mx-auto max-w-2xl text-lg sm:text-xl text-gray-300 mb-10 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <p className="mx-auto max-w-2xl text-lg sm:text-xl text-slate-600 mb-10 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
               Get instant access to ChatGPT Pro, Grammarly, Canva Pro, and {totalTools}+ premium tools. 
               Secure payments, 10-second delivery, 24/7 support.
             </p>
@@ -106,7 +106,7 @@ export default async function HomePage() {
               <Button 
                 asChild 
                 size="lg" 
-                className="text-base px-8 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white border-0 shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105"
+                className="text-base px-8 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-slate-900 border-0 shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105"
               >
                 <Link href="/tools">
                   Browse Tools <ArrowRight className="ml-2 h-4 w-4" />
@@ -116,7 +116,7 @@ export default async function HomePage() {
                 asChild 
                 variant="outline" 
                 size="lg" 
-                className="text-base px-8 bg-transparent border-2 border-white/20 text-white hover:bg-white/10 hover:border-white/40 transition-all duration-300"
+                className="text-base px-8 bg-white border-2 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-all duration-300"
               >
                 <Link href="/tools">View Pricing</Link>
               </Button>
@@ -132,11 +132,11 @@ export default async function HomePage() {
               ].map((stat, idx) => (
                 <div 
                   key={idx}
-                  className="glass rounded-xl p-4 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover-glow"
+                  className="glass rounded-xl p-4 hover:bg-slate-50 transition-all duration-300 hover:scale-105 hover-glow"
                 >
                   <stat.icon className={`h-6 w-6 ${stat.color} mx-auto mb-2`} />
-                  <div className="text-2xl sm:text-3xl font-bold text-white mb-1">{stat.value}</div>
-                  <div className="text-xs text-gray-400">{stat.label}</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">{stat.value}</div>
+                  <div className="text-xs text-slate-600">{stat.label}</div>
               </div>
               ))}
               </div>
@@ -147,7 +147,7 @@ export default async function HomePage() {
                 <Badge 
                   key={idx}
                   variant="secondary" 
-                  className="px-4 py-2 text-sm glass border-white/10 text-gray-300 hover:bg-white/10 transition-all"
+                  className="px-4 py-2 text-sm glass border-slate-200 text-slate-700 hover:bg-slate-50 transition-all"
                 >
                   {text}
                 </Badge>
@@ -158,11 +158,11 @@ export default async function HomePage() {
       </section>
 
       {/* Tools Grid Section */}
-      <section className="py-16 bg-slate-900/50 backdrop-blur-sm">
+      <section className="py-16 bg-white/50 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 animate-fade-in-up">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white">Access Premium AI Tools & Services</h2>
-            <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Access Premium AI Tools & Services</h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
               Get instant access to all these powerful tools and many more at unbeatable prices
             </p>
           </div>
@@ -173,11 +173,11 @@ export default async function HomePage() {
               <Link
                 key={tool.id}
                 href={`/tools#${tool.slug}`}
-                className="group flex flex-col items-center justify-center p-6 rounded-xl glass border border-white/10 hover:border-purple-500/50 hover:bg-white/5 transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-purple-500/20 animate-fade-in-up"
+                className="group flex flex-col items-center justify-center p-6 rounded-xl glass border border-slate-200 hover:border-purple-500/50 hover:bg-purple-50 transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-purple-500/20 animate-fade-in-up"
                 style={{ animationDelay: `${idx * 0.1}s` }}
               >
                 <div className="text-5xl mb-3 group-hover:scale-110 transition-transform duration-300">{tool.icon || "🛠️"}</div>
-                <div className="text-sm font-medium text-center text-gray-300 group-hover:text-purple-400 transition-colors">
+                <div className="text-sm font-medium text-center text-slate-700 group-hover:text-purple-400 transition-colors">
                   {tool.name}
                 </div>
               </Link>
@@ -189,7 +189,7 @@ export default async function HomePage() {
               asChild 
               size="lg" 
               variant="outline" 
-              className="bg-transparent border-2 border-purple-500/50 text-purple-300 hover:bg-purple-500/20 hover:border-purple-500 transition-all"
+              className="bg-white border-2 border-purple-500 text-purple-700 hover:bg-purple-50 hover:border-purple-600 transition-all"
             >
               <Link href="/tools">
                 View All Tools <ArrowRight className="ml-2 h-4 w-4" />
@@ -200,11 +200,11 @@ export default async function HomePage() {
       </section>
 
       {/* Why Choose Us Section */}
-      <section className="py-16 bg-slate-950/50">
+      <section className="py-16 bg-slate-50/50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 animate-fade-in-up">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white">Why Choose Us?</h2>
-            <p className="text-lg text-gray-400 max-w-3xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Why Choose Us?</h2>
+            <p className="text-lg text-slate-600 max-w-3xl mx-auto">
               Experience the fastest and most reliable way to access premium AI tools. 
               From instant delivery to secure accounts, we've got you covered.
             </p>
@@ -220,11 +220,11 @@ export default async function HomePage() {
             ].map((stat, idx) => (
               <div 
                 key={idx}
-                className="text-center glass rounded-xl p-4 hover:bg-white/10 transition-all duration-300 animate-fade-in-up"
+                className="text-center glass rounded-xl p-4 hover:bg-slate-50 transition-all duration-300 animate-fade-in-up"
                 style={{ animationDelay: `${idx * 0.1}s` }}
               >
                 <div className="text-3xl font-bold gradient-text mb-1">{stat.value}</div>
-                <div className="text-sm text-gray-400">{stat.label}</div>
+                <div className="text-sm text-slate-600">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -267,24 +267,24 @@ export default async function HomePage() {
             ].map((feature, index) => (
               <Card 
                 key={index} 
-                className="glass border-white/10 hover:border-purple-500/50 hover:bg-white/5 transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-purple-500/20 animate-fade-in-up"
+                className="glass border-slate-200 hover:border-purple-500/50 hover:bg-white/5 transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-purple-500/20 animate-fade-in-up"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <CardHeader>
                   <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 ${feature.color}`}>
                     {feature.icon}
                   </div>
-                  <CardTitle className="text-xl mb-2 text-white">{feature.title}</CardTitle>
-                  <CardDescription className="text-sm mb-4 text-gray-400">
+                  <CardTitle className="text-xl mb-2 text-slate-900">{feature.title}</CardTitle>
+                  <CardDescription className="text-sm mb-4 text-slate-600">
                     {feature.description}
                   </CardDescription>
-                  <div className="pt-4 border-t border-white/10">
+                  <div className="pt-4 border-t border-slate-200">
                     <div className={`text-2xl font-bold ${feature.color} mb-1`}>{feature.stat}</div>
                     <div className="text-xs text-gray-500">{feature.statLabel}</div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Button asChild variant="ghost" size="sm" className="w-full text-gray-300 hover:text-white hover:bg-white/10">
+                  <Button asChild variant="ghost" size="sm" className="w-full text-slate-700 hover:text-slate-900 hover:bg-slate-50">
                     <Link href="/tools">Learn more</Link>
                     </Button>
                 </CardContent>
@@ -296,7 +296,7 @@ export default async function HomePage() {
             <Button 
               asChild 
               size="lg"
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white border-0 shadow-lg hover:shadow-purple-500/50 transition-all duration-300"
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-slate-900 border-0 shadow-lg hover:shadow-purple-500/50 transition-all duration-300"
             >
               <Link href="/tools">Start Exploring</Link>
             </Button>
@@ -305,11 +305,11 @@ export default async function HomePage() {
       </section>
 
       {/* Simple Process Section */}
-      <section className="py-16 bg-slate-900/50 backdrop-blur-sm">
+      <section className="py-16 bg-white/50 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 animate-fade-in-up">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white">Get Started in 4 Easy Steps</h2>
-            <p className="text-lg text-gray-400">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Get Started in 4 Easy Steps</h2>
+            <p className="text-lg text-slate-600">
               From signup to instant access in under 2 minutes
             </p>
           </div>
@@ -339,12 +339,12 @@ export default async function HomePage() {
             ].map((step, index) => (
               <div 
                 key={index} 
-                className="text-center glass rounded-xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105 animate-fade-in-up"
+                className="text-center glass rounded-xl p-6 hover:bg-slate-50 transition-all duration-300 hover:scale-105 animate-fade-in-up"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="text-6xl font-bold gradient-text mb-4 opacity-30">{step.step}</div>
-                <h3 className="text-xl font-semibold mb-2 text-white">{step.title}</h3>
-                <p className="text-gray-400 text-sm">{step.description}</p>
+                <h3 className="text-xl font-semibold mb-2 text-slate-900">{step.title}</h3>
+                <p className="text-slate-600 text-sm">{step.description}</p>
               </div>
             ))}
           </div>
@@ -353,7 +353,7 @@ export default async function HomePage() {
             <Button 
               asChild 
               size="lg"
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white border-0 shadow-lg hover:shadow-purple-500/50 transition-all duration-300"
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-slate-900 border-0 shadow-lg hover:shadow-purple-500/50 transition-all duration-300"
             >
               <Link href="/register">Start Your Journey</Link>
             </Button>
@@ -362,11 +362,11 @@ export default async function HomePage() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-16 bg-slate-950/50">
+      <section className="py-16 bg-slate-50/50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 animate-fade-in-up">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white">Loved by {totalUsers.toLocaleString()}+ Users</h2>
-            <p className="text-lg text-gray-400">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Loved by {totalUsers.toLocaleString()}+ Users</h2>
+            <p className="text-lg text-slate-600">
               Join thousands of satisfied customers who transformed their workflow with GrowTools
             </p>
           </div>
@@ -418,7 +418,7 @@ export default async function HomePage() {
             ].map((testimonial, index) => (
               <Card 
                 key={index} 
-                className="glass border-white/10 hover:border-purple-500/50 hover:bg-white/5 transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-purple-500/20 animate-fade-in-up"
+                className="glass border-slate-200 hover:border-purple-500/50 hover:bg-white/5 transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-purple-500/20 animate-fade-in-up"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <CardHeader>
@@ -427,14 +427,14 @@ export default async function HomePage() {
                       {testimonial.initials}
                     </div>
                     <div>
-                      <CardTitle className="text-lg text-white">{testimonial.name}</CardTitle>
-                      <CardDescription className="text-sm text-gray-400">{testimonial.role}</CardDescription>
+                      <CardTitle className="text-lg text-slate-900">{testimonial.name}</CardTitle>
+                      <CardDescription className="text-sm text-slate-600">{testimonial.role}</CardDescription>
                     </div>
                   </div>
-                  <Badge variant="secondary" className="w-fit glass border-white/10 text-gray-300">{testimonial.tool}</Badge>
+                  <Badge variant="secondary" className="w-fit glass border-slate-200 text-slate-700">{testimonial.tool}</Badge>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-300 italic">
+                  <p className="text-sm text-slate-700 italic">
                     "{testimonial.review}"
                   </p>
                 </CardContent>
@@ -452,11 +452,11 @@ export default async function HomePage() {
             ].map((stat, idx) => (
               <div 
                 key={idx}
-                className="glass rounded-xl p-4 hover:bg-white/10 transition-all duration-300 animate-fade-in-up"
+                className="glass rounded-xl p-4 hover:bg-slate-50 transition-all duration-300 animate-fade-in-up"
                 style={{ animationDelay: `${idx * 0.1}s` }}
               >
                 <div className="text-3xl font-bold gradient-text mb-1">{stat.value}</div>
-                <div className="text-sm text-gray-400">{stat.label}</div>
+                <div className="text-sm text-slate-600">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -464,11 +464,11 @@ export default async function HomePage() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-purple-900 via-blue-900 to-slate-900 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 animate-gradient" />
+      <section className="py-20 bg-gradient-to-r from-purple-100 via-blue-100 to-slate-100 text-slate-900 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-200/30 to-blue-200/30 animate-gradient" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4 animate-fade-in-up">Ready to Supercharge Your Workflow?</h2>
-          <p className="text-lg mb-8 opacity-90 max-w-2xl mx-auto animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-slate-900 animate-fade-in-up">Ready to Supercharge Your Workflow?</h2>
+          <p className="text-lg mb-8 text-slate-700 max-w-2xl mx-auto animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
             Join {totalUsers.toLocaleString()}+ users who are saving money and boosting productivity with premium AI tools at unbeatable prices.
           </p>
           
@@ -477,9 +477,9 @@ export default async function HomePage() {
               <Badge 
                 key={idx}
                 variant="secondary" 
-                className="px-4 py-2 text-sm bg-white/10 text-white border-white/20 hover:bg-white/20 transition-all"
+                className="px-4 py-2 text-sm bg-white text-slate-900 border-slate-300 hover:bg-slate-50 transition-all shadow-sm"
               >
-                <CheckCircle className="w-3 h-3 mr-2" />
+                <CheckCircle className="w-3 h-3 mr-2 text-green-600" />
                 {text}
               </Badge>
             ))}
@@ -489,7 +489,7 @@ export default async function HomePage() {
             <Button 
               asChild 
               size="lg" 
-              className="text-base px-8 bg-white text-purple-900 hover:bg-gray-100 border-0 shadow-lg hover:shadow-white/50 transition-all duration-300 hover:scale-105"
+              className="text-base px-8 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white border-0 shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105"
             >
               <Link href="/tools">Browse Tools</Link>
             </Button>
@@ -497,13 +497,13 @@ export default async function HomePage() {
               asChild 
               size="lg" 
               variant="outline" 
-              className="text-base px-8 bg-transparent hover:bg-white/10 border-2 border-white/30 text-white hover:border-white/50 transition-all duration-300"
+              className="text-base px-8 bg-white hover:bg-slate-50 border-2 border-slate-300 text-slate-900 hover:border-slate-400 transition-all duration-300"
             >
               <Link href="/tools">View Pricing</Link>
             </Button>
           </div>
 
-          <p className="mt-8 text-sm opacity-80 animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
+          <p className="mt-8 text-sm text-slate-600 animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
             Trusted by students, freelancers, and businesses across India
           </p>
         </div>
@@ -512,50 +512,50 @@ export default async function HomePage() {
       {/* Chat Icon - Fixed Bottom Right */}
       <div className="fixed bottom-6 right-6 z-50 animate-fade-in-up" style={{ animationDelay: '1s' }}>
         <button className="group relative">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-blue-600 text-white shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-110 animate-pulse-glow">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-blue-600 text-slate-900 shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-110 animate-pulse-glow">
             <MessageCircle className="h-6 w-6" />
           </div>
-          <div className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+          <div className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-slate-900">
             AI
           </div>
         </button>
       </div>
 
       {/* Footer */}
-      <footer className="bg-slate-950 text-gray-300 py-12 border-t border-white/10">
+      <footer className="bg-white text-slate-700 py-12 border-t border-slate-200">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-white font-bold text-lg mb-4">GrowTools</h3>
-              <p className="text-sm text-gray-400">
+              <h3 className="text-slate-900 font-bold text-lg mb-4">GrowTools</h3>
+              <p className="text-sm text-slate-600">
                 Access premium AI tools with affordable monthly subscriptions.
               </p>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-4">Product</h4>
+              <h4 className="text-slate-900 font-semibold mb-4">Product</h4>
               <ul className="space-y-2 text-sm">
-                <li><Link href="/tools" className="hover:text-white transition">Tools</Link></li>
-                <li><Link href="/tools" className="hover:text-white transition">Pricing</Link></li>
-                <li><Link href="#features" className="hover:text-white transition">Features</Link></li>
+                <li><Link href="/tools" className="hover:text-slate-900 transition">Tools</Link></li>
+                <li><Link href="/tools" className="hover:text-slate-900 transition">Pricing</Link></li>
+                <li><Link href="#features" className="hover:text-slate-900 transition">Features</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-4">Company</h4>
+              <h4 className="text-slate-900 font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-sm">
-                <li><Link href="/about" className="hover:text-white transition">About</Link></li>
-                <li><Link href="/contact" className="hover:text-white transition">Contact</Link></li>
-                <li><Link href="/blog" className="hover:text-white transition">Blog</Link></li>
+                <li><Link href="/about" className="hover:text-slate-900 transition">About</Link></li>
+                <li><Link href="/contact" className="hover:text-slate-900 transition">Contact</Link></li>
+                <li><Link href="/blog" className="hover:text-slate-900 transition">Blog</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-4">Legal</h4>
+              <h4 className="text-slate-900 font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-sm">
-                <li><Link href="/privacy" className="hover:text-white transition">Privacy Policy</Link></li>
-                <li><Link href="/terms" className="hover:text-white transition">Terms of Service</Link></li>
+                <li><Link href="/privacy" className="hover:text-slate-900 transition">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-slate-900 transition">Terms of Service</Link></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-white/10 mt-8 pt-8 text-center text-sm text-gray-400">
+          <div className="border-t border-slate-200 mt-8 pt-8 text-center text-sm text-slate-600">
             <p>&copy; 2026 GrowTools. All rights reserved.</p>
           </div>
         </div>

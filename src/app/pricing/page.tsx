@@ -149,33 +149,33 @@ export default function PricingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 pt-16">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-blue-50 pt-16">
       {/* Header */}
       <section className="relative overflow-hidden gradient-bg py-12 sm:py-16">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 via-blue-900/20 to-slate-900/20 animate-gradient" />
-        <div className="absolute inset-0 bg-grid-slate-400/[0.02] bg-[size:75px_75px]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-100/30 via-blue-100/30 to-slate-100/30 animate-gradient" />
+        <div className="absolute inset-0 bg-grid-slate-300/[0.03] bg-[size:75px_75px]" />
         
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center animate-fade-in-up">
-            <Badge className="mb-6 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/50 text-orange-300 animate-pulse">
+            <Badge className="mb-6 bg-gradient-to-r from-orange-100 to-red-100 border border-orange-300 text-orange-700 animate-pulse">
               Special Launch Pricing - Ends in 3 Days!
             </Badge>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 text-white">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 text-slate-900">
               Choose Your Perfect <span className="gradient-text">Plan</span>
             </h1>
-            <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto mb-8">
+            <p className="text-lg sm:text-xl text-slate-700 max-w-3xl mx-auto mb-8">
               Join 12,000+ satisfied users saving thousands monthly on premium AI tools.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Badge variant="secondary" className="glass border-white/10 text-gray-300">
+              <Badge variant="secondary" className="glass border-slate-200 text-slate-700">
                 <CheckCircle2 className="h-3 w-3 mr-2" />
                 Instant access
               </Badge>
-              <Badge variant="secondary" className="glass border-white/10 text-gray-300">
+              <Badge variant="secondary" className="glass border-slate-200 text-slate-700">
                 <Shield className="h-3 w-3 mr-2" />
                 Account warranty
               </Badge>
-              <Badge variant="secondary" className="glass border-white/10 text-gray-300">
+              <Badge variant="secondary" className="glass border-slate-200 text-slate-700">
                 <Zap className="h-3 w-3 mr-2" />
                 No setup fees
               </Badge>
@@ -185,7 +185,7 @@ export default function PricingPage() {
       </section>
 
       {/* Stats */}
-      <section className="py-8 bg-slate-900/50 backdrop-blur-sm">
+      <section className="py-8 bg-white/50 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
             {[
@@ -195,7 +195,7 @@ export default function PricingPage() {
             ].map((stat, idx) => (
               <div key={idx} className="text-center animate-fade-in-up" style={{ animationDelay: `${idx * 0.1}s` }}>
                 <div className="text-2xl font-bold gradient-text mb-1">{stat.value}</div>
-                <div className="text-sm text-gray-400">{stat.label}</div>
+                <div className="text-sm text-slate-600">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -211,7 +211,7 @@ export default function PricingPage() {
               className={`px-6 py-2 rounded-lg font-medium transition-all duration-300 ${
                 billingCycle === 'monthly'
                   ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                  : 'glass border border-white/10 text-gray-300 hover:bg-white/10'
+                  : 'glass border border-slate-300 text-slate-700 hover:bg-slate-50'
               }`}
             >
               Monthly
@@ -221,7 +221,7 @@ export default function PricingPage() {
               className={`px-6 py-2 rounded-lg font-medium transition-all duration-300 relative ${
                 billingCycle === 'yearly'
                   ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                  : 'glass border border-white/10 text-gray-300 hover:bg-white/10'
+                  : 'glass border border-slate-300 text-slate-700 hover:bg-slate-50'
               }`}
             >
               Yearly
@@ -231,7 +231,7 @@ export default function PricingPage() {
             </button>
           </div>
           {billingCycle === 'yearly' && (
-            <p className="text-center text-sm text-gray-400 mb-4 animate-fade-in-up">
+            <p className="text-center text-sm text-slate-600 mb-4 animate-fade-in-up">
               3 days left at this price
             </p>
           )}
@@ -252,8 +252,8 @@ export default function PricingPage() {
                   key={plan.name}
                   className={`relative overflow-hidden glass border-2 transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-purple-500/20 animate-fade-in-up ${
                     isPopular
-                      ? 'border-purple-500/50 bg-gradient-to-br from-purple-900/20 to-blue-900/20'
-                      : 'border-white/10'
+                      ? 'border-purple-500/50 bg-gradient-to-br from-purple-100/30 to-blue-100/30'
+                      : 'border-slate-200'
                   }`}
                   style={{ animationDelay: `${idx * 0.1}s` }}
                 >
@@ -265,21 +265,21 @@ export default function PricingPage() {
                   
                   <CardHeader className={isPopular ? 'pt-12' : ''}>
                     {plan.badge && !isPopular && (
-                      <Badge className="mb-3 bg-orange-500/20 text-orange-300 border-orange-500/50 w-fit">
+                      <Badge className="mb-3 bg-orange-100 text-orange-700 border-orange-300 w-fit">
                         {plan.badge}
                       </Badge>
                     )}
                     {plan.daysLeft && (
-                      <Badge className="mb-3 bg-red-500/20 text-red-300 border-red-500/50 w-fit">
+                      <Badge className="mb-3 bg-red-100 text-red-700 border-red-300 w-fit">
                         {plan.daysLeft} {plan.daysLeft === 1 ? 'day' : 'days'} left at this price
                       </Badge>
                     )}
-                    <CardTitle className="text-2xl font-bold text-white mb-2">{plan.name}</CardTitle>
-                    <CardDescription className="text-gray-400 mb-4">{plan.description}</CardDescription>
+                    <CardTitle className="text-2xl font-bold text-slate-900 mb-2">{plan.name}</CardTitle>
+                    <CardDescription className="text-slate-600 mb-4">{plan.description}</CardDescription>
                     
                     <div className="flex items-center space-x-2 mb-4">
-                      <Users className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-400">{plan.userCount} Users</span>
+                      <Users className="h-4 w-4 text-slate-600" />
+                      <span className="text-sm text-slate-600">{plan.userCount} Users</span>
                     </div>
 
                     {/* Pricing */}
@@ -288,20 +288,20 @@ export default function PricingPage() {
                         <div className="text-4xl font-bold gradient-text">
                           ₹{currentPrice.toLocaleString()}
                         </div>
-                        <div className="text-lg text-gray-500 line-through">
+                        <div className="text-lg text-slate-500 line-through">
                           ₹{originalPrice.toLocaleString()}
                         </div>
                       </div>
-                      <div className="text-sm text-gray-400 mb-2">
+                      <div className="text-sm text-slate-600 mb-2">
                         {billingCycle === 'monthly' ? 'per month' : 'per year'}
                       </div>
-                      <Badge className="bg-green-500/20 text-green-300 border-green-500/50">
+                      <Badge className="bg-green-100 text-green-700 border-green-300">
                         Save ₹{plan.savings.toLocaleString()}/{billingCycle === 'monthly' ? 'month' : 'year'}
                       </Badge>
                     </div>
 
                     {plan.highlight && (
-                      <Badge className="mb-4 bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-purple-500/50 text-purple-300 w-fit">
+                      <Badge className="mb-4 bg-gradient-to-r from-purple-100 to-blue-100 border-purple-300 text-purple-700 w-fit">
                         {plan.highlight}
                       </Badge>
                     )}
@@ -313,18 +313,18 @@ export default function PricingPage() {
                       className={`w-full mb-6 ${
                         isPopular
                           ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white'
-                          : 'glass border border-white/20 text-white hover:bg-white/10'
+                          : 'glass border border-slate-300 text-slate-700 hover:bg-slate-50'
                       } transition-all duration-300 hover:scale-105`}
                     >
                       <Link href="/register">{plan.cta}</Link>
                     </Button>
 
                     <div className="space-y-3">
-                      <h4 className="font-semibold text-white text-sm mb-3">What you'll achieve:</h4>
+                      <h4 className="font-semibold text-slate-900 text-sm mb-3">What you'll achieve:</h4>
                       {plan.features.map((feature, featureIdx) => (
                         <div key={featureIdx} className="flex items-start space-x-2">
-                          <CheckCircle2 className="h-4 w-4 text-green-400 mt-0.5 flex-shrink-0" />
-                          <span className="text-sm text-gray-300">{feature}</span>
+                          <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                          <span className="text-sm text-slate-700">{feature}</span>
                         </div>
                       ))}
                     </div>
@@ -337,10 +337,10 @@ export default function PricingPage() {
       </section>
 
       {/* Trust Section */}
-      <section className="py-16 bg-slate-900/50 backdrop-blur-sm">
+      <section className="py-16 bg-white/50 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 animate-fade-in-up">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">
               Trusted by 12,000+ Users Worldwide
             </h2>
           </div>
@@ -350,12 +350,12 @@ export default function PricingPage() {
               return (
                 <div
                   key={idx}
-                  className="text-center glass rounded-xl p-6 border border-white/10 hover:bg-white/5 transition-all duration-300 animate-fade-in-up"
+                  className="text-center glass rounded-xl p-6 border border-slate-200 hover:bg-slate-50 transition-all duration-300 animate-fade-in-up"
                   style={{ animationDelay: `${idx * 0.1}s` }}
                 >
-                  <Icon className="h-8 w-8 text-purple-400 mx-auto mb-3" />
+                  <Icon className="h-8 w-8 text-purple-600 mx-auto mb-3" />
                   <div className="text-3xl font-bold gradient-text mb-1">{stat.value}</div>
-                  <div className="text-sm text-gray-400">{stat.label}</div>
+                  <div className="text-sm text-slate-600">{stat.label}</div>
                 </div>
               );
             })}
@@ -367,7 +367,7 @@ export default function PricingPage() {
       <section className="py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 animate-fade-in-up">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">
               Why GrowTools Beats Individual Subscriptions
             </h2>
           </div>
@@ -377,17 +377,17 @@ export default function PricingPage() {
               return (
                 <Card
                   key={idx}
-                  className="glass border border-white/10 text-center hover:border-purple-500/50 hover:bg-white/5 transition-all duration-300 animate-fade-in-up"
+                  className="glass border border-slate-200 text-center hover:border-purple-500/50 hover:bg-slate-50 transition-all duration-300 animate-fade-in-up"
                   style={{ animationDelay: `${idx * 0.1}s` }}
                 >
                   <CardHeader>
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 text-purple-300">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-purple-100 to-blue-100 text-purple-700">
                       <Icon className="h-8 w-8" />
                     </div>
-                    <CardTitle className="text-xl text-white">{benefit.title}</CardTitle>
+                    <CardTitle className="text-xl text-slate-900">{benefit.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription className="text-gray-400">
+                    <CardDescription className="text-slate-600">
                       {benefit.description}
                     </CardDescription>
                   </CardContent>
@@ -399,26 +399,26 @@ export default function PricingPage() {
       </section>
 
       {/* FAQs */}
-      <section className="py-16 bg-slate-900/50 backdrop-blur-sm">
+      <section className="py-16 bg-white/50 backdrop-blur-sm">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 animate-fade-in-up">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white">Pricing FAQs</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Pricing FAQs</h2>
           </div>
           <div className="space-y-4">
             {faqs.map((faq, idx) => (
               <Card
                 key={idx}
-                className="glass border border-white/10 hover:border-purple-500/50 transition-all duration-300 animate-fade-in-up"
+                className="glass border border-slate-200 hover:border-purple-500/50 transition-all duration-300 animate-fade-in-up"
                 style={{ animationDelay: `${idx * 0.1}s` }}
               >
                 <CardHeader>
                   <div className="flex items-start space-x-3">
-                    <HelpCircle className="h-5 w-5 text-purple-400 mt-0.5 flex-shrink-0" />
-                    <CardTitle className="text-lg text-white">{faq.question}</CardTitle>
+                    <HelpCircle className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <CardTitle className="text-lg text-slate-900">{faq.question}</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-300">{faq.answer}</p>
+                  <p className="text-slate-700">{faq.answer}</p>
                 </CardContent>
               </Card>
             ))}

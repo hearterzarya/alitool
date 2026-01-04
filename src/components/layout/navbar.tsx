@@ -14,13 +14,13 @@ export function Navbar() {
     { href: '/', label: 'Home', icon: Home },
     { href: '/tools', label: 'Tools', icon: Wrench },
     { href: '/pricing', label: 'Pricing', icon: DollarSign },
-    { href: '/about', label: 'Features', icon: Star },
+    { href: '/features', label: 'Features', icon: Star },
     { href: '/reviews', label: 'Reviews/Proofs', icon: FileText },
     { href: '/faq', label: 'FAQ', icon: HelpCircle },
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/10 backdrop-blur-xl bg-slate-950/80">
+    <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-slate-200 backdrop-blur-xl bg-white/90">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -45,7 +45,7 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300 group relative"
+                  className="flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-all duration-300 group relative"
                 >
                   <Icon className="h-4 w-4 group-hover:scale-110 transition-transform" />
                   <span>{link.label}</span>
@@ -56,10 +56,10 @@ export function Navbar() {
             {session && (
               <Link
                 href="/dashboard"
-                className="flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300 group relative"
-              >
-                <User className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                <span>Dashboard</span>
+                  className="flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-all duration-300 group relative"
+                  >
+                    <User className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                    <span>Dashboard</span>
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 rounded-full" />
               </Link>
             )}
@@ -68,14 +68,14 @@ export function Navbar() {
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center space-x-3">
             {status === "loading" ? (
-              <div className="h-9 w-20 bg-white/10 animate-pulse rounded-lg" />
+              <div className="h-9 w-20 bg-slate-200 animate-pulse rounded-lg" />
             ) : session ? (
               <>
                 <Button 
                   asChild 
                   variant="ghost" 
                   size="sm"
-                  className="text-gray-300 hover:text-white hover:bg-white/10 border-0"
+                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-100 border-0"
                 >
                   <Link href="/dashboard" className="flex items-center space-x-2">
                     <User className="h-4 w-4" />
@@ -86,7 +86,7 @@ export function Navbar() {
                   variant="outline"
                   size="sm"
                   onClick={() => signOut({ callbackUrl: "/" })}
-                  className="bg-transparent border-white/20 text-gray-300 hover:bg-white/10 hover:border-white/40 hover:text-white transition-all"
+                  className="bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-900 transition-all"
                 >
                   Sign Out
                 </Button>
@@ -97,7 +97,7 @@ export function Navbar() {
                   asChild 
                   variant="ghost" 
                   size="sm"
-                  className="text-gray-300 hover:text-white hover:bg-white/10 border-0"
+                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-100 border-0"
                 >
                   <Link href="/login">Sign In</Link>
                 </Button>
@@ -115,7 +115,7 @@ export function Navbar() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition-all"
+            className="md:hidden p-2 rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-all"
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? (
@@ -128,7 +128,7 @@ export function Navbar() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-white/10 animate-fade-in-up">
+          <div className="md:hidden py-4 border-t border-slate-200 animate-fade-in-up">
             <div className="flex flex-col space-y-2">
               {navLinks.map((link) => {
                 const Icon = link.icon;
@@ -137,7 +137,7 @@ export function Navbar() {
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300"
+                    className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-all duration-300"
                   >
                     <Icon className="h-4 w-4" />
                     <span>{link.label}</span>
@@ -154,9 +154,9 @@ export function Navbar() {
                   <span>Dashboard</span>
                 </Link>
               )}
-              <div className="pt-4 border-t border-white/10 space-y-2">
+              <div className="pt-4 border-t border-slate-200 space-y-2">
                 {status === "loading" ? (
-                  <div className="h-10 w-full bg-white/10 animate-pulse rounded-lg" />
+                  <div className="h-10 w-full bg-slate-200 animate-pulse rounded-lg" />
                 ) : session ? (
                   <>
                     <Button
@@ -166,7 +166,7 @@ export function Navbar() {
                         setMobileMenuOpen(false);
                         signOut({ callbackUrl: "/" });
                       }}
-                      className="w-full justify-start text-gray-300 hover:text-white hover:bg-white/10"
+                      className="w-full justify-start text-slate-700 hover:text-slate-900 hover:bg-slate-100"
                     >
                       Sign Out
                     </Button>
@@ -177,7 +177,7 @@ export function Navbar() {
                       asChild 
                       variant="ghost" 
                       size="sm"
-                      className="w-full justify-start text-gray-300 hover:text-white hover:bg-white/10"
+                      className="w-full justify-start text-slate-700 hover:text-slate-900 hover:bg-slate-100"
                     >
                       <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
                         Sign In

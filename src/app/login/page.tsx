@@ -54,16 +54,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-50 via-purple-50 to-blue-50 flex items-center justify-center p-4">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-float-reverse" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-purple-200/40 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-200/40 rounded-full blur-3xl animate-float-reverse" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-purple-100/50 to-blue-100/50 rounded-full blur-3xl animate-pulse" />
       </div>
 
       {/* Grid Pattern Overlay */}
-      <div className="absolute inset-0 bg-grid-slate-400/[0.02] bg-[size:75px_75px]" />
+      <div className="absolute inset-0 bg-grid-slate-300/[0.03] bg-[size:75px_75px]" />
 
       <div className="relative z-10 w-full max-w-md animate-fade-in-up">
         {/* Logo Section */}
@@ -75,16 +75,16 @@ export default function LoginPage() {
             </div>
             <span className="text-3xl font-bold gradient-text">GrowTools</span>
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
             Welcome Back
           </h1>
-          <p className="text-gray-400">
+          <p className="text-slate-600">
             Sign in to access your premium tools
           </p>
         </div>
 
         {/* Login Card */}
-        <div className="glass rounded-2xl p-8 border border-white/10 shadow-2xl backdrop-blur-xl animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+        <div className="glass rounded-2xl p-8 border border-slate-200 shadow-2xl backdrop-blur-xl animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="bg-red-500/10 border border-red-500/50 text-red-300 text-sm p-4 rounded-lg flex items-center space-x-2 animate-fade-in">
@@ -95,7 +95,7 @@ export default function LoginPage() {
 
             {/* Email Field */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-300 flex items-center space-x-2">
+              <Label htmlFor="email" className="text-slate-700 flex items-center space-x-2">
                 <Mail className="h-4 w-4" />
                 <span>Email Address</span>
               </Label>
@@ -108,7 +108,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={loading}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:ring-purple-500/20 h-12 pl-4 pr-4"
+                  className="bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500/20 h-12 pl-4 pr-4"
                 />
               </div>
             </div>
@@ -116,13 +116,13 @@ export default function LoginPage() {
             {/* Password Field */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-gray-300 flex items-center space-x-2">
+                <Label htmlFor="password" className="text-slate-700 flex items-center space-x-2">
                   <Lock className="h-4 w-4" />
                   <span>Password</span>
                 </Label>
                 <Link
                   href="/forgot-password"
-                  className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                  className="text-sm text-purple-600 hover:text-purple-700 transition-colors"
                 >
                   Forgot password?
                 </Link>
@@ -136,12 +136,12 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={loading}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:ring-purple-500/20 h-12 pl-4 pr-12"
+                  className="bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500/20 h-12 pl-4 pr-12"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
@@ -171,10 +171,10 @@ export default function LoginPage() {
           {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10" />
+              <div className="w-full border-t border-slate-200" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-slate-950/50 text-gray-400">New to GrowTools?</span>
+              <span className="px-4 bg-white text-slate-500">New to GrowTools?</span>
             </div>
           </div>
 
@@ -182,7 +182,7 @@ export default function LoginPage() {
           <Link href="/register">
             <Button
               variant="outline"
-              className="w-full h-12 bg-transparent border-white/20 text-white hover:bg-white/10 hover:border-white/40 transition-all duration-300"
+              className="w-full h-12 bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-all duration-300"
             >
               Create an Account
             </Button>
@@ -190,13 +190,13 @@ export default function LoginPage() {
         </div>
 
         {/* Footer Links */}
-        <p className="mt-8 text-center text-sm text-gray-400 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+        <p className="mt-8 text-center text-sm text-slate-600 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
           By signing in, you agree to our{" "}
-          <Link href="/terms" className="text-purple-400 hover:text-purple-300 transition-colors underline">
+          <Link href="/terms" className="text-purple-600 hover:text-purple-700 transition-colors underline">
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="text-purple-400 hover:text-purple-300 transition-colors underline">
+          <Link href="/privacy" className="text-purple-600 hover:text-purple-700 transition-colors underline">
             Privacy Policy
           </Link>
         </p>

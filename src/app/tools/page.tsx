@@ -98,18 +98,18 @@ export default async function ToolsPage({ searchParams }: PageProps) {
     const featuredTool = allTools.find(t => t.name.toLowerCase().includes('chatgpt')) || allTools[0];
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 pt-16">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-blue-50 pt-16">
         {/* Header */}
         <section className="relative overflow-hidden gradient-bg py-12 sm:py-16">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 via-blue-900/20 to-slate-900/20 animate-gradient" />
-          <div className="absolute inset-0 bg-grid-slate-400/[0.02] bg-[size:75px_75px]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-100/30 via-blue-100/30 to-slate-100/30 animate-gradient" />
+          <div className="absolute inset-0 bg-grid-slate-300/[0.03] bg-[size:75px_75px]" />
           
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center animate-fade-in-up">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 text-white">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 text-slate-900">
                 Premium <span className="gradient-text">Tools</span>
               </h1>
-              <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto">
+              <p className="text-lg sm:text-xl text-slate-700 max-w-3xl mx-auto">
                 Access the best productivity, entertainment, and AI tools with our curated selection
               </p>
             </div>
@@ -122,24 +122,24 @@ export default async function ToolsPage({ searchParams }: PageProps) {
           {featuredTool && !validCategory && !searchQuery && (
             <div className="mb-12 animate-fade-in-up">
               <div className="flex items-center space-x-2 mb-4">
-                <Badge className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/50 text-purple-300">
+                <Badge className="bg-gradient-to-r from-purple-100 to-blue-100 border border-purple-300 text-purple-700">
                   Featured
                 </Badge>
-                <Badge className="glass border-white/10 text-gray-300">
+                <Badge className="glass border-slate-200 text-slate-700">
                   {categories.find(c => c.value === featuredTool.category)?.label || 'AI Assistant'}
                 </Badge>
               </div>
-              <div className="glass rounded-xl p-8 border border-white/10 hover:border-purple-500/50 transition-all duration-300">
+              <div className="glass rounded-xl p-8 border border-slate-200 hover:border-purple-500/50 transition-all duration-300">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
                   <div>
                     <div className="text-7xl mb-4">{featuredTool.icon || "🛠️"}</div>
-                    <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">{featuredTool.name}</h2>
-                    <p className="text-gray-300 mb-6 text-lg">
+                    <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">{featuredTool.name}</h2>
+                    <p className="text-slate-700 mb-6 text-lg">
                       {featuredTool.shortDescription || featuredTool.description || "Premium AI tool access"}
                     </p>
                     <div className="flex flex-wrap gap-2 mb-6">
                       {['GPT-4 Access', 'Unlimited conversations', 'Priority access', 'Advanced reasoning'].slice(0, 4).map((feature, idx) => (
-                        <Badge key={idx} variant="secondary" className="glass border-white/10 text-gray-300">
+                        <Badge key={idx} variant="secondary" className="glass border-slate-200 text-slate-700">
                           {feature}
                         </Badge>
                       ))}
@@ -160,7 +160,7 @@ export default async function ToolsPage({ searchParams }: PageProps) {
                       </Link>
                       <Link
                         href={`/checkout/${featuredTool.id}`}
-                        className="px-6 py-3 rounded-lg glass border border-white/20 text-white hover:bg-white/10 transition-all duration-300"
+                        className="px-6 py-3 rounded-lg glass border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all duration-300"
                       >
                         View Details
                       </Link>
@@ -186,17 +186,17 @@ export default async function ToolsPage({ searchParams }: PageProps) {
                     {/* Category Header */}
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center space-x-3">
-                        <h2 className="text-2xl sm:text-3xl font-bold text-white">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
                           {category.label}
                         </h2>
-                        <Badge variant="secondary" className="glass border-white/10 text-gray-300">
+                        <Badge variant="secondary" className="glass border-slate-200 text-slate-700">
                           {categoryTools.length} {categoryTools.length === 1 ? 'tool' : 'tools'}
                         </Badge>
                       </div>
                       {categoryTools.length > 3 && (
                         <Link
                           href={`/tools?category=${category.value}`}
-                          className="flex items-center space-x-1 text-purple-400 hover:text-purple-300 transition-colors"
+                          className="flex items-center space-x-1 text-purple-600 hover:text-purple-700 transition-colors"
                         >
                           <span>View All</span>
                           <ChevronRight className="h-4 w-4" />
@@ -227,12 +227,12 @@ export default async function ToolsPage({ searchParams }: PageProps) {
             <div className="animate-fade-in-up">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">
                     {validCategory
                       ? categories.find(c => c.value === validCategory)?.label || 'Tools'
                       : 'Search Results'}
                   </h2>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-slate-600">
                     {allTools.length} {allTools.length === 1 ? 'tool' : 'tools'} found
                     {searchQuery && ` for "${searchQuery}"`}
                   </p>
@@ -240,7 +240,7 @@ export default async function ToolsPage({ searchParams }: PageProps) {
                 {(searchQuery || validCategory) && (
                   <Link
                     href="/tools"
-                    className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                    className="text-sm text-purple-600 hover:text-purple-700 transition-colors"
                   >
                     Clear filters
                   </Link>
@@ -266,11 +266,11 @@ export default async function ToolsPage({ searchParams }: PageProps) {
   } catch (error: any) {
     console.error('Database error:', error?.message);
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 pt-16 flex items-center justify-center">
-        <div className="text-center glass rounded-xl p-8 border border-white/10">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-blue-50 pt-16 flex items-center justify-center">
+        <div className="text-center glass rounded-xl p-8 border border-slate-200">
           <div className="text-6xl mb-4">⚠️</div>
-          <h3 className="text-xl font-semibold mb-2 text-white">Error loading tools</h3>
-          <p className="text-gray-400 mb-4">
+          <h3 className="text-xl font-semibold mb-2 text-slate-900">Error loading tools</h3>
+          <p className="text-slate-600 mb-4">
             Please try again later or contact support
           </p>
         </div>
