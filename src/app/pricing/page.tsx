@@ -316,7 +316,9 @@ export default function PricingPage() {
                           : 'glass border border-slate-300 text-slate-700 hover:bg-slate-50'
                       } transition-all duration-300 hover:scale-105`}
                     >
-                      <Link href="/register">{plan.cta}</Link>
+                      <Link href={`/checkout?plan=${encodeURIComponent(plan.name)}&amount=${currentPrice}`}>
+                        {plan.cta}
+                      </Link>
                     </Button>
 
                     <div className="space-y-3">
