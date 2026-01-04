@@ -117,7 +117,6 @@ const tools = [
 ];
 
 async function main() {
-  console.log('Start seeding...');
 
   // Create admin user
   const adminEmail = 'admin@growtools.com';
@@ -137,12 +136,6 @@ async function main() {
       passwordHash: adminPasswordHash,
     },
   });
-
-  console.log(`Admin user credentials:`);
-  console.log(`Email: ${adminEmail}`);
-  console.log(`Password: ${adminPassword}`);
-
-  console.log(`Created admin user: ${adminUser.email}`);
 
   // Create tools
   for (const tool of tools) {
