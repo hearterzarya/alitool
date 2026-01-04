@@ -29,12 +29,12 @@ export default async function AdminLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-background">
+    <div className="min-h-screen bg-gray-50 dark:bg-background mt-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Panel</h1>
           <p className="text-gray-600 dark:text-gray-400">Manage tools, users, and subscriptions</p>
-        </div>
+        </div> */}
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Sidebar */}

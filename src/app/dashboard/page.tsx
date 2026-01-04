@@ -33,7 +33,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
+      <div className="md:mt-[60px]">
         <h1 className="text-3xl font-bold mb-2">My Tools</h1>
         <p className="text-gray-600 dark:text-gray-400">
           Access and manage your subscribed tools

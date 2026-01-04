@@ -105,6 +105,12 @@ export async function createPaygicPayment(
   paymentData: PaygicPaymentRequest
 ): Promise<PaygicPaymentResponse> {
   try {
+    console.log('Paygic payment request:', {
+      amount: paymentData.amount,
+      amountType: typeof paymentData.amount,
+      merchantReferenceId: paymentData.merchantReferenceId,
+    });
+    
     const response = await fetch(`${PAYGIC_BASE_URL}/api/v2/createPaymentRequest`, {
       method: 'POST',
       headers: {

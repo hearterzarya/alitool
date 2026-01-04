@@ -150,7 +150,15 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
     setLoading(true);
 
     try {
-      const amount = tool.priceMonthly / 100; // Convert from cents to rupees
+      // priceMonthly is stored in paise, convert to rupees for display/API
+      const amount = tool.priceMonthly / 100; // Convert from paise to rupees
+      
+      console.log('Creating payment:', {
+        toolId: tool.id,
+        priceMonthly: tool.priceMonthly,
+        amountInRupees: amount,
+        amountInPaise: tool.priceMonthly,
+      });
       
       const response = await fetch('/api/payments/create', {
         method: 'POST',

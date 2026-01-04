@@ -24,7 +24,8 @@ export async function POST(req: NextRequest) {
     const { toolId, planName, amount, customerName, customerEmail, customerMobile } = body;
 
     // Validate required fields
-    if (!amount || amount < 1) {
+    // Amount can be less than 1 rupee (e.g., 0.01 for 1 paise)
+    if (!amount || amount <= 0) {
       return NextResponse.json(
         { error: 'Invalid amount' },
         { status: 400 }
@@ -39,8 +40,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate toolId if provided (for individual tool purchases)
+    let tool = null;
+    let finalAmount = amount;
+    
     if (toolId) {
-      const tool = await prisma.tool.findUnique({
+      tool = await prisma.tool.findUnique({
         where: { id: toolId },
       });
 
@@ -50,6 +54,17 @@ export async function POST(req: NextRequest) {
           { status: 404 }
         );
       }
+      
+      // For tool purchases, ALWAYS use the tool's priceMonthly to ensure consistency
+      // This prevents any conversion errors or mismatches
+      finalAmount = tool.priceMonthly / 100; // Convert from paise to rupees
+      console.log('Using tool price:', {
+        toolId: tool.id,
+        toolName: tool.name,
+        priceMonthly: tool.priceMonthly,
+        priceInRupees: finalAmount,
+        providedAmount: amount,
+      });
     }
 
     // Generate unique merchant reference ID
@@ -59,7 +74,24 @@ export async function POST(req: NextRequest) {
     const token = await createPaygicToken();
 
     // Convert amount to paise (Paygic expects amount in paise)
-    const amountInPaise = convertToPaise(amount);
+    // Use finalAmount which is either the provided amount or the tool's price
+    const amountInPaise = convertToPaise(finalAmount);
+    
+    console.log('Payment creation:', {
+      amountInRupees: finalAmount,
+      amountInPaise,
+      toolId,
+      toolPriceMonthly: tool?.priceMonthly,
+      originalProvidedAmount: amount,
+    });
+    
+    // Validate minimum amount for Paygic (minimum 1 paise)
+    if (parseInt(amountInPaise) < 1) {
+      return NextResponse.json(
+        { error: 'Amount too small. Minimum payment is ₹0.01 (1 paise)' },
+        { status: 400 }
+      );
+    }
 
     // Create payment request with Paygic
     const paygicResponse = await createPaygicPayment(token, {
@@ -77,7 +109,7 @@ export async function POST(req: NextRequest) {
         userId: (session.user as any).id,
         toolId: toolId || null,
         planName: planName || null,
-        amount: Math.round(amount * 100), // Store in paise
+        amount: Math.round(finalAmount * 100), // Store in paise
         merchantReferenceId,
         paygicToken: token,
         upiIntent: paygicResponse.data.intent,
