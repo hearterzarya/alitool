@@ -3,22 +3,34 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { formatPrice } from "@/lib/utils";
 import { TrendingUp, Users, Wrench, DollarSign } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AnalyticsPage() {
-  const [tools, activeSubscriptions] = await Promise.all([
-    prisma.tool.findMany({
-      include: {
-        subscriptions: {
-          where: { status: "ACTIVE" },
+  let tools: any[] = [];
+  let activeSubscriptions: any[] = [];
+
+  try {
+    [tools, activeSubscriptions] = await Promise.all([
+      prisma.tool.findMany({
+        include: {
+          subscriptions: {
+            where: { status: "ACTIVE" },
+          },
         },
-      },
-    }),
-    prisma.toolSubscription.findMany({
-      where: { status: "ACTIVE" },
-      include: {
-        tool: true,
-      },
-    }),
-  ]);
+      }),
+      prisma.toolSubscription.findMany({
+        where: { status: "ACTIVE" },
+        include: {
+          tool: true,
+        },
+      }),
+    ]);
+  } catch (error: any) {
+    console.error('Analytics page error:', error);
+    // Return empty data on error
+    tools = [];
+    activeSubscriptions = [];
+  }
 
   const totalRevenue = activeSubscriptions.reduce(
     (sum, sub) => sum + sub.tool.priceMonthly,

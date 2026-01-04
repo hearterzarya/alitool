@@ -3,6 +3,7 @@ import { ToolCard } from "@/components/tools/tool-card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, ChevronRight, Star } from "lucide-react";
 import Link from "next/link";
+import { ToolCategory } from "@prisma/client";
 
 export const dynamic = 'force-dynamic';
 
@@ -10,10 +11,25 @@ interface PageProps {
   searchParams: Promise<{ category?: string; search?: string }>;
 }
 
+const VALID_CATEGORIES: ToolCategory[] = [
+  'AI_WRITING',
+  'SEO_TOOLS',
+  'DESIGN',
+  'PRODUCTIVITY',
+  'CODE_DEV',
+  'VIDEO_AUDIO',
+  'OTHER',
+];
+
 export default async function ToolsPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const selectedCategory = params.category;
   const searchQuery = params.search;
+
+  // Validate category
+  const validCategory = selectedCategory && VALID_CATEGORIES.includes(selectedCategory as ToolCategory)
+    ? (selectedCategory as ToolCategory)
+    : undefined;
 
   // Fetch all tools from database
   let allTools: any[] = [];
@@ -24,7 +40,7 @@ export default async function ToolsPage({ searchParams }: PageProps) {
     allTools = await prisma.tool.findMany({
       where: {
         isActive: true,
-        ...(selectedCategory && { category: selectedCategory }),
+        ...(validCategory && { category: validCategory }),
         ...(searchQuery && {
           OR: [
             { name: { contains: searchQuery, mode: 'insensitive' } },
@@ -103,7 +119,7 @@ export default async function ToolsPage({ searchParams }: PageProps) {
         {/* Main Content */}
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
           {/* Featured Tool */}
-          {featuredTool && !selectedCategory && !searchQuery && (
+          {featuredTool && !validCategory && !searchQuery && (
             <div className="mb-12 animate-fade-in-up">
               <div className="flex items-center space-x-2 mb-4">
                 <Badge className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/50 text-purple-300">
@@ -190,7 +206,7 @@ export default async function ToolsPage({ searchParams }: PageProps) {
 
                     {/* Tools Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {categoryTools.slice(0, selectedCategory === category.value ? undefined : 4).map((tool, idx) => (
+                      {categoryTools.slice(0, validCategory === category.value ? undefined : 4).map((tool, idx) => (
                         <div
                           key={tool.id}
                           className="animate-fade-in-up"
@@ -207,13 +223,13 @@ export default async function ToolsPage({ searchParams }: PageProps) {
           )}
 
           {/* Search Results or Filtered Results */}
-          {(searchQuery || selectedCategory) && (
+          {(searchQuery || validCategory) && (
             <div className="animate-fade-in-up">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1">
-                    {selectedCategory
-                      ? categories.find(c => c.value === selectedCategory)?.label || 'Tools'
+                    {validCategory
+                      ? categories.find(c => c.value === validCategory)?.label || 'Tools'
                       : 'Search Results'}
                   </h2>
                   <p className="text-sm text-gray-400">
@@ -221,7 +237,7 @@ export default async function ToolsPage({ searchParams }: PageProps) {
                     {searchQuery && ` for "${searchQuery}"`}
                   </p>
                 </div>
-                {(searchQuery || selectedCategory) && (
+                {(searchQuery || validCategory) && (
                   <Link
                     href="/tools"
                     className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
