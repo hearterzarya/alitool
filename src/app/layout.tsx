@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
 import { SessionProvider } from "@/components/providers/session-provider";
+import { ConditionalNavbar } from "@/components/layout/conditional-navbar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,7 +21,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
         <SessionProvider>
-          <Navbar />
+          <ConditionalNavbar />
           {children}
         </SessionProvider>
       </body>

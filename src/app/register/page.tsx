@@ -7,8 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Mail, Lock, User, ArrowRight, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -16,6 +15,8 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -78,112 +79,199 @@ export default function RegisterPage() {
     }
   };
 
+  const passwordRequirements = [
+    { met: password.length >= 6, text: "At least 6 characters" },
+    { met: password.length > 0 && confirmPassword === password && password.length >= 6, text: "Passwords match" },
+  ];
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center space-x-2">
-            <Sparkles className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">GrowTools</span>
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 flex items-center justify-center p-4">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-float-reverse" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full blur-3xl animate-pulse" />
+      </div>
+
+      {/* Grid Pattern Overlay */}
+      <div className="absolute inset-0 bg-grid-slate-400/[0.02] bg-[size:75px_75px]" />
+
+      <div className="relative z-10 w-full max-w-md animate-fade-in-up">
+        {/* Logo Section */}
+        <div className="text-center mb-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <Link href="/" className="inline-flex items-center space-x-3 group mb-4">
+            <div className="relative">
+              <Sparkles className="h-10 w-10 text-purple-400 group-hover:text-purple-300 transition-colors animate-pulse" />
+              <div className="absolute inset-0 bg-purple-500/30 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <span className="text-3xl font-bold gradient-text">GrowTools</span>
           </Link>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Create your account to get started
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+            Create Your Account
+          </h1>
+          <p className="text-gray-400">
+            Start accessing premium AI tools today
           </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Create Account</CardTitle>
-            <CardDescription>
-              Sign up to access premium AI tools
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
-                  {error}
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="name">Name (optional)</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="John Doe"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  disabled={loading}
-                />
+        {/* Register Card */}
+        <div className="glass rounded-2xl p-8 border border-white/10 shadow-2xl backdrop-blur-xl animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-300 text-sm p-4 rounded-lg flex items-center space-x-2 animate-fade-in">
+                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
+                <span>{error}</span>
               </div>
+            )}
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
+            {/* Name Field */}
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-gray-300 flex items-center space-x-2">
+                <User className="h-4 w-4" />
+                <span>Full Name <span className="text-gray-500 text-xs">(optional)</span></span>
+              </Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={loading}
+                className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:ring-purple-500/20 h-12 pl-4 pr-4"
+              />
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+            {/* Email Field */}
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-gray-300 flex items-center space-x-2">
+                <Mail className="h-4 w-4" />
+                <span>Email Address</span>
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
+                className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:ring-purple-500/20 h-12 pl-4 pr-4"
+              />
+            </div>
+
+            {/* Password Field */}
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-gray-300 flex items-center space-x-2">
+                <Lock className="h-4 w-4" />
+                <span>Password</span>
+              </Label>
+              <div className="relative">
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={loading}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:ring-purple-500/20 h-12 pl-4 pr-12"
                 />
-                <p className="text-xs text-gray-500">
-                  Must be at least 6 characters
-                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
+              {password.length > 0 && (
+                <div className="space-y-1.5 mt-2">
+                  {passwordRequirements.map((req, idx) => (
+                    <div key={idx} className={`flex items-center space-x-2 text-xs transition-colors ${req.met ? 'text-green-400' : 'text-gray-500'}`}>
+                      <CheckCircle2 className={`h-3.5 w-3.5 ${req.met ? 'text-green-400' : 'text-gray-600'}`} />
+                      <span>{req.text}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+            {/* Confirm Password Field */}
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-gray-300 flex items-center space-x-2">
+                <Lock className="h-4 w-4" />
+                <span>Confirm Password</span>
+              </Label>
+              <div className="relative">
                 <Input
                   id="confirmPassword"
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   disabled={loading}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:ring-purple-500/20 h-12 pl-4 pr-12"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
-
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Creating account..." : "Create Account"}
-              </Button>
-            </form>
-
-            <div className="mt-6 text-center text-sm">
-              <span className="text-gray-600 dark:text-gray-400">
-                Already have an account?{" "}
-              </span>
-              <Link href="/login" className="text-primary hover:underline font-medium">
-                Sign in
-              </Link>
             </div>
-          </CardContent>
-        </Card>
 
-        <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold text-base shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed group mt-6"
+            >
+              {loading ? (
+                <span className="flex items-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Creating account...</span>
+                </span>
+              ) : (
+                <span className="flex items-center justify-center space-x-2">
+                  <span>Create Account</span>
+                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </span>
+              )}
+            </Button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-slate-950/50 text-gray-400">Already have an account?</span>
+            </div>
+          </div>
+
+          {/* Sign In Link */}
+          <Link href="/login">
+            <Button
+              variant="outline"
+              className="w-full h-12 bg-transparent border-white/20 text-white hover:bg-white/10 hover:border-white/40 transition-all duration-300"
+            >
+              Sign In Instead
+            </Button>
+          </Link>
+        </div>
+
+        {/* Footer Links */}
+        <p className="mt-8 text-center text-sm text-gray-400 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
           By signing up, you agree to our{" "}
-          <Link href="/terms" className="text-primary hover:underline">
+          <Link href="/terms" className="text-purple-400 hover:text-purple-300 transition-colors underline">
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="text-primary hover:underline">
+          <Link href="/privacy" className="text-purple-400 hover:text-purple-300 transition-colors underline">
             Privacy Policy
           </Link>
         </p>
