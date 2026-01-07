@@ -103,10 +103,10 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
         {/* Pricing */}
         <div className="flex items-baseline space-x-2">
           <div className="text-2xl font-bold gradient-text">
-            ${(currentPrice / 100).toFixed(2)}
+            {formatPrice(currentPrice)}
           </div>
           <div className="text-sm text-slate-500 line-through">
-            ${(originalPrice / 100).toFixed(2)}
+            {formatPrice(originalPrice)}
           </div>
           <Badge className="bg-red-100 text-red-700 border-red-300 text-xs">
             {discountPercent}% OFF

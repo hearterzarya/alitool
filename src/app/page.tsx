@@ -36,6 +36,16 @@ export default async function HomePage() {
   } catch (error: any) {
     console.error('Database error:', error?.message);
     
+    // Check if it's a table missing error
+    const isTableMissing = error?.message?.includes('does not exist') || 
+                           error?.code === 'P2021' ||
+                           error?.message?.includes('table');
+    
+    if (isTableMissing) {
+      console.warn('⚠️ Database tables not found. Please run: npm run db:setup');
+    }
+    
+    // Fallback data for display (allows page to render even if DB is not set up)
     tools = [
       { id: '1', name: 'ChatGPT Plus', slug: 'chatgpt-plus', icon: '🤖' },
       { id: '2', name: 'Claude Pro', slug: 'claude-pro', icon: '🧠' },

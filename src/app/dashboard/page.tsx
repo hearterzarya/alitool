@@ -16,27 +16,70 @@ export default async function DashboardPage() {
     return null;
   }
 
-  // Fetch user's active subscriptions
-  const subscriptions = await prisma.toolSubscription.findMany({
-    where: {
-      userId: (session.user as any).id,
-      status: "ACTIVE",
-    },
-    include: {
-      tool: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+  const userId = (session.user as any).id;
+  const userRole = (session.user as any).role;
+  const isTestUser = userRole === 'TEST_USER' || userRole === 'ADMIN';
+
+  // For test users, show all active tools. For regular users, show only subscriptions
+  let subscriptions: Array<{
+    id: string;
+    tool: any;
+    status: string;
+    currentPeriodEnd: Date;
+    createdAt: Date;
+  }> = [];
+
+  if (isTestUser) {
+    // Fetch all active tools for test users
+    const allTools = await prisma.tool.findMany({
+      where: {
+        isActive: true,
+      },
+      orderBy: {
+        sortOrder: 'asc',
+      },
+    });
+
+    // Convert tools to subscription-like format for display
+    subscriptions = allTools.map((tool) => ({
+      id: `test-${tool.id}`,
+      tool: tool,
+      status: 'ACTIVE',
+      currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      createdAt: new Date(),
+    }));
+  } else {
+    // Fetch user's active subscriptions for regular users
+    subscriptions = await prisma.toolSubscription.findMany({
+      where: {
+        userId: userId,
+        status: "ACTIVE",
+      },
+      include: {
+        tool: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="md:mt-[60px]">
-        <h1 className="text-3xl font-bold mb-2">My Tools</h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-3xl font-bold">My Tools</h1>
+          {isTestUser && (
+            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+              🧪 Test Mode
+            </Badge>
+          )}
+        </div>
         <p className="text-gray-600 dark:text-gray-400">
-          Access and manage your subscribed tools
+          {isTestUser 
+            ? "Access all tools without payment (Testing Mode)"
+            : "Access and manage your subscribed tools"}
         </p>
       </div>
 
@@ -93,18 +136,30 @@ export default async function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Next billing</span>
-                      <span className="font-medium">
-                        {formatDate(subscription.currentPeriodEnd)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Monthly cost</span>
-                      <span className="font-bold text-lg">
-                        {formatPrice(subscription.tool.priceMonthly)}
-                      </span>
-                    </div>
+                    {!isTestUser && (
+                      <>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Next billing</span>
+                          <span className="font-medium">
+                            {formatDate(subscription.currentPeriodEnd)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Monthly cost</span>
+                          <span className="font-bold text-lg">
+                            {formatPrice(subscription.tool.priceMonthly)}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    {isTestUser && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">Price</span>
+                        <span className="font-bold text-lg text-green-600">
+                          FREE (Test Mode)
+                        </span>
+                      </div>
+                    )}
                     <AccessToolButton tool={subscription.tool} />
                   </div>
                 </CardContent>

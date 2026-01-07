@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, ChevronRight, Star } from "lucide-react";
 import Link from "next/link";
 import { ToolCategory } from "@prisma/client";
+import { formatPrice } from "@/lib/utils";
 
 export const dynamic = 'force-dynamic';
 
@@ -147,7 +148,7 @@ export default async function ToolsPage({ searchParams }: PageProps) {
                     <div className="flex items-center space-x-4 mb-6">
                       <div>
                         <div className="text-3xl font-bold gradient-text">
-                          ${(featuredTool.priceMonthly / 100).toFixed(2)}/month
+                          {formatPrice(featuredTool.priceMonthly)}/month
                         </div>
                       </div>
                     </div>
@@ -265,14 +266,39 @@ export default async function ToolsPage({ searchParams }: PageProps) {
     );
   } catch (error: any) {
     console.error('Database error:', error?.message);
+    
+    // Check if it's a table missing error
+    const isTableMissing = error?.message?.includes('does not exist') || 
+                           error?.code === 'P2021' ||
+                           error?.message?.includes('table');
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-blue-50 pt-16 flex items-center justify-center">
-        <div className="text-center glass rounded-xl p-8 border border-slate-200">
+        <div className="text-center glass rounded-xl p-8 border border-slate-200 max-w-2xl">
           <div className="text-6xl mb-4">⚠️</div>
-          <h3 className="text-xl font-semibold mb-2 text-slate-900">Error loading tools</h3>
-          <p className="text-slate-600 mb-4">
-            Please try again later or contact support
-          </p>
+          <h3 className="text-xl font-semibold mb-2 text-slate-900">
+            {isTableMissing ? 'Database Not Set Up' : 'Error loading tools'}
+          </h3>
+          {isTableMissing ? (
+            <>
+              <p className="text-slate-600 mb-4">
+                The database tables haven't been created yet. Please run the setup command to create them.
+              </p>
+              <div className="bg-slate-100 rounded-lg p-4 mb-4 text-left">
+                <p className="text-sm font-mono text-slate-800 mb-2">Run this command in your terminal:</p>
+                <code className="text-sm bg-slate-200 px-3 py-2 rounded block">
+                  npm run db:setup
+                </code>
+              </div>
+              <p className="text-sm text-slate-500">
+                Or see <code className="bg-slate-100 px-2 py-1 rounded">DATABASE_SETUP.md</code> for detailed instructions.
+              </p>
+            </>
+          ) : (
+            <p className="text-slate-600 mb-4">
+              Please try again later or contact support
+            </p>
+          )}
         </div>
       </div>
     );

@@ -23,9 +23,11 @@ interface AccessToolButtonProps {
 export function AccessToolButton({ tool }: AccessToolButtonProps) {
   const [showExtensionModal, setShowExtensionModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleAccessTool = async () => {
     setLoading(true);
+    setSuccess(false);
 
     try {
       // Check if extension is installed
@@ -41,12 +43,14 @@ export function AccessToolButton({ tool }: AccessToolButtonProps) {
       const response = await fetch(`/api/cookies/${tool.id}`);
 
       if (!response.ok) {
-        throw new Error("Failed to fetch cookies");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to fetch cookies");
       }
 
       const { cookies, url } = await response.json();
 
-      // Send message to extension
+      // Send message to extension via window.postMessage
+      // The content script will forward it to the background script
       window.postMessage(
         {
           type: "GROWTOOLS_ACCESS",
@@ -56,43 +60,70 @@ export function AccessToolButton({ tool }: AccessToolButtonProps) {
         },
         "*"
       );
-    } catch (error) {
+
+      // Listen for success/error response from extension
+      const messageHandler = (event: MessageEvent) => {
+        if (event.data.type === "GROWTOOLS_ACCESS_SUCCESS" && event.data.toolId === tool.id) {
+          setSuccess(true);
+          setLoading(false);
+          window.removeEventListener("message", messageHandler);
+          // Reset success state after 2 seconds
+          setTimeout(() => setSuccess(false), 2000);
+        } else if (event.data.type === "GROWTOOLS_ACCESS_ERROR" && event.data.toolId === tool.id) {
+          setLoading(false);
+          window.removeEventListener("message", messageHandler);
+          alert(`Failed to access tool: ${event.data.error || "Unknown error"}`);
+        }
+      };
+
+      window.addEventListener("message", messageHandler);
+
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        window.removeEventListener("message", messageHandler);
+        if (loading) {
+          setLoading(false);
+          // Assume success if no error (tool might have opened)
+          setSuccess(true);
+          setTimeout(() => setSuccess(false), 2000);
+        }
+      }, 5000);
+    } catch (error: any) {
       console.error("Error accessing tool:", error);
-      alert("Failed to access tool. Please try again.");
-    } finally {
       setLoading(false);
+      alert(error.message || "Failed to access tool. Please try again.");
     }
   };
 
   const checkExtension = (): Promise<boolean> => {
     return new Promise((resolve) => {
-      // For now, we'll just check if the message can be posted
-      // In production, the extension would respond with a confirmation
-      const extensionId = process.env.NEXT_PUBLIC_EXTENSION_ID;
-
-      if (!extensionId) {
-        // Extension not configured, show modal
-        resolve(false);
-        return;
-      }
-
-      // Try to communicate with extension
+      // Try to communicate with extension via window.postMessage
+      // The content script will respond if extension is installed
       try {
         window.postMessage({ type: "GROWTOOLS_CHECK" }, "*");
 
-        // Wait for response (timeout after 1 second)
-        const timeout = setTimeout(() => resolve(false), 1000);
+        // Wait for response (timeout after 2 seconds to give extension time to respond)
+        const timeout = setTimeout(() => {
+          window.removeEventListener("message", handler);
+          console.log("Extension check timeout - extension may not be installed");
+          resolve(false);
+        }, 2000);
 
         const handler = (event: MessageEvent) => {
-          if (event.data.type === "GROWTOOLS_INSTALLED") {
+          // Only accept messages from same window
+          if (event.source !== window) return;
+          
+          if (event.data && event.data.type === "GROWTOOLS_INSTALLED") {
             clearTimeout(timeout);
             window.removeEventListener("message", handler);
+            console.log("Extension detected!");
             resolve(true);
           }
         };
 
         window.addEventListener("message", handler);
-      } catch {
+      } catch (error) {
+        console.error("Error checking for extension:", error);
         resolve(false);
       }
     });
@@ -104,9 +135,12 @@ export function AccessToolButton({ tool }: AccessToolButtonProps) {
         className="w-full"
         onClick={handleAccessTool}
         disabled={loading || !tool.cookiesEncrypted}
+        variant={success ? "default" : "default"}
       >
         {loading ? (
-          "Loading..."
+          "Opening..."
+        ) : success ? (
+          "✓ Opened!"
         ) : !tool.cookiesEncrypted ? (
           "Cookies not configured"
         ) : (
@@ -125,37 +159,38 @@ export function AccessToolButton({ tool }: AccessToolButtonProps) {
               <Chrome className="h-6 w-6 text-primary" />
               Extension Required
             </DialogTitle>
-            <DialogDescription className="space-y-4 pt-4">
-              <p>
-                To access your tools, you need to install the GrowTools Browser Extension.
-              </p>
-
-              <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
-                <h4 className="font-semibold mb-2">How it works:</h4>
-                <ol className="list-decimal list-inside space-y-1 text-sm">
-                  <li>Install the browser extension</li>
-                  <li>Click "Access Tool" button</li>
-                  <li>Tool opens automatically with your account logged in</li>
-                </ol>
-              </div>
-
-              <div className="flex gap-3">
-                <Button asChild className="flex-1">
-                  <a
-                    href="https://chrome.google.com/webstore"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Chrome className="h-4 w-4 mr-2" />
-                    Install Extension
-                  </a>
-                </Button>
-                <Button variant="outline" onClick={() => setShowExtensionModal(false)}>
-                  Maybe Later
-                </Button>
-              </div>
+            <DialogDescription>
+              To access your tools, you need to install the GrowTools Browser Extension.
             </DialogDescription>
           </DialogHeader>
+          
+          <div className="space-y-4 pt-4">
+            <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
+              <h4 className="font-semibold mb-2">How it works:</h4>
+              <ol className="list-decimal list-inside space-y-1 text-sm">
+                <li>Install the browser extension</li>
+                <li>Click "Access Tool" button</li>
+                <li>Tool opens automatically with your account logged in</li>
+              </ol>
+            </div>
+
+            <div className="bg-yellow-50 dark:bg-yellow-950 p-4 rounded-lg">
+              <h4 className="font-semibold mb-2 text-yellow-900 dark:text-yellow-100">Installation Steps:</h4>
+              <ol className="list-decimal list-inside space-y-1 text-sm text-yellow-800 dark:text-yellow-200">
+                <li>Download the extension from the extension folder</li>
+                <li>Open Chrome and go to chrome://extensions/</li>
+                <li>Enable "Developer mode" (top right)</li>
+                <li>Click "Load unpacked" and select the extension folder</li>
+                <li>Refresh this page and try again</li>
+              </ol>
+            </div>
+
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setShowExtensionModal(false)}>
+                Close
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </>

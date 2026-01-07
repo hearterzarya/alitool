@@ -9,7 +9,7 @@ const tools = [
     slug: 'chatgpt-plus',
     category: 'AI_WRITING' as ToolCategory,
     toolUrl: 'https://chat.openai.com',
-    priceMonthly: 800, // $8
+    priceMonthly: 5000, // ₹50 (in paise)
     shortDescription: 'Access to GPT-4 with faster response times and priority access',
     description: 'Get unlimited access to GPT-4, our most capable model, with faster response times and priority access during peak hours. Perfect for writing, coding, and creative tasks.',
     icon: '🤖',
@@ -20,7 +20,7 @@ const tools = [
     slug: 'claude-pro',
     category: 'AI_WRITING' as ToolCategory,
     toolUrl: 'https://claude.ai',
-    priceMonthly: 1000, // $10
+    priceMonthly: 6000, // ₹60 (in paise)
     shortDescription: 'Extended context and priority access to Claude 3',
     description: 'Experience Claude 3 with 5x more usage, priority access during high-traffic periods, and early access to new features.',
     icon: '🎨',
@@ -31,7 +31,7 @@ const tools = [
     slug: 'gemini-advanced',
     category: 'AI_WRITING' as ToolCategory,
     toolUrl: 'https://gemini.google.com',
-    priceMonthly: 900, // $9
+    priceMonthly: 5500, // ₹55 (in paise)
     shortDescription: 'Google\'s most capable AI model with multimodal capabilities',
     description: 'Access Google\'s most advanced AI model with enhanced reasoning, coding, and creative abilities. Includes 2TB Google One storage.',
     icon: '💎',
@@ -42,7 +42,7 @@ const tools = [
     slug: 'jasper-ai',
     category: 'AI_WRITING' as ToolCategory,
     toolUrl: 'https://app.jasper.ai',
-    priceMonthly: 1200, // $12
+    priceMonthly: 7000, // ₹70 (in paise)
     shortDescription: 'AI content creation and SEO writing assistant',
     description: 'Professional AI writing assistant for marketers, bloggers, and content creators. Generate SEO-optimized content, blog posts, and marketing copy.',
     icon: '📝',
@@ -53,7 +53,7 @@ const tools = [
     slug: 'midjourney',
     category: 'DESIGN' as ToolCategory,
     toolUrl: 'https://www.midjourney.com',
-    priceMonthly: 1500, // $15
+    priceMonthly: 9000, // ₹90 (in paise)
     shortDescription: 'AI image generation with stunning quality',
     description: 'Create breathtaking AI-generated images from text descriptions. Perfect for designers, artists, and creative professionals.',
     icon: '🎨',
@@ -64,7 +64,7 @@ const tools = [
     slug: 'canva-pro',
     category: 'DESIGN' as ToolCategory,
     toolUrl: 'https://www.canva.com',
-    priceMonthly: 700, // $7
+    priceMonthly: 4000, // ₹40 (in paise)
     shortDescription: 'Professional design platform with AI features',
     description: 'Access premium templates, remove backgrounds instantly, resize designs with Magic Resize, and use the brand kit feature.',
     icon: '🖼️',
@@ -75,7 +75,7 @@ const tools = [
     slug: 'grammarly-premium',
     category: 'PRODUCTIVITY' as ToolCategory,
     toolUrl: 'https://app.grammarly.com',
-    priceMonthly: 600, // $6
+    priceMonthly: 3500, // ₹35 (in paise)
     shortDescription: 'Advanced grammar and style checking with AI',
     description: 'Get full-sentence rewrites, tone adjustments, plagiarism detection, and advanced grammar suggestions powered by AI.',
     icon: '✍️',
@@ -86,7 +86,7 @@ const tools = [
     slug: 'github-copilot',
     category: 'CODE_DEV' as ToolCategory,
     toolUrl: 'https://github.com/features/copilot',
-    priceMonthly: 500, // $5
+    priceMonthly: 3000, // ₹30 (in paise)
     shortDescription: 'AI pair programmer for faster coding',
     description: 'Your AI pair programmer that helps you write code faster with whole-line and full function suggestions.',
     icon: '💻',
@@ -97,7 +97,7 @@ const tools = [
     slug: 'notion-ai',
     category: 'PRODUCTIVITY' as ToolCategory,
     toolUrl: 'https://www.notion.so',
-    priceMonthly: 800, // $8
+    priceMonthly: 5000, // ₹50 (in paise)
     shortDescription: 'AI-powered workspace for notes and docs',
     description: 'Transform your workspace with AI that helps you write better, think bigger, and work faster. Includes all Notion features.',
     icon: '📔',
@@ -108,7 +108,7 @@ const tools = [
     slug: 'perplexity-pro',
     category: 'AI_WRITING' as ToolCategory,
     toolUrl: 'https://www.perplexity.ai',
-    priceMonthly: 900, // $9
+    priceMonthly: 5500, // ₹55 (in paise)
     shortDescription: 'AI-powered search and research assistant',
     description: 'Get accurate answers with citations, upload and analyze files, and access advanced AI models including GPT-4 and Claude.',
     icon: '🔍',

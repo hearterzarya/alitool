@@ -6,7 +6,6 @@ import {
   createPaygicToken,
   createPaygicPayment,
   generateMerchantReferenceId,
-  convertToPaise,
 } from '@/lib/paygic';
 
 export async function POST(req: NextRequest) {
@@ -73,22 +72,23 @@ export async function POST(req: NextRequest) {
     // Create Paygic token
     const token = await createPaygicToken();
 
-    // Convert amount to paise (Paygic expects amount in paise)
-    // Use finalAmount which is either the provided amount or the tool's price
-    const amountInPaise = convertToPaise(finalAmount);
+    // Paygic expects amount in rupees (as a string)
+    // Use finalAmount which is already in rupees
+    const amountInRupees = Math.round(finalAmount * 100) / 100; // Round to 2 decimal places
+    const amountForPaygic = amountInRupees.toString();
     
     console.log('Payment creation:', {
       amountInRupees: finalAmount,
-      amountInPaise,
+      amountForPaygic,
       toolId,
       toolPriceMonthly: tool?.priceMonthly,
       originalProvidedAmount: amount,
     });
     
-    // Validate minimum amount for Paygic (minimum 1 paise)
-    if (parseInt(amountInPaise) < 1) {
+    // Validate minimum amount for Paygic (minimum ₹1)
+    if (amountInRupees < 1) {
       return NextResponse.json(
-        { error: 'Amount too small. Minimum payment is ₹0.01 (1 paise)' },
+        { error: 'Amount too small. Minimum payment is ₹1' },
         { status: 400 }
       );
     }
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
     // Create payment request with Paygic
     const paygicResponse = await createPaygicPayment(token, {
       mid: process.env.PAYGIC_MERCHANT_ID!,
-      amount: amountInPaise,
+      amount: amountForPaygic,
       merchantReferenceId,
       customer_name: customerName || session.user.name || 'Customer',
       customer_email: customerEmail,

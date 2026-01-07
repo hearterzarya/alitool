@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "GrowTools - Access Premium AI Tools",
-  description: "Subscribe to premium AI tools like ChatGPT Plus, Claude Pro, Midjourney and more. Affordable monthly subscriptions starting at $5/month.",
+  description: "Subscribe to premium AI tools like ChatGPT Plus, Claude Pro, Midjourney and more. Affordable monthly subscriptions starting at ₹50/month.",
 };
 
 export default function RootLayout({

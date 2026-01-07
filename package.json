@@ -9,9 +9,13 @@
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
+    "db:push:force": "prisma db push --accept-data-loss",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "create-admin": "tsx scripts/create-admin.ts"
+    "db:setup": "node scripts/setup-db.js",
+    "create-admin": "tsx scripts/create-admin.ts",
+    "grant-test-access": "tsx scripts/grant-test-access.ts",
+    "revoke-test-access": "tsx scripts/revoke-test-access.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

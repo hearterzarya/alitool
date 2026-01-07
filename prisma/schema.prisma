@@ -28,6 +28,7 @@ model User {
 enum Role {
   USER
   ADMIN
+  TEST_USER
 }
 
 // Tools (AI services available for purchase)
@@ -40,7 +41,7 @@ model Tool {
   category         ToolCategory
   icon             String?       // Icon URL or emoji
   toolUrl          String        // https://chat.openai.com
-  priceMonthly     Int           // in cents (e.g., 800 = $8)
+  priceMonthly     Int           // in paise (e.g., 5000 = ₹50)
 
   // Cookie storage (encrypted)
   cookiesEncrypted String?       @db.Text

@@ -185,11 +185,12 @@ export function generateMerchantReferenceId(): string {
 }
 
 /**
- * Convert amount from rupees to paise (Paygic expects amount in paise)
- * Example: 999 (rupees) -> "99900" (paise)
+ * Convert amount from rupees to paise (for internal storage)
+ * Example: 999 (rupees) -> 99900 (paise)
+ * Note: Paygic API expects amount in rupees, not paise
  */
-export function convertToPaise(rupees: number): string {
-  return Math.round(rupees * 100).toString();
+export function convertToPaise(rupees: number): number {
+  return Math.round(rupees * 100);
 }
 
 /**
