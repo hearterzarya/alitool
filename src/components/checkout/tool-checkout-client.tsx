@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { ToolIcon } from '@/components/tools/tool-icon';
 import { 
   CreditCard, 
   Smartphone, 
@@ -41,6 +42,12 @@ interface Tool {
   icon?: string | null;
   toolUrl: string;
   priceMonthly: number;
+  sharedPlanPrice?: number | null;
+  privatePlanPrice?: number | null;
+  sharedPlanFeatures?: string | null;
+  privatePlanFeatures?: string | null;
+  sharedPlanEnabled?: boolean;
+  privatePlanEnabled?: boolean;
   isActive: boolean;
 }
 
@@ -69,6 +76,15 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'failed'>('pending');
   const [checkingStatus, setCheckingStatus] = useState(false);
 
+  // Plan selection
+  // Plan selection - default to first available plan
+  const getDefaultPlan = (): 'shared' | 'private' => {
+    if (tool.sharedPlanEnabled) return 'shared';
+    if (tool.privatePlanEnabled) return 'private';
+    return 'shared'; // fallback
+  };
+  const [selectedPlan, setSelectedPlan] = useState<'shared' | 'private'>(getDefaultPlan());
+  
   // Form state
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
@@ -150,14 +166,17 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
     setLoading(true);
 
     try {
-      // priceMonthly is stored in paise, convert to rupees for display/API
-      const amount = tool.priceMonthly / 100; // Convert from paise to rupees
+      // Get price based on selected plan
+      const planPrice = selectedPlan === 'shared' 
+        ? (tool.sharedPlanPrice || tool.priceMonthly)
+        : (tool.privatePlanPrice || tool.priceMonthly);
+      const amount = planPrice / 100; // Convert from paise to rupees
       
       console.log('Creating payment:', {
         toolId: tool.id,
-        priceMonthly: tool.priceMonthly,
+        plan: selectedPlan,
+        planPrice: planPrice,
         amountInRupees: amount,
-        amountInPaise: tool.priceMonthly,
       });
       
       const response = await fetch('/api/payments/create', {
@@ -165,7 +184,7 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           toolId: tool.id,
-          planName: null,
+          planName: selectedPlan === 'shared' ? 'Shared Plan' : 'Private Plan',
           amount,
           customerName,
           customerEmail,
@@ -196,12 +215,29 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
     }
   };
 
+  // Get selected plan details
+  const selectedPlanPrice = selectedPlan === 'shared' 
+    ? (tool.sharedPlanPrice || tool.priceMonthly)
+    : (tool.privatePlanPrice || tool.priceMonthly);
+  const selectedPlanFeatures = selectedPlan === 'shared'
+    ? (tool.sharedPlanFeatures || '')
+    : (tool.privatePlanFeatures || '');
+  
   // Calculate pricing with discount
-  const originalPrice = tool.priceMonthly * 4; // 4x for 75% discount
-  const currentPrice = tool.priceMonthly;
+  const originalPrice = selectedPlanPrice * 4; // 4x for 75% discount
+  const currentPrice = selectedPlanPrice;
   const discountPercent = 75;
   const displayAmount = `₹${(currentPrice / 100).toLocaleString('en-IN')}`;
   const displayOriginalAmount = `₹${(originalPrice / 100).toLocaleString('en-IN')}`;
+  
+  // Parse features (split by newline or comma)
+  const parseFeatures = (features: string) => {
+    if (!features) return [];
+    return features.split(/\n|,/).map(f => f.trim()).filter(f => f.length > 0);
+  };
+  
+  const sharedFeatures = parseFeatures(tool.sharedPlanFeatures || '');
+  const privateFeatures = parseFeatures(tool.privatePlanFeatures || '');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-blue-50 pt-16 pb-12">
@@ -231,7 +267,7 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="text-5xl">{tool.icon || '🛠️'}</div>
+                    <ToolIcon icon={tool.icon} name={tool.name} size="lg" />
                     <div>
                       <CardTitle className="text-2xl text-slate-900 mb-2">
                         {tool.name}
@@ -253,6 +289,93 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
                 </div>
               </CardHeader>
             </Card>
+
+            {/* Plan Selection Card - Only show if at least one plan is enabled */}
+            {(tool.sharedPlanEnabled || tool.privatePlanEnabled) && (
+              <Card className="glass border-slate-200">
+                <CardHeader>
+                  <CardTitle className="text-slate-900">Select Plan</CardTitle>
+                  <CardDescription>Choose between Shared or Private plan</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className={`grid gap-4 ${tool.sharedPlanEnabled && tool.privatePlanEnabled ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+                    {/* Shared Plan */}
+                    {tool.sharedPlanEnabled && (
+                      <div
+                        onClick={() => setSelectedPlan('shared')}
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                          selectedPlan === 'shared'
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <Badge className="bg-blue-100 text-blue-800">Shared Plan</Badge>
+                            {selectedPlan === 'shared' && (
+                              <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-2xl font-bold text-slate-900 mb-2">
+                          ₹{((tool.sharedPlanPrice || tool.priceMonthly) / 100).toLocaleString('en-IN')}/month
+                        </div>
+                        <p className="text-sm text-slate-600 mb-3">Multiple users share the account</p>
+                        <div className="space-y-1">
+                          {sharedFeatures.length > 0 ? (
+                            sharedFeatures.map((feature, idx) => (
+                              <div key={idx} className="flex items-center text-sm text-slate-700">
+                                <CheckCircle2 className="h-4 w-4 text-blue-500 mr-2" />
+                                <span>{feature}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-sm text-slate-500">No features listed</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Private Plan */}
+                    {tool.privatePlanEnabled && (
+                      <div
+                        onClick={() => setSelectedPlan('private')}
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                          selectedPlan === 'private'
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <Badge className="bg-purple-100 text-purple-800">Private Plan</Badge>
+                            {selectedPlan === 'private' && (
+                              <div className="h-2 w-2 bg-purple-500 rounded-full"></div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-2xl font-bold text-slate-900 mb-2">
+                          ₹{((tool.privatePlanPrice || tool.priceMonthly) / 100).toLocaleString('en-IN')}/month
+                        </div>
+                        <p className="text-sm text-slate-600 mb-3">Dedicated account for single user</p>
+                        <div className="space-y-1">
+                          {privateFeatures.length > 0 ? (
+                            privateFeatures.map((feature, idx) => (
+                              <div key={idx} className="flex items-center text-sm text-slate-700">
+                                <CheckCircle2 className="h-4 w-4 text-purple-500 mr-2" />
+                                <span>{feature}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-sm text-slate-500">No features listed</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {!paymentCreated ? (
               <Card className="glass border-slate-200">
@@ -465,6 +588,11 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-slate-600">{tool.name}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Badge className={selectedPlan === 'shared' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}>
+                      {selectedPlan === 'shared' ? 'Shared Plan' : 'Private Plan'}
+                    </Badge>
                   </div>
                   <p className="text-sm text-slate-500">
                     Monthly subscription

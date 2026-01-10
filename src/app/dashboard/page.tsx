@@ -4,10 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AccessToolButton } from "@/components/dashboard/access-tool-button";
+import { TutorialSection } from "@/components/dashboard/tutorial-section";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { ShoppingCart } from "lucide-react";
+import { ToolIcon } from "@/components/tools/tool-icon";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -19,6 +21,24 @@ export default async function DashboardPage() {
   const userId = (session.user as any).id;
   const userRole = (session.user as any).role;
   const isTestUser = userRole === 'TEST_USER' || userRole === 'ADMIN';
+
+  // Fetch user data to check if they're a new customer
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      createdAt: true,
+      subscriptions: {
+        where: { status: 'ACTIVE' },
+        select: { id: true },
+      },
+    },
+  });
+
+  // Check if user is new (created within last 7 days and has no active subscriptions)
+  const isNewCustomer = user && (
+    new Date().getTime() - new Date(user.createdAt).getTime() < 7 * 24 * 60 * 60 * 1000
+  ) && user.subscriptions.length === 0;
 
   // For test users, show all active tools. For regular users, show only subscriptions
   let subscriptions: Array<{
@@ -83,6 +103,9 @@ export default async function DashboardPage() {
         </p>
       </div>
 
+      {/* Tutorial Section */}
+      <TutorialSection isNewCustomer={isNewCustomer || false} />
+
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
@@ -121,7 +144,7 @@ export default async function DashboardPage() {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="text-4xl">{subscription.tool.icon || "🛠️"}</div>
+                      <ToolIcon icon={subscription.tool.icon} name={subscription.tool.name} size="md" />
                       <div>
                         <CardTitle className="text-lg">{subscription.tool.name}</CardTitle>
                         <CardDescription className="line-clamp-1">

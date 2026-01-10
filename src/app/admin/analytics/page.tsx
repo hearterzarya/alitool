@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPrice } from "@/lib/utils";
 import { TrendingUp, Users, Wrench, DollarSign } from "lucide-react";
+import { ToolIcon } from "@/components/tools/tool-icon";
 
 export const dynamic = 'force-dynamic';
 
@@ -73,7 +74,7 @@ export default async function AnalyticsPage() {
             {toolsByRevenue.map((tool) => (
               <div key={tool.id} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{tool.icon || "🛠️"}</span>
+                  <ToolIcon icon={tool.icon} name={tool.name} size="sm" />
                   <div>
                     <p className="font-medium">{tool.name}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -105,7 +106,7 @@ export default async function AnalyticsPage() {
                   <span className="text-2xl font-bold text-gray-400">
                     #{index + 1}
                   </span>
-                  <span className="text-2xl">{tool.icon || "🛠️"}</span>
+                  <ToolIcon icon={tool.icon} name={tool.name} size="sm" />
                   <div>
                     <p className="font-medium">{tool.name}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">

@@ -41,7 +41,15 @@ model Tool {
   category         ToolCategory
   icon             String?       // Icon URL or emoji
   toolUrl          String        // https://chat.openai.com
-  priceMonthly     Int           // in paise (e.g., 5000 = ₹50)
+  priceMonthly     Int           // in paise (e.g., 5000 = ₹50) - deprecated, use plan prices
+  
+  // Plan pricing
+  sharedPlanPrice  Int?          // Shared plan price in paise
+  privatePlanPrice Int?          // Private plan price in paise
+  sharedPlanFeatures String?     @db.Text // JSON array or comma-separated features
+  privatePlanFeatures String?    @db.Text // JSON array or comma-separated features
+  sharedPlanEnabled Boolean      @default(false) // Enable/disable shared plan
+  privatePlanEnabled Boolean     @default(false) // Enable/disable private plan
 
   // Cookie storage (encrypted)
   cookiesEncrypted String?       @db.Text
@@ -49,6 +57,7 @@ model Tool {
   cookiesExpiryDate DateTime?    // Admin sets expected expiry
 
   isActive         Boolean       @default(true)
+  isFeatured       Boolean       @default(false)  // Featured in slider
   sortOrder        Int           @default(0)
 
   stripePriceId    String?       // Stripe Price ID for subscription

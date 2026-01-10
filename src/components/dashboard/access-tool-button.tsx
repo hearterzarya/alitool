@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Chrome } from "lucide-react";
+import { ExternalLink, Chrome, PlayCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -186,6 +186,69 @@ export function AccessToolButton({ tool }: AccessToolButtonProps) {
             </div>
 
             <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                onClick={async () => {
+                  try {
+                    // Try direct download first
+                    const link = document.createElement('a');
+                    link.href = '/extension/growtools-extension.zip';
+                    link.download = 'growtools-extension.zip';
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    
+                    // Clean up after a short delay
+                    setTimeout(() => {
+                      if (document.body.contains(link)) {
+                        document.body.removeChild(link);
+                      }
+                    }, 100);
+
+                    // Fallback: try API route if direct download doesn't work
+                    setTimeout(async () => {
+                      try {
+                        const response = await fetch('/api/extension/download');
+                        if (response.ok) {
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const fallbackLink = document.createElement('a');
+                          fallbackLink.href = url;
+                          fallbackLink.download = 'growtools-extension.zip';
+                          fallbackLink.style.display = 'none';
+                          document.body.appendChild(fallbackLink);
+                          fallbackLink.click();
+                          window.URL.revokeObjectURL(url);
+                          setTimeout(() => {
+                            if (document.body.contains(fallbackLink)) {
+                              document.body.removeChild(fallbackLink);
+                            }
+                          }, 100);
+                        }
+                      } catch (apiError) {
+                        console.error('API download error:', apiError);
+                        // Final fallback: open in new tab
+                        window.open('/extension/growtools-extension.zip', '_blank');
+                      }
+                    }, 500);
+                  } catch (error) {
+                    console.error('Download error:', error);
+                    // Fallback: open in new tab if download fails
+                    window.open('/extension/growtools-extension.zip', '_blank');
+                  }
+                }}
+                className="flex-1"
+              >
+                <Chrome className="h-4 w-4 mr-2" />
+                Download Extension
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => window.open('https://youtu.be/DPBtd57p5Mg', '_blank')}
+              >
+                <PlayCircle className="h-4 w-4 mr-2" />
+                Watch Tutorial
+              </Button>
               <Button variant="outline" onClick={() => setShowExtensionModal(false)}>
                 Close
               </Button>

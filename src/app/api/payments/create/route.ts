@@ -54,16 +54,29 @@ export async function POST(req: NextRequest) {
         );
       }
       
-      // For tool purchases, ALWAYS use the tool's priceMonthly to ensure consistency
-      // This prevents any conversion errors or mismatches
-      finalAmount = tool.priceMonthly / 100; // Convert from paise to rupees
-      console.log('Using tool price:', {
-        toolId: tool.id,
-        toolName: tool.name,
-        priceMonthly: tool.priceMonthly,
-        priceInRupees: finalAmount,
-        providedAmount: amount,
-      });
+      // Use the provided amount (which includes plan-specific pricing)
+      // Only fallback to tool.priceMonthly if amount is not provided or invalid
+      if (!amount || amount <= 0) {
+        finalAmount = tool.priceMonthly / 100; // Convert from paise to rupees
+        console.log('Using tool default price (no plan specified):', {
+          toolId: tool.id,
+          toolName: tool.name,
+          priceMonthly: tool.priceMonthly,
+          priceInRupees: finalAmount,
+        });
+      } else {
+        // Use the plan-specific amount provided by the client
+        finalAmount = amount;
+        console.log('Using plan-specific price:', {
+          toolId: tool.id,
+          toolName: tool.name,
+          planName: planName,
+          planPriceInRupees: finalAmount,
+          toolDefaultPrice: tool.priceMonthly / 100,
+          sharedPlanPrice: tool.sharedPlanPrice ? tool.sharedPlanPrice / 100 : null,
+          privatePlanPrice: tool.privatePlanPrice ? tool.privatePlanPrice / 100 : null,
+        });
+      }
     }
 
     // Generate unique merchant reference ID

@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { ToolCard } from "@/components/tools/tool-card";
+import { FeaturedSlider } from "@/components/tools/featured-slider";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, ChevronRight, Star } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { ToolCategory } from "@prisma/client";
-import { formatPrice } from "@/lib/utils";
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +34,7 @@ export default async function ToolsPage({ searchParams }: PageProps) {
 
   // Fetch all tools from database
   let allTools: any[] = [];
+  let featuredTools: any[] = [];
   let categories: Array<{ value: string; label: string; count: number }> = [];
   let totalCount = 0;
 
@@ -53,6 +54,34 @@ export default async function ToolsPage({ searchParams }: PageProps) {
         sortOrder: 'asc',
       },
     });
+
+    // Fetch featured tools for slider (gracefully handle if column doesn't exist yet)
+    try {
+      // Use type assertion to bypass TypeScript check if Prisma client not regenerated
+      featuredTools = await (prisma.tool.findMany as any)({
+        where: {
+          isActive: true,
+          isFeatured: true,
+        },
+        orderBy: {
+          sortOrder: 'asc',
+        },
+      });
+      console.log('Featured tools found:', featuredTools.length);
+    } catch (featuredError: any) {
+      // If isFeatured column doesn't exist yet, just use empty array
+      // User needs to run: npx prisma generate && npx prisma db push
+      if (featuredError?.message?.includes('isFeatured') || 
+          featuredError?.code === 'P2021' ||
+          featuredError?.message?.includes('column') ||
+          featuredError?.message?.includes('Unknown column')) {
+        console.warn('isFeatured column not found. Run: npx prisma generate && npx prisma db push');
+        featuredTools = [];
+      } else {
+        console.error('Error fetching featured tools:', featuredError);
+        featuredTools = [];
+      }
+    }
 
     totalCount = await prisma.tool.count({ where: { isActive: true } });
 
@@ -95,9 +124,6 @@ export default async function ToolsPage({ searchParams }: PageProps) {
       },
     ].filter(cat => cat.count > 0);
 
-    // Featured tool (first tool or ChatGPT if available)
-    const featuredTool = allTools.find(t => t.name.toLowerCase().includes('chatgpt')) || allTools[0];
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-blue-50 pt-16">
         {/* Header */}
@@ -119,60 +145,22 @@ export default async function ToolsPage({ searchParams }: PageProps) {
 
         {/* Main Content */}
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-          {/* Featured Tool */}
-          {featuredTool && !validCategory && !searchQuery && (
-            <div className="mb-12 animate-fade-in-up">
-              <div className="flex items-center space-x-2 mb-4">
-                <Badge className="bg-gradient-to-r from-purple-100 to-blue-100 border border-purple-300 text-purple-700">
-                  Featured
-                </Badge>
-                <Badge className="glass border-slate-200 text-slate-700">
-                  {categories.find(c => c.value === featuredTool.category)?.label || 'AI Assistant'}
-                </Badge>
-              </div>
-              <div className="glass rounded-xl p-8 border border-slate-200 hover:border-purple-500/50 transition-all duration-300">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                  <div>
-                    <div className="text-7xl mb-4">{featuredTool.icon || "🛠️"}</div>
-                    <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">{featuredTool.name}</h2>
-                    <p className="text-slate-700 mb-6 text-lg">
-                      {featuredTool.shortDescription || featuredTool.description || "Premium AI tool access"}
-                    </p>
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {['GPT-4 Access', 'Unlimited conversations', 'Priority access', 'Advanced reasoning'].slice(0, 4).map((feature, idx) => (
-                        <Badge key={idx} variant="secondary" className="glass border-slate-200 text-slate-700">
-                          {feature}
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="flex items-center space-x-4 mb-6">
-                      <div>
-                        <div className="text-3xl font-bold gradient-text">
-                          {formatPrice(featuredTool.priceMonthly)}/month
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-4">
-                      <Link
-                        href={`/checkout/${featuredTool.id}`}
-                        className="px-6 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-purple-500/50"
-                      >
-                        Add to Cart
-                      </Link>
-                      <Link
-                        href={`/checkout/${featuredTool.id}`}
-                        className="px-6 py-3 rounded-lg glass border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all duration-300"
-                      >
-                        View Details
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="flex justify-center lg:justify-end">
-                    <div className="text-9xl opacity-20">{featuredTool.icon || "🛠️"}</div>
-                  </div>
+          {/* Featured Tools Slider */}
+          {!validCategory && !searchQuery && (
+            <>
+              {featuredTools.length > 0 ? (
+                <FeaturedSlider 
+                  tools={featuredTools} 
+                  categories={categories.map(c => ({ value: c.value, label: c.label }))}
+                />
+              ) : (
+                <div className="mb-12 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
+                  <p className="text-yellow-800 text-sm">
+                    No featured tools yet. Go to <Link href="/admin/tools" className="underline font-medium">Admin Panel</Link> to mark tools as featured.
+                  </p>
                 </div>
-              </div>
-            </div>
+              )}
+            </>
           )}
 
           {/* Category Sections */}
@@ -267,17 +255,20 @@ export default async function ToolsPage({ searchParams }: PageProps) {
   } catch (error: any) {
     console.error('Database error:', error?.message);
     
-    // Check if it's a table missing error
+    // Check if it's a table missing error or column missing error
     const isTableMissing = error?.message?.includes('does not exist') || 
                            error?.code === 'P2021' ||
                            error?.message?.includes('table');
+    const isColumnMissing = error?.message?.includes('isFeatured') || 
+                           error?.message?.includes('column') ||
+                           error?.message?.includes('Unknown column');
     
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-blue-50 pt-16 flex items-center justify-center">
         <div className="text-center glass rounded-xl p-8 border border-slate-200 max-w-2xl">
           <div className="text-6xl mb-4">⚠️</div>
           <h3 className="text-xl font-semibold mb-2 text-slate-900">
-            {isTableMissing ? 'Database Not Set Up' : 'Error loading tools'}
+            {isTableMissing ? 'Database Not Set Up' : isColumnMissing ? 'Database Schema Update Required' : 'Error loading tools'}
           </h3>
           {isTableMissing ? (
             <>
@@ -292,6 +283,24 @@ export default async function ToolsPage({ searchParams }: PageProps) {
               </div>
               <p className="text-sm text-slate-500">
                 Or see <code className="bg-slate-100 px-2 py-1 rounded">DATABASE_SETUP.md</code> for detailed instructions.
+              </p>
+            </>
+          ) : isColumnMissing ? (
+            <>
+              <p className="text-slate-600 mb-4">
+                The database schema needs to be updated. Please run these commands to add the new featured field.
+              </p>
+              <div className="bg-slate-100 rounded-lg p-4 mb-4 text-left space-y-2">
+                <p className="text-sm font-mono text-slate-800 mb-2">Run these commands in your terminal:</p>
+                <code className="text-sm bg-slate-200 px-3 py-2 rounded block">
+                  npx prisma generate
+                </code>
+                <code className="text-sm bg-slate-200 px-3 py-2 rounded block">
+                  npx prisma db push
+                </code>
+              </div>
+              <p className="text-sm text-slate-500">
+                This will add the <code className="bg-slate-100 px-2 py-1 rounded">isFeatured</code> field to your database.
               </p>
             </>
           ) : (

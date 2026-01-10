@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatPrice } from "@/lib/utils";
+import { ToolIcon } from "@/components/tools/tool-icon";
 
 export default async function SubscriptionsManagementPage() {
   const subscriptions = await prisma.toolSubscription.findMany({
@@ -86,7 +87,7 @@ export default async function SubscriptionsManagementPage() {
                 className="flex items-start justify-between p-4 border rounded-lg"
               >
                 <div className="flex items-start gap-4 flex-1">
-                  <div className="text-3xl">{subscription.tool.icon || "🛠️"}</div>
+                  <ToolIcon icon={subscription.tool.icon} name={subscription.tool.name} size="md" />
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-1">
                       <h3 className="font-semibold">{subscription.tool.name}</h3>

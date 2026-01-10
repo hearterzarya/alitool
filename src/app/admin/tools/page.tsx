@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { Pencil, Plus, AlertCircle, CheckCircle, Wrench } from "lucide-react";
+import { ToolIcon } from "@/components/tools/tool-icon";
 
 export default async function ToolsManagementPage() {
   const tools = await prisma.tool.findMany({
@@ -48,7 +49,7 @@ export default async function ToolsManagementPage() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="text-4xl">{tool.icon || "🛠️"}</div>
+                    <ToolIcon icon={tool.icon} name={tool.name} size="md" />
                     <div>
                       <div className="flex items-center gap-2">
                         <CardTitle className="text-lg">{tool.name}</CardTitle>

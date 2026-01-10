@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
 import { ArrowRight, Star, ShoppingCart, Eye } from "lucide-react";
+import { ToolIcon } from "./tool-icon";
 
 interface ToolCardProps {
   tool: {
@@ -48,15 +49,16 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
   const features = getFeatures();
 
   return (
-    <Card className="group relative overflow-hidden glass border border-slate-200 hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-purple-500/20 h-full flex flex-col">
-      {/* Gradient overlay on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-blue-600/0 group-hover:from-purple-600/10 group-hover:to-blue-600/10 transition-all duration-300 pointer-events-none" />
-      
-      <CardHeader className="flex-1 pb-4">
+    <Link href={`/checkout/${tool.id}`} className="block h-full">
+      <Card className="group relative overflow-hidden glass border border-slate-200 hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-purple-500/20 h-full flex flex-col cursor-pointer">
+        {/* Gradient overlay on hover */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-blue-600/0 group-hover:from-purple-600/10 group-hover:to-blue-600/10 transition-all duration-300 pointer-events-none" />
+        
+        <CardHeader className="flex-1 pb-4">
         {/* Tool Icon/Logo */}
         <div className="flex items-center justify-between mb-3">
-          <div className="text-5xl group-hover:scale-110 transition-transform duration-300">
-            {tool.icon || "🛠️"}
+          <div className="group-hover:scale-110 transition-transform duration-300">
+            <ToolIcon icon={tool.icon} name={tool.name} size="lg" />
           </div>
           <div className="flex items-center space-x-1 bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-medium">
             <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
@@ -115,7 +117,7 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
         <div className="text-xs text-slate-500">per month</div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2 pt-2">
+        <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
           {showSubscribeButton && tool.isActive ? (
             <>
               <Button 
@@ -149,6 +151,7 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
 
       {/* Shine effect on hover */}
       <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none" />
-    </Card>
+      </Card>
+    </Link>
   );
 }
