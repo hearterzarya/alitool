@@ -104,7 +104,9 @@ export default function RegisterPage() {
               <Sparkles className="h-10 w-10 text-purple-400 group-hover:text-purple-300 transition-colors animate-pulse" />
               <div className="absolute inset-0 bg-purple-500/30 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <span className="text-3xl font-bold gradient-text">AliDigitalSolution</span>
+            <span className="text-3xl font-bold gradient-text">AliDigitalSolution
+
+</span>
           </Link>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
             Create Your Account

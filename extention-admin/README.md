@@ -1,4 +1,6 @@
-# AliDigitalSolution Admin Extension
+# AliDigitalSolution
+
+ Admin Extension
 
 Admin browser extension for managing cookies and sessions for tools.
 

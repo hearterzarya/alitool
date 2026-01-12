@@ -160,7 +160,9 @@ export function AccessToolButton({ tool }: AccessToolButtonProps) {
               Extension Required
             </DialogTitle>
             <DialogDescription>
-              To access your tools, you need to install the AliDigitalSolution Browser Extension.
+              To access your tools, you need to install the AliDigitalSolution
+
+ Browser Extension.
             </DialogDescription>
           </DialogHeader>
           

@@ -4,24 +4,35 @@ import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { ToolIcon } from '@/components/tools/tool-icon';
+import { ToolCard } from '@/components/tools/tool-card';
 
 interface Tool {
   id: string;
   name: string;
   slug: string;
+  description: string;
+  shortDescription: string | null;
+  category: string;
   icon: string | null;
-  description?: string;
-  sharedPlanFeatures?: string | null;
-  privatePlanFeatures?: string | null;
+  toolUrl: string;
+  priceMonthly: number;
+  sharedPlanPrice: number | null;
+  privatePlanPrice: number | null;
+  sharedPlanFeatures: string | null;
+  privatePlanFeatures: string | null;
+  sharedPlanEnabled: boolean;
+  privatePlanEnabled: boolean;
+  isActive: boolean;
+  isFeatured: boolean | null;
+  sortOrder: number;
 }
 
-interface IndividualToolsSearchProps {
+interface CategoryToolsSearchProps {
   tools: Tool[];
+  categoryLabel: string;
 }
 
-export function IndividualToolsSearch({ tools: initialTools }: IndividualToolsSearchProps) {
+export function CategoryToolsSearch({ tools: initialTools, categoryLabel }: CategoryToolsSearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredTools = useMemo(() => {
@@ -32,7 +43,8 @@ export function IndividualToolsSearch({ tools: initialTools }: IndividualToolsSe
     const query = searchQuery.toLowerCase();
     return initialTools.filter(tool => {
       const nameMatch = tool.name.toLowerCase().includes(query);
-      const descriptionMatch = tool.description?.toLowerCase().includes(query);
+      const descriptionMatch = tool.description?.toLowerCase().includes(query) || 
+                               tool.shortDescription?.toLowerCase().includes(query);
       
       // Search in plan features
       const sharedFeatures = tool.sharedPlanFeatures?.toLowerCase() || '';
@@ -44,17 +56,17 @@ export function IndividualToolsSearch({ tools: initialTools }: IndividualToolsSe
   }, [searchQuery, initialTools]);
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-6">
       {/* Search Bar */}
-      <div className="max-w-2xl mx-auto px-4">
+      <div className="max-w-2xl mx-auto">
         <div className="relative">
           <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-slate-400" />
           <Input
             type="text"
-            placeholder="Search tools, plans, or features..."
+            placeholder={`Search ${categoryLabel} tools, plans, or features...`}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 sm:pl-12 pr-10 sm:pr-12 py-4 sm:py-5 md:py-6 text-base sm:text-lg border-2 border-slate-300 focus:border-purple-500 rounded-lg sm:rounded-xl"
+            className="pl-10 sm:pl-12 pr-10 sm:pr-12 py-3 sm:py-4 text-sm sm:text-base border-2 border-slate-300 focus:border-purple-500 rounded-lg"
           />
           {searchQuery && (
             <Button
@@ -69,33 +81,33 @@ export function IndividualToolsSearch({ tools: initialTools }: IndividualToolsSe
         </div>
         {searchQuery && (
           <p className="text-xs sm:text-sm text-slate-600 mt-2 text-center">
-            Found {filteredTools.length} {filteredTools.length === 1 ? 'tool' : 'tools'}
+            Found {filteredTools.length} {filteredTools.length === 1 ? 'tool' : 'tools'} in {categoryLabel}
           </p>
         )}
       </div>
 
       {/* Tools Grid */}
       {filteredTools.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 mb-8 sm:mb-12">
-          {filteredTools.map((tool) => (
-            <Link
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredTools.map((tool, idx) => (
+            <div
               key={tool.id}
-              href={`/tools#${tool.slug}`}
-              className="group relative flex flex-col items-center justify-center p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl bg-gradient-to-br from-white to-slate-50 border-2 border-slate-200 hover:border-purple-400 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 sm:hover:-translate-y-2"
+              className="animate-fade-in-up"
+              style={{ animationDelay: `${idx * 0.05}s` }}
             >
-              <div className="mb-2 sm:mb-3 md:mb-4 group-hover:scale-110 transition-transform duration-300">
-                <ToolIcon icon={tool.icon} name={tool.name} size="xl" />
-              </div>
-              <div className="text-xs sm:text-sm font-semibold text-center text-slate-700 group-hover:text-purple-600 transition-colors line-clamp-2">
-                {tool.name}
-              </div>
-            </Link>
+              <ToolCard tool={{
+                ...tool,
+                shortDescription: tool.shortDescription || undefined,
+                description: tool.description || undefined,
+                icon: tool.icon || undefined,
+              }} />
+            </div>
           ))}
         </div>
       ) : (
         <div className="text-center py-12">
           <p className="text-slate-600">
-            {searchQuery ? `No tools found matching "${searchQuery}"` : 'Tools will be available soon. Check back later!'}
+            {searchQuery ? `No tools found matching "${searchQuery}" in ${categoryLabel}` : 'No tools available in this category.'}
           </p>
         </div>
       )}

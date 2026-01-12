@@ -85,10 +85,14 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold mb-1">Email Support</h3>
                     <a 
-                      href="mailto:support@alidigitalsolution.in" 
+                      href="mailto:support@AliDigitalSolution
+
+.in" 
                       className="text-purple-600 hover:text-purple-700 text-sm"
                     >
-                      support@alidigitalsolution.in
+                      support@AliDigitalSolution
+
+.in
                     </a>
                     <p className="text-xs text-slate-500 mt-1">We respond within 24 hours</p>
                   </div>

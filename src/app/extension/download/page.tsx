@@ -14,7 +14,9 @@ export default function ExtensionDownloadPage() {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-full mb-4">
             <Chrome className="h-10 w-10 text-white" />
           </div>
-          <h1 className="text-4xl font-bold mb-2">Download AliDigitalSolution Extension</h1>
+          <h1 className="text-4xl font-bold mb-2">Download AliDigitalSolution
+
+ Extension</h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 mb-4">
             Install our browser extension to access your premium tools seamlessly
           </p>
@@ -33,7 +35,9 @@ export default function ExtensionDownloadPage() {
           <CardHeader>
             <CardTitle>Installation Instructions</CardTitle>
             <CardDescription>
-              Follow these steps to install the AliDigitalSolution browser extension
+              Follow these steps to install the AliDigitalSolution
+
+ browser extension
             </CardDescription>
           </CardHeader>
           <CardContent>

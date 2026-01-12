@@ -73,7 +73,9 @@ export default function LoginPage() {
               <Sparkles className="h-10 w-10 text-purple-400 group-hover:text-purple-300 transition-colors animate-pulse" />
               <div className="absolute inset-0 bg-purple-500/30 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <span className="text-3xl font-bold gradient-text">AliDigitalSolution</span>
+            <span className="text-3xl font-bold gradient-text">AliDigitalSolution
+
+</span>
           </Link>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
             Welcome Back
@@ -174,7 +176,9 @@ export default function LoginPage() {
               <div className="w-full border-t border-slate-200" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-slate-500">New to AliDigitalSolution?</span>
+              <span className="px-4 bg-white text-slate-500">New to AliDigitalSolution
+
+?</span>
             </div>
           </div>
 

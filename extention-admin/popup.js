@@ -1,4 +1,6 @@
-// AliDigitalSolution Admin Extension - Popup Script
+// AliDigitalSolution
+
+ Admin Extension - Popup Script
 
 let currentCookies = [];
 let currentTabUrl = '';

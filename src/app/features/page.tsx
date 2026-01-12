@@ -333,6 +333,8 @@ export default function FeaturesPage() {
             <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Success Stories</h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
               Join thousands of satisfied customers who've transformed their business with AliDigitalSolution
+
+
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -438,7 +440,9 @@ export default function FeaturesPage() {
             Ready to Transform Your Business?
           </h2>
           <p className="text-lg mb-8 text-slate-700 max-w-2xl mx-auto animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            Join 10,000+ successful businesses already using AliDigitalSolution premium tools. 
+            Join 10,000+ successful businesses already using AliDigitalSolution
+
+ premium tools. 
             Get instant access to 50+ AI tools plus expert development services.
           </p>
           

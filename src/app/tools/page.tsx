@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { ToolCard } from "@/components/tools/tool-card";
 import { FeaturedSlider } from "@/components/tools/featured-slider";
+import { CategoryToolsSearch } from "@/components/tools/category-tools-search";
 import { Badge } from "@/components/ui/badge";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
@@ -47,11 +48,34 @@ export default async function ToolsPage({ searchParams }: PageProps) {
           OR: [
             { name: { contains: searchQuery, mode: 'insensitive' } },
             { description: { contains: searchQuery, mode: 'insensitive' } },
+            { shortDescription: { contains: searchQuery, mode: 'insensitive' } },
+            { sharedPlanFeatures: { contains: searchQuery, mode: 'insensitive' } },
+            { privatePlanFeatures: { contains: searchQuery, mode: 'insensitive' } },
           ],
         }),
       },
       orderBy: {
         sortOrder: 'asc',
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        shortDescription: true,
+        category: true,
+        icon: true,
+        toolUrl: true,
+        priceMonthly: true,
+        sharedPlanPrice: true,
+        privatePlanPrice: true,
+        sharedPlanFeatures: true,
+        privatePlanFeatures: true,
+        sharedPlanEnabled: true,
+        privatePlanEnabled: true,
+        isActive: true,
+        isFeatured: true,
+        sortOrder: true,
       },
     });
 
@@ -173,7 +197,7 @@ export default async function ToolsPage({ searchParams }: PageProps) {
                 return (
                   <div key={category.value} className="mb-12 animate-fade-in-up" style={{ animationDelay: `${catIdx * 0.1}s` }}>
                     {/* Category Header */}
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
                       <div className="flex items-center space-x-3">
                         <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
                           {category.label}
@@ -185,7 +209,7 @@ export default async function ToolsPage({ searchParams }: PageProps) {
                       {categoryTools.length > 3 && (
                         <Link
                           href={`/tools?category=${category.value}`}
-                          className="flex items-center space-x-1 text-purple-600 hover:text-purple-700 transition-colors"
+                          className="flex items-center space-x-1 text-purple-600 hover:text-purple-700 transition-colors text-sm sm:text-base"
                         >
                           <span>View All</span>
                           <ChevronRight className="h-4 w-4" />
@@ -193,18 +217,11 @@ export default async function ToolsPage({ searchParams }: PageProps) {
                       )}
                     </div>
 
-                    {/* Tools Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {categoryTools.slice(0, validCategory === category.value ? undefined : 4).map((tool, idx) => (
-                        <div
-                          key={tool.id}
-                          className="animate-fade-in-up"
-                          style={{ animationDelay: `${idx * 0.05}s` }}
-                        >
-                          <ToolCard tool={tool} />
-                        </div>
-                      ))}
-                    </div>
+                    {/* Search Bar for Individual Tools Section */}
+                    <CategoryToolsSearch 
+                      tools={categoryTools.slice(0, validCategory === category.value ? undefined : 4)} 
+                      categoryLabel={category.label}
+                    />
                   </div>
                 );
               })}

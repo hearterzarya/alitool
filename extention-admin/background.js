@@ -1,4 +1,6 @@
-// AliDigitalSolution Admin Extension - Background Service Worker
+// AliDigitalSolution
+
+ Admin Extension - Background Service Worker
 // Handles cookie extraction, management, and session handling for admins
 
 /**
@@ -321,4 +323,6 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
-console.log('AliDigitalSolution Admin Extension loaded');
+console.log('AliDigitalSolution
+
+ Admin Extension loaded');
