@@ -287,3 +287,15 @@ model AdminLog {
 
   @@map("admin_logs")
 }
+
+model ReviewScreenshot {
+  id          String   @id @default(uuid())
+  imageUrl    String   // URL to the uploaded screenshot
+  caption     String?  // Optional caption/description
+  sortOrder   Int      @default(0) // For ordering in gallery
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("review_screenshots")
+}

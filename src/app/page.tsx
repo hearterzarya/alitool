@@ -6,6 +6,8 @@ import { ArrowRight, MessageCircle, Users, Zap, CheckCircle2 } from "lucide-reac
 import { prisma } from "@/lib/prisma";
 import { TrendingBundlesSlider } from "@/components/tools/trending-bundles-slider";
 import { ToolIcon } from "@/components/tools/tool-icon";
+import { ToolNamesSlider } from "@/components/tools/tool-names-slider";
+import { IndividualToolsSearch } from "@/components/tools/individual-tools-search";
 
 export const dynamic = 'force-dynamic';
 
@@ -99,6 +101,9 @@ export default async function HomePage() {
         name: true,
         slug: true,
         icon: true,
+        description: true,
+        sharedPlanFeatures: true,
+        privatePlanFeatures: true,
       },
     });
   } catch (error: any) {
@@ -131,7 +136,7 @@ export default async function HomePage() {
               Monthly • 6-Month • Yearly plans • Instant access • Indian payments supported
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6 sm:mb-8">
               <Button 
                 asChild 
                 size="lg" 
@@ -143,6 +148,13 @@ export default async function HomePage() {
                 </Link>
               </Button>
             </div>
+
+            {/* Tool Names Slider */}
+            {tools.length > 0 && (
+              <div className="mt-4 sm:mt-6 md:mt-8 -mx-4 sm:-mx-6 lg:-mx-8">
+                <ToolNamesSlider tools={tools} />
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -234,28 +246,7 @@ export default async function HomePage() {
             </p>
           </div>
 
-          {tools.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-12">
-              {tools.map((tool) => (
-                <Link
-                  key={tool.id}
-                  href={`/tools#${tool.slug}`}
-                  className="group relative flex flex-col items-center justify-center p-6 rounded-2xl bg-gradient-to-br from-white to-slate-50 border-2 border-slate-200 hover:border-purple-400 hover:shadow-xl transition-all duration-300 hover:-translate-y-2"
-                >
-                  <div className="mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <ToolIcon icon={tool.icon} name={tool.name} size="xl" />
-                  </div>
-                  <div className="text-sm font-semibold text-center text-slate-700 group-hover:text-purple-600 transition-colors">
-                    {tool.name}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-slate-600">Tools will be available soon. Check back later!</p>
-            </div>
-          )}
+          <IndividualToolsSearch tools={tools} />
 
           <div className="text-center">
             <Button 

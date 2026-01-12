@@ -40,7 +40,9 @@ import {
   Phone,
   Eye,
   EyeOff,
-  Loader2
+  Loader2,
+  Pencil,
+  Save
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -108,6 +110,10 @@ export function UsersManagementClient({
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [editFormData, setEditFormData] = useState({ name: '', email: '', status: '', role: '' });
+  const [editLoading, setEditLoading] = useState(false);
   const { toast } = useToast();
 
   // Filter users
@@ -188,6 +194,64 @@ export function UsersManagementClient({
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user);
+    setEditFormData({
+      name: user.name || '',
+      email: user.email,
+      status: user.status,
+      role: user.role,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateUser = async () => {
+    if (!selectedUser) return;
+
+    setEditLoading(true);
+    try {
+      const response = await fetch(`/api/admin/users/${selectedUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editFormData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: 'Success',
+          description: 'User updated successfully',
+        });
+        
+        setUsers(prev => prev.map(user => 
+          user.id === selectedUser.id 
+            ? { ...user, ...data.user }
+            : user
+        ));
+
+        setEditDialogOpen(false);
+        setSelectedUser(null);
+        setEditFormData({ name: '', email: '', status: '', role: '' });
+      } else {
+        toast({
+          title: 'Error',
+          description: data.error || 'Failed to update user',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update user',
+        variant: 'destructive',
+      });
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -433,18 +497,29 @@ export function UsersManagementClient({
                       {formatDate(user.createdAt)}
                     </TableCell>
                     <TableCell>
-                      {user.status !== 'SUSPENDED' ? (
+                      <div className="flex items-center gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleSuspendUser(user.id)}
-                          className="text-red-600 hover:text-red-700"
+                          onClick={() => handleEditUser(user)}
+                          className="text-blue-600 hover:text-blue-700"
                         >
-                          Suspend
+                          <Pencil className="h-3 w-3 mr-1" />
+                          Edit
                         </Button>
-                      ) : (
-                        <Badge variant="destructive">Suspended</Badge>
-                      )}
+                        {user.status !== 'SUSPENDED' ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSuspendUser(user.id)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            Suspend
+                          </Button>
+                        ) : (
+                          <Badge variant="destructive">Suspended</Badge>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -453,6 +528,101 @@ export function UsersManagementClient({
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update user information for {selectedUser?.name || selectedUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="edit-name">Name</Label>
+              <Input
+                id="edit-name"
+                value={editFormData.name}
+                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                placeholder="User name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editFormData.email}
+                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                placeholder="user@example.com"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-status">Status</Label>
+              <Select
+                value={editFormData.status}
+                onValueChange={(value) => setEditFormData({ ...editFormData, status: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="FREE">FREE</SelectItem>
+                  <SelectItem value="PENDING">PENDING</SelectItem>
+                  <SelectItem value="ACTIVE">ACTIVE</SelectItem>
+                  <SelectItem value="SUSPENDED">SUSPENDED</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="edit-role">Role</Label>
+              <Select
+                value={editFormData.role}
+                onValueChange={(value) => setEditFormData({ ...editFormData, role: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USER">USER</SelectItem>
+                  <SelectItem value="ADMIN">ADMIN</SelectItem>
+                  <SelectItem value="TEST_USER">TEST_USER</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditDialogOpen(false);
+                setSelectedUser(null);
+                setEditFormData({ name: '', email: '', status: '', role: '' });
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateUser}
+              disabled={editLoading || !editFormData.email}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {editLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Activate Subscription Dialog */}
       <Dialog open={activateDialogOpen} onOpenChange={setActivateDialogOpen}>
