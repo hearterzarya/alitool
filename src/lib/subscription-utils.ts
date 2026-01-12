@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
+import { PlanType, ActivationStatus } from '@prisma/client';
 
-export type PlanType = 'SHARED' | 'PRIVATE';
+export type PlanTypeEnum = PlanType;
 
 /**
  * Creates a subscription based on plan type
@@ -10,7 +11,7 @@ export type PlanType = 'SHARED' | 'PRIVATE';
 export async function createSubscriptionAfterPayment(
   userId: string,
   toolId: string,
-  planType: PlanType,
+  planType: PlanTypeEnum,
   paymentId: string
 ) {
   const now = new Date();
@@ -34,9 +35,9 @@ export async function createSubscriptionAfterPayment(
       return await prisma.toolSubscription.update({
         where: { id: existingSubscription.id },
         data: {
-          planType: 'SHARED',
+          planType: PlanType.SHARED,
           status: 'ACTIVE',
-          activationStatus: 'ACTIVE',
+          activationStatus: ActivationStatus.ACTIVE,
           currentPeriodStart: now,
           currentPeriodEnd: periodEnd,
           canceledAt: null,
@@ -48,9 +49,9 @@ export async function createSubscriptionAfterPayment(
       return await prisma.toolSubscription.update({
         where: { id: existingSubscription.id },
         data: {
-          planType: 'PRIVATE',
+          planType: PlanType.PRIVATE,
           status: 'ACTIVE', // Payment successful, but activation pending
-          activationStatus: 'PENDING',
+          activationStatus: ActivationStatus.PENDING,
           currentPeriodStart: now,
           currentPeriodEnd: periodEnd,
           canceledAt: null,
@@ -67,12 +68,12 @@ export async function createSubscriptionAfterPayment(
     const sharedCredentials = await getOrCreateSharedCredentials(toolId);
 
     const subscription = await prisma.toolSubscription.create({
-      data: {
-        userId,
-        toolId,
-        planType: 'SHARED',
-        status: 'ACTIVE',
-        activationStatus: 'ACTIVE', // Instant activation
+        data: {
+          userId,
+          toolId,
+          planType: PlanType.SHARED,
+          status: 'ACTIVE',
+          activationStatus: ActivationStatus.ACTIVE, // Instant activation
         currentPeriodStart: now,
         currentPeriodEnd: periodEnd,
         sharedCredentials: {
@@ -100,12 +101,12 @@ export async function createSubscriptionAfterPayment(
   } else {
     // PRIVATE PLAN: Pending activation
     const subscription = await prisma.toolSubscription.create({
-      data: {
-        userId,
-        toolId,
-        planType: 'PRIVATE',
-        status: 'ACTIVE', // Payment successful
-        activationStatus: 'PENDING', // Requires admin activation
+        data: {
+          userId,
+          toolId,
+          planType: PlanType.PRIVATE,
+          status: 'ACTIVE', // Payment successful
+          activationStatus: ActivationStatus.PENDING, // Requires admin activation
         currentPeriodStart: now,
         currentPeriodEnd: periodEnd,
       },
@@ -131,8 +132,8 @@ async function getOrCreateSharedCredentials(toolId: string) {
     where: {
       subscription: {
         toolId,
-        planType: 'SHARED',
-        activationStatus: 'ACTIVE',
+        planType: PlanType.SHARED,
+        activationStatus: ActivationStatus.ACTIVE,
       },
       currentUsers: { lt: 5 }, // Less than 5 users
     },
@@ -192,11 +193,11 @@ export async function activatePrivateSubscription(
     throw new Error('Subscription not found');
   }
 
-  if (subscription.planType !== 'PRIVATE') {
+  if (subscription.planType !== PlanType.PRIVATE) {
     throw new Error('Only private plans require manual activation');
   }
 
-  if (subscription.activationStatus === 'ACTIVE') {
+  if (subscription.activationStatus === ActivationStatus.ACTIVE) {
     throw new Error('Subscription already activated');
   }
 
@@ -204,7 +205,7 @@ export async function activatePrivateSubscription(
   const updated = await prisma.toolSubscription.update({
     where: { id: subscriptionId },
     data: {
-      activationStatus: 'ACTIVE',
+      activationStatus: ActivationStatus.ACTIVE,
       activatedAt: new Date(),
       activatedBy: adminId,
       privateCredentials: {
@@ -245,7 +246,7 @@ export async function suspendSubscription(subscriptionId: string, adminId: strin
   await prisma.toolSubscription.update({
     where: { id: subscriptionId },
     data: {
-      activationStatus: 'SUSPENDED',
+      activationStatus: ActivationStatus.SUSPENDED,
     },
   });
 
@@ -253,7 +254,7 @@ export async function suspendSubscription(subscriptionId: string, adminId: strin
   const activeSubscriptions = await prisma.toolSubscription.count({
     where: {
       userId: subscription.userId,
-      activationStatus: 'ACTIVE',
+      activationStatus: ActivationStatus.ACTIVE,
     },
   });
 

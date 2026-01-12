@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { createPaygicToken, checkPaygicStatus } from '@/lib/paygic';
 import { createSubscriptionAfterPayment } from '@/lib/subscription-utils';
+import { PlanType } from '@prisma/client';
 
 export async function POST(req: NextRequest) {
   try {
@@ -84,7 +85,7 @@ export async function POST(req: NextRequest) {
     if (statusResponse.txnStatus === 'SUCCESS' && updatedPayment.status === 'SUCCESS') {
       if (updatedPayment.toolId) {
         // Get plan type from payment (SHARED or PRIVATE)
-        const planType = ((updatedPayment as any).planType || 'SHARED') as 'SHARED' | 'PRIVATE';
+        const planType = ((updatedPayment as any).planType || PlanType.SHARED) as PlanType;
         
         try {
           await createSubscriptionAfterPayment(

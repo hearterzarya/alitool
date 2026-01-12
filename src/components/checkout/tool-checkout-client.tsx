@@ -185,7 +185,7 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
         body: JSON.stringify({
           toolId: tool.id,
           planName: selectedPlan === 'shared' ? 'Shared Plan' : 'Private Plan',
-          planType: selectedPlan === 'shared' ? 'SHARED' : 'PRIVATE',
+          planType: selectedPlan === 'shared' ? 'SHARED' : 'PRIVATE', // Will be converted to enum in API
           amount,
           customerName,
           customerEmail,

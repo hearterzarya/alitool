@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createSubscriptionAfterPayment } from '@/lib/subscription-utils';
+import { PlanType } from '@prisma/client';
 
 /**
  * Paygic Webhook Handler
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
     if (txnStatus === 'SUCCESS' && updatedPayment.status === 'SUCCESS') {
       if (updatedPayment.toolId) {
         // Get plan type from payment (SHARED or PRIVATE)
-        const planType = ((updatedPayment as any).planType || 'SHARED') as 'SHARED' | 'PRIVATE';
+        const planType = ((updatedPayment as any).planType || PlanType.SHARED) as PlanType;
         
         try {
           await createSubscriptionAfterPayment(

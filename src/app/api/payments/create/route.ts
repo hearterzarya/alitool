@@ -7,6 +7,7 @@ import {
   createPaygicPayment,
   generateMerchantReferenceId,
 } from '@/lib/paygic';
+import { PlanType } from '@prisma/client';
 
 export async function POST(req: NextRequest) {
   try {
@@ -169,7 +170,7 @@ export async function POST(req: NextRequest) {
       userId: (session.user as any).id,
       toolId: toolId || null,
       planName: planName || null,
-      planType: planType || (toolId ? 'SHARED' : null), // Default to SHARED for tool purchases
+      planType: planType || (toolId ? PlanType.SHARED : null), // Default to SHARED for tool purchases
       amount: Math.round(finalAmount * 100), // Store in paise
       merchantReferenceId,
       paygicToken: token,
