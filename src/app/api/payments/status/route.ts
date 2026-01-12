@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { createPaygicToken, checkPaygicStatus } from '@/lib/paygic';
+import { createSubscriptionAfterPayment } from '@/lib/subscription-utils';
 
 export async function POST(req: NextRequest) {
   try {
@@ -81,32 +82,20 @@ export async function POST(req: NextRequest) {
 
     // If payment is successful, create subscription
     if (statusResponse.txnStatus === 'SUCCESS' && updatedPayment.status === 'SUCCESS') {
-      // Check if subscription already exists
       if (updatedPayment.toolId) {
-        const existingSubscription = await prisma.toolSubscription.findUnique({
-          where: {
-            userId_toolId: {
-              userId: payment.userId,
-              toolId: updatedPayment.toolId,
-            },
-          },
-        });
-
-        if (!existingSubscription) {
-          // Create subscription for 30 days
-          const now = new Date();
-          const periodEnd = new Date(now);
-          periodEnd.setDate(periodEnd.getDate() + 30);
-
-          await prisma.toolSubscription.create({
-            data: {
-              userId: payment.userId,
-              toolId: updatedPayment.toolId,
-              status: 'ACTIVE',
-              currentPeriodStart: now,
-              currentPeriodEnd: periodEnd,
-            },
-          });
+        // Get plan type from payment (SHARED or PRIVATE)
+        const planType = ((updatedPayment as any).planType || 'SHARED') as 'SHARED' | 'PRIVATE';
+        
+        try {
+          await createSubscriptionAfterPayment(
+            payment.userId,
+            updatedPayment.toolId,
+            planType,
+            updatedPayment.id
+          );
+        } catch (error: any) {
+          console.error('Error creating subscription after payment:', error);
+          // Continue to return payment status even if subscription creation fails
         }
       }
     }

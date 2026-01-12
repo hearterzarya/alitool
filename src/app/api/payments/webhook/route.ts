@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { createSubscriptionAfterPayment } from '@/lib/subscription-utils';
 
 /**
  * Paygic Webhook Handler
@@ -56,47 +57,19 @@ export async function POST(req: NextRequest) {
     // If payment is successful, create or update subscription
     if (txnStatus === 'SUCCESS' && updatedPayment.status === 'SUCCESS') {
       if (updatedPayment.toolId) {
-        // Check if subscription already exists
-        const existingSubscription = await prisma.toolSubscription.findUnique({
-          where: {
-            userId_toolId: {
-              userId: payment.userId,
-              toolId: updatedPayment.toolId,
-            },
-          },
-        });
-
-        if (!existingSubscription) {
-          // Create subscription for 30 days
-          const now = new Date();
-          const periodEnd = new Date(now);
-          periodEnd.setDate(periodEnd.getDate() + 30);
-
-          await prisma.toolSubscription.create({
-            data: {
-              userId: payment.userId,
-              toolId: updatedPayment.toolId,
-              status: 'ACTIVE',
-              currentPeriodStart: now,
-              currentPeriodEnd: periodEnd,
-            },
-          });
-        } else if (existingSubscription.status !== 'ACTIVE') {
-          // Reactivate subscription if it was canceled
-          const now = new Date();
-          const periodEnd = new Date(now);
-          periodEnd.setDate(periodEnd.getDate() + 30);
-
-          await prisma.toolSubscription.update({
-            where: { id: existingSubscription.id },
-            data: {
-              status: 'ACTIVE',
-              currentPeriodStart: now,
-              currentPeriodEnd: periodEnd,
-              canceledAt: null,
-              cancelAtPeriodEnd: false,
-            },
-          });
+        // Get plan type from payment (SHARED or PRIVATE)
+        const planType = ((updatedPayment as any).planType || 'SHARED') as 'SHARED' | 'PRIVATE';
+        
+        try {
+          await createSubscriptionAfterPayment(
+            payment.userId,
+            updatedPayment.toolId,
+            planType,
+            updatedPayment.id
+          );
+        } catch (error: any) {
+          console.error('Error creating subscription after payment:', error);
+          // Don't fail webhook, log error for manual review
         }
       }
     }

@@ -217,7 +217,7 @@ export function TutorialSection({ isNewCustomer = false }: TutorialSectionProps)
                 <iframe
                   className="absolute top-0 left-0 w-full h-full rounded-lg"
                   src="https://www.youtube.com/embed/DPBtd57p5Mg"
-                  title="GrowTools Extension Installation Tutorial"
+                  title="AliDigitalSolution Extension Installation Tutorial"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 />
@@ -236,7 +236,7 @@ export function TutorialSection({ isNewCustomer = false }: TutorialSectionProps)
               <div className="flex-1">
                 <h3 className="font-semibold text-lg mb-2">Install Browser Extension</h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-3">
-                  Download and install the GrowTools browser extension to enable automatic login to your tools.
+                  Download and install the AliDigitalSolution browser extension to enable automatic login to your tools.
                 </p>
                 <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg space-y-2">
                   <div className="flex items-center gap-2">

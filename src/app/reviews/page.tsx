@@ -24,7 +24,7 @@ export default function ReviewsPage() {
       tool: "ChatGPT Pro",
       initials: "RS",
       rating: 5,
-      review: "GrowTools saved me ₹20,000/month on AI tools! ChatGPT Pro access is instant and works flawlessly. Best investment for my content business.",
+      review: "AliDigitalSolution saved me ₹20,000/month on AI tools! ChatGPT Pro access is instant and works flawlessly. Best investment for my content business.",
       verified: true,
     },
     {
@@ -51,7 +51,7 @@ export default function ReviewsPage() {
       tool: "QuillBot + Claude",
       initials: "SG",
       rating: 5,
-      review: "As a student, I couldn't afford these tools. GrowTools made premium AI accessible to me. My academic work improved significantly!",
+      review: "As a student, I couldn't afford these tools. AliDigitalSolution made premium AI accessible to me. My academic work improved significantly!",
       verified: true,
     },
     {
@@ -78,7 +78,7 @@ export default function ReviewsPage() {
       tool: "ChatGPT + Midjourney",
       initials: "RM",
       rating: 5,
-      review: "Running a startup means every rupee counts. GrowTools gave me access to premium AI tools at a fraction of the cost. Game changer!",
+      review: "Running a startup means every rupee counts. AliDigitalSolution gave me access to premium AI tools at a fraction of the cost. Game changer!",
       verified: true,
     },
     {
@@ -96,7 +96,7 @@ export default function ReviewsPage() {
       tool: "GitHub Copilot + ChatGPT",
       initials: "AD",
       rating: 5,
-      review: "As a developer, I need multiple tools. GrowTools bundle saved me thousands. Setup was instant and support is responsive.",
+      review: "As a developer, I need multiple tools. AliDigitalSolution bundle saved me thousands. Setup was instant and support is responsive.",
       verified: true,
     },
   ];
@@ -140,7 +140,7 @@ export default function ReviewsPage() {
             Customer Reviews & Proofs
           </h1>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            See what our customers are saying about GrowTools. Real reviews from verified users who transformed their workflow.
+            See what our customers are saying about AliDigitalSolution. Real reviews from verified users who transformed their workflow.
           </p>
         </div>
 
@@ -250,15 +250,6 @@ export default function ReviewsPage() {
                 <Link href="/tools">
                   Browse Tools
                   <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="border-slate-300 text-slate-700 hover:bg-slate-50"
-              >
-                <Link href="/pricing">
-                  View Pricing
                 </Link>
               </Button>
             </div>

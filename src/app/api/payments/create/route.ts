@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { toolId, planName, amount, customerName, customerEmail, customerMobile } = body;
+    const { toolId, bundleId, planName, planType, amount, customerName, customerEmail, customerMobile } = body;
 
     // Validate required fields
     // Amount can be less than 1 rupee (e.g., 0.01 for 1 paise)
@@ -38,8 +38,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate toolId if provided (for individual tool purchases)
+    // Validate toolId or bundleId if provided
     let tool = null;
+    let bundle = null;
     let finalAmount = amount;
     
     if (toolId) {
@@ -76,6 +77,53 @@ export async function POST(req: NextRequest) {
           sharedPlanPrice: tool.sharedPlanPrice ? tool.sharedPlanPrice / 100 : null,
           privatePlanPrice: tool.privatePlanPrice ? tool.privatePlanPrice / 100 : null,
         });
+      }
+    } else if (bundleId) {
+      try {
+        // Check if bundle model exists in Prisma client
+        if ('bundle' in prisma && typeof (prisma as any).bundle?.findUnique === 'function') {
+          bundle = await (prisma as any).bundle.findUnique({
+            where: { id: bundleId },
+          });
+
+          if (!bundle) {
+            return NextResponse.json(
+              { error: 'Bundle not found' },
+              { status: 404 }
+            );
+          }
+          
+          // Use the provided amount (which includes plan-specific pricing)
+          if (!amount || amount <= 0) {
+            finalAmount = bundle.priceMonthly / 100; // Convert from paise to rupees
+            console.log('Using bundle default price:', {
+              bundleId: bundle.id,
+              bundleName: bundle.name,
+              priceMonthly: bundle.priceMonthly,
+              priceInRupees: finalAmount,
+            });
+          } else {
+            finalAmount = amount;
+            console.log('Using plan-specific bundle price:', {
+              bundleId: bundle.id,
+              bundleName: bundle.name,
+              planName: planName,
+              planPriceInRupees: finalAmount,
+            });
+          }
+        } else {
+          console.warn('Bundle model not available in Prisma client. Please run: npx prisma generate');
+          return NextResponse.json(
+            { error: 'Bundle feature not available yet. Please run database migration.' },
+            { status: 400 }
+          );
+        }
+      } catch (error: any) {
+        console.warn('Error accessing bundle:', error);
+        return NextResponse.json(
+          { error: 'Bundle feature not available yet. Please run database migration.' },
+          { status: 400 }
+        );
       }
     }
 
@@ -117,29 +165,42 @@ export async function POST(req: NextRequest) {
     });
 
     // Save payment to database
+    const paymentData: any = {
+      userId: (session.user as any).id,
+      toolId: toolId || null,
+      planName: planName || null,
+      planType: planType || (toolId ? 'SHARED' : null), // Default to SHARED for tool purchases
+      amount: Math.round(finalAmount * 100), // Store in paise
+      merchantReferenceId,
+      paygicToken: token,
+      upiIntent: paygicResponse.data.intent,
+      phonePeLink: paygicResponse.data.phonePe,
+      paytmLink: paygicResponse.data.paytm,
+      gpayLink: paygicResponse.data.gpay,
+      dynamicQR: paygicResponse.data.dynamicQR,
+      customerName: customerName || session.user.name || null,
+      customerEmail,
+      customerMobile,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes expiry
+      status: 'PENDING',
+    };
+
+    // Add bundleId if bundle model exists
+    try {
+      if (bundleId && 'bundle' in prisma && typeof (prisma as any).bundle?.findUnique === 'function') {
+        paymentData.bundleId = bundleId;
+      }
+    } catch (error) {
+      console.warn('BundleId field may not exist in Payment model yet');
+    }
+
     const payment = await prisma.payment.create({
-      data: {
-        userId: (session.user as any).id,
-        toolId: toolId || null,
-        planName: planName || null,
-        amount: Math.round(finalAmount * 100), // Store in paise
-        merchantReferenceId,
-        paygicToken: token,
-        upiIntent: paygicResponse.data.intent,
-        phonePeLink: paygicResponse.data.phonePe,
-        paytmLink: paygicResponse.data.paytm,
-        gpayLink: paygicResponse.data.gpay,
-        dynamicQR: paygicResponse.data.dynamicQR,
-        customerName: customerName || session.user.name || null,
-        customerEmail,
-        customerMobile,
-        expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes expiry
-        status: 'PENDING',
-      },
+      data: paymentData,
     });
 
     return NextResponse.json({
       success: true,
+      merchantReferenceId: payment.merchantReferenceId,
       payment: {
         id: payment.id,
         merchantReferenceId: payment.merchantReferenceId,

@@ -51,10 +51,10 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
   return (
     <Link href={`/checkout/${tool.id}`} className="block h-full">
       <Card className="group relative overflow-hidden glass border border-slate-200 hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-purple-500/20 h-full flex flex-col cursor-pointer">
-        {/* Gradient overlay on hover */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-blue-600/0 group-hover:from-purple-600/10 group-hover:to-blue-600/10 transition-all duration-300 pointer-events-none" />
-        
-        <CardHeader className="flex-1 pb-4">
+      {/* Gradient overlay on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-blue-600/0 group-hover:from-purple-600/10 group-hover:to-blue-600/10 transition-all duration-300 pointer-events-none" />
+      
+      <CardHeader className="flex-1 pb-4">
         {/* Tool Icon/Logo */}
         <div className="flex items-center justify-between mb-3">
           <div className="group-hover:scale-110 transition-transform duration-300">
@@ -151,7 +151,7 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
 
       {/* Shine effect on hover */}
       <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none" />
-      </Card>
+    </Card>
     </Link>
   );
 }

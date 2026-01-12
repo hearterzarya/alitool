@@ -5,11 +5,12 @@ import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { ConditionalNavbar } from "@/components/layout/conditional-navbar";
+import { WhatsAppButton } from "@/components/layout/whatsapp-button";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "GrowTools - Access Premium AI Tools",
+  title: "AliDigitalSolution - Access Premium AI Tools",
   description: "Subscribe to premium AI tools like ChatGPT Plus, Claude Pro, Midjourney and more. Affordable monthly subscriptions starting at ₹50/month.",
 };
 
@@ -24,6 +25,7 @@ export default function RootLayout({
         <SessionProvider>
           <ConditionalNavbar />
           {children}
+          <WhatsAppButton />
         </SessionProvider>
       </body>
     </html>

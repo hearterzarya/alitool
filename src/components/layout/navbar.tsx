@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, User, Wrench, DollarSign, Star, FileText, HelpCircle, Menu, X, Home } from "lucide-react";
+import { Sparkles, User, Wrench, Star, FileText, HelpCircle, Menu, X, Home } from "lucide-react";
 import { useState } from "react";
 
 export function Navbar() {
@@ -13,7 +13,6 @@ export function Navbar() {
   const navLinks = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/tools', label: 'Tools', icon: Wrench },
-    { href: '/pricing', label: 'Pricing', icon: DollarSign },
     { href: '/features', label: 'Features', icon: Star },
     { href: '/reviews', label: 'Reviews/Proofs', icon: FileText },
     { href: '/faq', label: 'FAQ', icon: HelpCircle },
@@ -33,7 +32,7 @@ export function Navbar() {
               <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent animate-gradient">
-              GrowTools
+              AliDigitalSolution
             </span>
           </Link>
 

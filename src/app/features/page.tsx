@@ -96,7 +96,7 @@ export default function FeaturesPage() {
       role: "Digital Marketing Agency Owner",
       company: "GrowthMax Digital",
       initials: "RP",
-      review: "GrowTools transformed our workflow with their AI tools. The ChatGPT Pro access alone saved us 20 hours per week! The support team is incredibly responsive.",
+      review: "AliDigitalSolution transformed our workflow with their AI tools. The ChatGPT Pro access alone saved us 20 hours per week! The support team is incredibly responsive.",
       tools: ["ChatGPT Pro", "Canva Pro", "Grammarly Pro"],
     },
     {
@@ -104,7 +104,7 @@ export default function FeaturesPage() {
       role: "Content Creator",
       company: "Freelancer",
       initials: "PS",
-      review: "As a content creator, I need multiple tools but couldn't afford individual subscriptions. GrowTools made it possible with their affordable bundles. Highly recommended!",
+      review: "As a content creator, I need multiple tools but couldn't afford individual subscriptions. AliDigitalSolution made it possible with their affordable bundles. Highly recommended!",
       tools: ["Jasper AI", "Midjourney", "Grammarly"],
     },
     {
@@ -112,7 +112,7 @@ export default function FeaturesPage() {
       role: "SEO Specialist",
       company: "SEO Masters",
       initials: "AK",
-      review: "The Semrush access through GrowTools helped me grow my agency significantly. Instant activation and reliable service. Best investment for my business!",
+      review: "The Semrush access through AliDigitalSolution helped me grow my agency significantly. Instant activation and reliable service. Best investment for my business!",
       tools: ["Semrush", "Ahrefs", "ChatGPT Pro"],
     },
   ];
@@ -168,8 +168,8 @@ export default function FeaturesPage() {
                 size="lg"
                 className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white border-0 shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105 px-8"
               >
-                <Link href="/pricing">
-                  Explore Premium Plans <ArrowRight className="ml-2 h-4 w-4" />
+                <Link href="/tools">
+                  Explore Tools <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Button 
@@ -313,7 +313,7 @@ export default function FeaturesPage() {
                       asChild
                       className={`w-full mt-6 bg-gradient-to-r ${method.featured ? 'from-orange-600 to-yellow-600 hover:from-orange-500 hover:to-yellow-500' : 'from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500'} text-white border-0 transition-all duration-300 hover:scale-105`}
                     >
-                      <Link href="/pricing">Get Started</Link>
+                      <Link href="/tools">Get Started</Link>
                     </Button>
                   </CardContent>
                 </Card>
@@ -332,7 +332,7 @@ export default function FeaturesPage() {
             </Badge>
             <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Success Stories</h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Join thousands of satisfied customers who've transformed their business with GrowTools
+              Join thousands of satisfied customers who've transformed their business with AliDigitalSolution
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -438,7 +438,7 @@ export default function FeaturesPage() {
             Ready to Transform Your Business?
           </h2>
           <p className="text-lg mb-8 text-slate-700 max-w-2xl mx-auto animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            Join 10,000+ successful businesses already using GrowTools premium tools. 
+            Join 10,000+ successful businesses already using AliDigitalSolution premium tools. 
             Get instant access to 50+ AI tools plus expert development services.
           </p>
           
@@ -455,14 +455,14 @@ export default function FeaturesPage() {
             ))}
           </div>
 
-          <div className="flex gap-4 justify-center flex-wrap animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
-            <Button 
-              asChild 
-              size="lg" 
-              className="text-base px-8 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white border-0 shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105"
-            >
-              <Link href="/pricing">Start Your Journey</Link>
-            </Button>
+            <div className="flex gap-4 justify-center flex-wrap animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+              <Button 
+                asChild 
+                size="lg" 
+                className="text-base px-8 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white border-0 shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105"
+              >
+                <Link href="/tools">Start Your Journey</Link>
+              </Button>
             <Button 
               asChild 
               size="lg" 

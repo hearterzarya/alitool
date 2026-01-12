@@ -73,8 +73,8 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
     const { name, value, type } = e.target;
     setFormData((prev) => {
       const updated = {
-        ...prev,
-        [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
+      ...prev,
+      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
       };
       
       // Update preview if icon field changes and it's an image URL
@@ -343,14 +343,14 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                   <Label htmlFor="iconUrl" className="text-xs text-gray-500">
                     Or enter URL/emoji manually:
                   </Label>
-                  <Input
+              <Input
                     id="iconUrl"
-                    name="icon"
-                    value={formData.icon}
-                    onChange={handleChange}
+                name="icon"
+                value={formData.icon}
+                onChange={handleChange}
                     placeholder="https://example.com/icon.png or 🤖"
                     className="mt-1"
-                  />
+              />
                 </div>
               </div>
             </div>
@@ -368,18 +368,18 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="toolUrl">Tool URL *</Label>
-            <Input
-              id="toolUrl"
-              name="toolUrl"
-              type="url"
-              value={formData.toolUrl}
-              onChange={handleChange}
-              required
-              placeholder="https://chat.openai.com"
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="toolUrl">Tool URL *</Label>
+              <Input
+                id="toolUrl"
+                name="toolUrl"
+                type="url"
+                value={formData.toolUrl}
+                onChange={handleChange}
+                required
+                placeholder="https://chat.openai.com"
+              />
+            </div>
 
           {/* Plan Pricing Section */}
           <Card>
@@ -410,13 +410,13 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                   </div>
                 </div>
                 <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${!formData.sharedPlanEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
-                  <div className="space-y-2">
+            <div className="space-y-2">
                     <Label htmlFor="sharedPlanPrice">Shared Plan Price (₹)</Label>
-                    <Input
+              <Input
                       id="sharedPlanPrice"
                       name="sharedPlanPrice"
-                      type="number"
-                      step="0.01"
+                type="number"
+                step="0.01"
                       value={formData.sharedPlanPrice}
                       onChange={handleChange}
                       placeholder="199"
@@ -454,11 +454,11 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                       id="privatePlanEnabled"
                       name="privatePlanEnabled"
                       checked={formData.privatePlanEnabled}
-                      onChange={handleChange}
+                onChange={handleChange}
                       className="h-5 w-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                    />
-                  </div>
-                </div>
+              />
+            </div>
+          </div>
                 <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${!formData.privatePlanEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
                   <div className="space-y-2">
                     <Label htmlFor="privatePlanPrice">Private Plan Price (₹)</Label>
@@ -491,18 +491,18 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
           </Card>
 
           <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="isActive"
-                name="isActive"
-                checked={formData.isActive}
-                onChange={handleChange}
-                className="h-4 w-4 rounded border-gray-300"
-              />
-              <Label htmlFor="isActive" className="cursor-pointer">
-                Tool is active and available for subscription
-              </Label>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="isActive"
+              name="isActive"
+              checked={formData.isActive}
+              onChange={handleChange}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <Label htmlFor="isActive" className="cursor-pointer">
+              Tool is active and available for subscription
+            </Label>
             </div>
             <div className="flex items-center space-x-2">
               <input

@@ -169,7 +169,7 @@ function CheckoutContent() {
         {/* Header */}
         <div className="mb-8">
           <Link 
-            href={toolId ? `/tools` : '/pricing'}
+            href="/tools"
             className="inline-flex items-center text-slate-600 hover:text-slate-900 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

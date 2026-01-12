@@ -85,10 +85,10 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold mb-1">Email Support</h3>
                     <a 
-                      href="mailto:support@growtools.com" 
+                      href="mailto:support@alidigitalsolution.in" 
                       className="text-purple-600 hover:text-purple-700 text-sm"
                     >
-                      support@growtools.com
+                      support@alidigitalsolution.in
                     </a>
                     <p className="text-xs text-slate-500 mt-1">We respond within 24 hours</p>
                   </div>
@@ -155,9 +155,6 @@ export default function ContactPage() {
                 </Link>
                 <Link href="/tools" className="block text-sm text-slate-600 hover:text-purple-600 transition">
                   → Browse Our Tools
-                </Link>
-                <Link href="/pricing" className="block text-sm text-slate-600 hover:text-purple-600 transition">
-                  → View Pricing
                 </Link>
                 <Link href="/features" className="block text-sm text-slate-600 hover:text-purple-600 transition">
                   → See Features

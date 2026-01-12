@@ -22,11 +22,11 @@ export default function FAQPage() {
       category: "General",
       questions: [
         {
-          question: "What is GrowTools?",
-          answer: "GrowTools is a platform that provides affordable access to premium AI tools like ChatGPT Plus, Claude Pro, Midjourney, and 50+ more tools. We offer shared accounts at a fraction of the original cost, making premium AI accessible to everyone.",
+          question: "What is AliDigitalSolution?",
+          answer: "AliDigitalSolution is a platform that provides affordable access to premium AI tools like ChatGPT Plus, Claude Pro, Midjourney, and 50+ more tools. We offer shared accounts at a fraction of the original cost, making premium AI accessible to everyone.",
         },
         {
-          question: "How does GrowTools work?",
+          question: "How does AliDigitalSolution work?",
           answer: "Simply choose a tool or plan, make a secure payment, and receive instant access via email and WhatsApp within 2 minutes. You'll get login credentials to access the premium tool immediately.",
         },
         {
@@ -115,11 +115,11 @@ export default function FAQPage() {
       questions: [
         {
           question: "Do I need to install anything?",
-          answer: "No installation required for most tools. You'll receive login credentials and can access the tools directly through their web interfaces. Some tools may require browser extensions (like our GrowTools extension for cookie-based access).",
+          answer: "No installation required for most tools. You'll receive login credentials and can access the tools directly through their web interfaces. Some tools may require browser extensions (like our AliDigitalSolution extension for cookie-based access).",
         },
         {
-          question: "What is the GrowTools Browser Extension?",
-          answer: "The GrowTools Browser Extension allows you to access tools that require cookie-based authentication. It securely injects session cookies into your browser, allowing you to access premium tools with your own browser session.",
+          question: "What is the AliDigitalSolution Browser Extension?",
+          answer: "The AliDigitalSolution Browser Extension allows you to access tools that require cookie-based authentication. It securely injects session cookies into your browser, allowing you to access premium tools with your own browser session.",
         },
         {
           question: "Will my data be safe?",
@@ -153,7 +153,7 @@ export default function FAQPage() {
             Frequently Asked Questions
           </h1>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Find answers to common questions about GrowTools. Can't find what you're looking for? Contact our support team.
+            Find answers to common questions about AliDigitalSolution. Can't find what you're looking for? Contact our support team.
           </p>
         </div>
 
@@ -250,7 +250,7 @@ export default function FAQPage() {
                 variant="outline"
                 className="border-slate-300 text-slate-700 hover:bg-slate-50"
               >
-                <a href="mailto:support@growtools.com">
+                <a href="mailto:support@alidigitalsolution.in">
                   <Mail className="mr-2 h-4 w-4" />
                   Email Support
                 </a>
@@ -265,10 +265,6 @@ export default function FAQPage() {
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/tools" className="text-sm text-purple-600 hover:text-purple-700 font-medium">
               Browse Tools
-            </Link>
-            <span className="text-slate-300">•</span>
-            <Link href="/pricing" className="text-sm text-purple-600 hover:text-purple-700 font-medium">
-              View Pricing
             </Link>
             <span className="text-slate-300">•</span>
             <Link href="/features" className="text-sm text-purple-600 hover:text-purple-700 font-medium">

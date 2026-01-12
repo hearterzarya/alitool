@@ -15,6 +15,7 @@ model User {
   passwordHash  String?
   name          String?
   role          Role           @default(USER)
+  status        UserStatus      @default(FREE)
   emailVerified DateTime?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -29,6 +30,13 @@ enum Role {
   USER
   ADMIN
   TEST_USER
+}
+
+enum UserStatus {
+  FREE
+  PENDING
+  ACTIVE
+  SUSPENDED
 }
 
 // Tools (AI services available for purchase)
@@ -67,6 +75,7 @@ model Tool {
 
   subscriptions    ToolSubscription[]
   payments         Payment[]
+  bundleTools      BundleTool[]
 
   @@map("tools")
 }
@@ -87,7 +96,20 @@ model ToolSubscription {
   userId               String
   toolId               String
 
+  // Plan type
+  planType             PlanType           @default(SHARED)
+  
+  // Subscription status
   status               SubscriptionStatus @default(ACTIVE)
+  
+  // Activation status (for private plans)
+  activationStatus     ActivationStatus   @default(ACTIVE) // ACTIVE for shared (instant), PENDING for private
+  activatedAt          DateTime?          // When admin activated (for private plans)
+  activatedBy          String?             // Admin ID who activated
+
+  // Credentials
+  sharedCredentials    SharedCredentials? // For shared plans
+  privateCredentials   PrivateCredentials? // For private plans
 
   // Stripe subscription details
   stripeSubscriptionId String?            @unique
@@ -110,6 +132,11 @@ model ToolSubscription {
   @@map("tool_subscriptions")
 }
 
+enum PlanType {
+  SHARED
+  PRIVATE
+}
+
 enum SubscriptionStatus {
   ACTIVE
   PAST_DUE
@@ -118,12 +145,53 @@ enum SubscriptionStatus {
   INCOMPLETE
 }
 
+enum ActivationStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
+}
+
+// Shared credentials (4-5 users per account)
+model SharedCredentials {
+  id                   String             @id @default(uuid())
+  subscriptionId       String             @unique
+  email                String
+  password             String             @db.Text // Encrypted
+  sharedAccountId      String             // Reference to shared account pool
+  maxUsers             Int                @default(5)
+  currentUsers         Int                @default(1)
+  credentialsUpdatedAt DateTime           @default(now())
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  subscription         ToolSubscription   @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("shared_credentials")
+}
+
+// Private credentials (one user per account)
+model PrivateCredentials {
+  id                   String             @id @default(uuid())
+  subscriptionId       String             @unique
+  email                String
+  password             String             @db.Text // Encrypted
+  credentialsUpdatedAt DateTime           @default(now())
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  subscription         ToolSubscription   @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("private_credentials")
+}
+
 // Payment transactions (Paygic)
 model Payment {
   id                   String        @id @default(uuid())
   userId               String
   toolId               String?
-  planName             String?       // For bundle purchases (Starter, Pro, Elite)
+  bundleId             String?       // For bundle purchases
+  planName             String?       // For bundle purchases (Starter, Pro, Elite) or plan type
+  planType             PlanType?     // SHARED or PRIVATE for tool purchases
   amount               Int           // Amount in paise (e.g., 99900 = ₹999)
   
   // Paygic details
@@ -155,6 +223,7 @@ model Payment {
   
   user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   tool                 Tool?         @relation(fields: [toolId], references: [id], onDelete: SetNull)
+  bundle               Bundle?       @relation(fields: [bundleId], references: [id], onDelete: SetNull)
   
   @@map("payments")
 }
@@ -165,6 +234,46 @@ enum PaymentStatus {
   FAILED
   EXPIRED
   CANCELLED
+}
+
+// Bundles (collections of tools)
+model Bundle {
+  id                String        @id @default(uuid())
+  name              String        // "AI Content & Design Suite"
+  slug              String        @unique
+  description       String        @db.Text
+  shortDescription  String?
+  icon              String?        // Icon URL or emoji
+  priceMonthly      Int           // Monthly price in paise
+  priceSixMonth     Int?          // 6-month price in paise
+  priceYearly       Int?          // Yearly price in paise
+  features          String?       @db.Text // JSON array or comma-separated features
+  isActive          Boolean       @default(true)
+  isTrending        Boolean       @default(false) // Featured in trending slider
+  sortOrder         Int           @default(0)
+  targetAudience    String?       // "Creators, bloggers, freelancers"
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  tools             BundleTool[]
+  payments          Payment[]
+
+  @@map("bundles")
+}
+
+// Many-to-many relationship between Bundles and Tools
+model BundleTool {
+  id        String   @id @default(uuid())
+  bundleId  String
+  toolId    String
+  sortOrder Int      @default(0)
+  
+  bundle    Bundle   @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  tool      Tool     @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  
+  @@unique([bundleId, toolId])
+  @@map("bundle_tools")
 }
 
 // Admin activity log (track cookie updates)

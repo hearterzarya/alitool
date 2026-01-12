@@ -185,6 +185,7 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
         body: JSON.stringify({
           toolId: tool.id,
           planName: selectedPlan === 'shared' ? 'Shared Plan' : 'Private Plan',
+          planType: selectedPlan === 'shared' ? 'SHARED' : 'PRIVATE',
           amount,
           customerName,
           customerEmail,
@@ -311,7 +312,10 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
                       >
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center space-x-2">
-                            <Badge className="bg-blue-100 text-blue-800">Shared Plan</Badge>
+                            <Badge className="bg-blue-600 text-white font-semibold">SHARED</Badge>
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              Instant Access
+                            </Badge>
                             {selectedPlan === 'shared' && (
                               <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
                             )}
@@ -320,7 +324,9 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
                         <div className="text-2xl font-bold text-slate-900 mb-2">
                           ₹{((tool.sharedPlanPrice || tool.priceMonthly) / 100).toLocaleString('en-IN')}/month
                         </div>
-                        <p className="text-sm text-slate-600 mb-3">Multiple users share the account</p>
+                        <p className="text-sm text-slate-600 mb-3">
+                          <strong>Instant Activation:</strong> Get immediate access after payment. Shared account (4-5 users).
+                        </p>
                         <div className="space-y-1">
                           {sharedFeatures.length > 0 ? (
                             sharedFeatures.map((feature, idx) => (
@@ -348,7 +354,10 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
                       >
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center space-x-2">
-                            <Badge className="bg-purple-100 text-purple-800">Private Plan</Badge>
+                            <Badge className="bg-purple-600 text-white font-semibold">PRIVATE</Badge>
+                            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                              Manual Activation
+                            </Badge>
                             {selectedPlan === 'private' && (
                               <div className="h-2 w-2 bg-purple-500 rounded-full"></div>
                             )}
@@ -357,7 +366,9 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
                         <div className="text-2xl font-bold text-slate-900 mb-2">
                           ₹{((tool.privatePlanPrice || tool.priceMonthly) / 100).toLocaleString('en-IN')}/month
                         </div>
-                        <p className="text-sm text-slate-600 mb-3">Dedicated account for single user</p>
+                        <p className="text-sm text-slate-600 mb-3">
+                          <strong>Manual Activation:</strong> Dedicated account. Activation via Email/WhatsApp after payment.
+                        </p>
                         <div className="space-y-1">
                           {privateFeatures.length > 0 ? (
                             privateFeatures.map((feature, idx) => (
