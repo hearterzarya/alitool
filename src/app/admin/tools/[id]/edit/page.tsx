@@ -18,7 +18,15 @@ export default async function EditToolPage({ params }: { params: Promise<{ id: s
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">Edit Tool</h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-2xl font-bold">Edit Tool</h2>
+          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <span>Tool ID:</span>
+            <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono text-xs">
+              {tool.id}
+            </code>
+          </div>
+        </div>
         <p className="text-gray-600 dark:text-gray-400">
           Update tool details and manage cookies
         </p>

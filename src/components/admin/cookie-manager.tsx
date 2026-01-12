@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
-import { CheckCircle, AlertCircle, Copy, Download, ExternalLink } from "lucide-react";
+import { CheckCircle, AlertCircle, Copy, Download, ExternalLink, Info } from "lucide-react";
 import Link from "next/link";
 
 interface CookieManagerProps {
@@ -150,6 +150,38 @@ export function CookieManager({ tool }: CookieManagerProps) {
         )}
       </div>
 
+      {/* Tool ID Display */}
+      <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Info className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Tool ID:</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <code className="bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 text-sm font-mono text-slate-900 dark:text-slate-100">
+              {tool.id}
+            </code>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                navigator.clipboard.writeText(tool.id);
+                setSuccess("Tool ID copied to clipboard!");
+                setTimeout(() => setSuccess(""), 2000);
+              }}
+              className="h-8"
+            >
+              <Copy className="h-3 w-3 mr-1" />
+              Copy
+            </Button>
+          </div>
+        </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+          Use this ID when uploading cookies via the admin extension
+        </p>
+      </div>
+
       {/* Admin Extension Banner */}
       <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950 border-2 border-purple-200 dark:border-purple-800 p-4 rounded-lg">
         <div className="flex items-start justify-between">
@@ -159,7 +191,7 @@ export function CookieManager({ tool }: CookieManagerProps) {
               Use Admin Extension (Recommended)
             </h4>
             <p className="text-sm text-purple-800 dark:text-purple-200 mb-3">
-              Extract cookies directly from the browser with one click using our admin extension.
+              Extract cookies directly from the browser with one click using our admin extension. Use the Tool ID above when uploading.
             </p>
             <Link href="/admin/extension">
               <Button

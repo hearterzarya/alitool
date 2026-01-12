@@ -62,6 +62,12 @@ export default async function ToolsManagementPage() {
                       <CardDescription className="mt-1">
                         {tool.shortDescription || tool.description}
                       </CardDescription>
+                      <div className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                        <span>ID:</span>
+                        <code className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded font-mono">
+                          {tool.id}
+                        </code>
+                      </div>
                     </div>
                   </div>
                   <Button asChild variant="outline" size="sm">
