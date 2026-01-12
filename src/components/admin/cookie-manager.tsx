@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
-import { CheckCircle, AlertCircle, Copy } from "lucide-react";
+import { CheckCircle, AlertCircle, Copy, Download, ExternalLink } from "lucide-react";
+import Link from "next/link";
 
 interface CookieManagerProps {
   tool: {
@@ -149,10 +150,36 @@ export function CookieManager({ tool }: CookieManagerProps) {
         )}
       </div>
 
-      {/* Instructions */}
+      {/* Admin Extension Banner */}
+      <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950 border-2 border-purple-200 dark:border-purple-800 p-4 rounded-lg">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-2 flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Use Admin Extension (Recommended)
+            </h4>
+            <p className="text-sm text-purple-800 dark:text-purple-200 mb-3">
+              Extract cookies directly from the browser with one click using our admin extension.
+            </p>
+            <Link href="/admin/extension">
+              <Button
+                type="button"
+                size="sm"
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Get Admin Extension
+                <ExternalLink className="h-4 w-4 ml-2" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Manual Instructions */}
       <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg space-y-2">
         <h4 className="font-semibold text-blue-900 dark:text-blue-100">
-          How to get cookies:
+          Manual Method (Alternative):
         </h4>
         <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800 dark:text-blue-200">
           <li>Login to {tool.name} in your browser</li>
