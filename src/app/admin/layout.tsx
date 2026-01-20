@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import Link from "next/link";
-import { LayoutDashboard, Wrench, Users, CreditCard, BarChart3, Cookie, Receipt, Download, Star } from "lucide-react";
+import { LayoutDashboard, Wrench, Users, CreditCard, BarChart3, Receipt, Download, Star, Package, Settings } from "lucide-react";
 
 export default async function AdminLayout({
   children,
@@ -23,10 +23,12 @@ export default async function AdminLayout({
   const menuItems = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/tools", label: "Tools", icon: Wrench },
+    { href: "/admin/bundles", label: "Bundles", icon: Package },
     { href: "/admin/users", label: "Users", icon: Users },
     { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
     { href: "/admin/payments", label: "Payments", icon: Receipt },
     { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+    { href: "/admin/settings", label: "Settings", icon: Settings },
     { href: "/admin/extension", label: "Admin Extension", icon: Download },
     { href: "/admin/reviews", label: "Reviews & Proofs", icon: Star },
   ];

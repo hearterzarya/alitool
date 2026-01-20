@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import type { PrismaClient } from '@prisma/client';
 
 const bundles = [
   {
@@ -120,7 +118,7 @@ const bundles = [
   },
 ];
 
-async function main() {
+export async function seedBundles(prisma: PrismaClient) {
   console.log('🌱 Seeding bundles...');
 
   for (const bundleData of bundles) {
@@ -174,11 +172,18 @@ async function main() {
   console.log('✨ Bundle seeding completed!');
 }
 
-main()
-  .catch((e) => {
-    console.error('❌ Error seeding bundles:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+// Allow running this file directly: `tsx prisma/seed-bundles.ts`
+if (require.main === module) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { PrismaClient: RuntimePrismaClient } = require('@prisma/client');
+  const prisma = new RuntimePrismaClient();
+
+  seedBundles(prisma)
+    .catch((e) => {
+      console.error('❌ Error seeding bundles:', e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

@@ -41,7 +41,10 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ 
+      success: true,
+      message: 'Cookies updated successfully'
+    });
   } catch (error) {
     console.error("Error updating cookies:", error);
     return NextResponse.json(

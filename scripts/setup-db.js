@@ -31,13 +31,15 @@ if (!envContent.includes('DATABASE_URL')) {
 }
 
 try {
-  // Step 1: Generate Prisma Client
+  // Step 1: Generate Prisma Client (best-effort)
+  // On Windows, the query engine DLL can be locked by a running dev server, antivirus, or another Node process.
   console.log('📦 Step 1: Generating Prisma Client...');
   try {
     execSync('npx prisma generate', { stdio: 'inherit' });
     console.log('✅ Prisma Client generated successfully!\n');
   } catch (error) {
-    console.warn('⚠️  Warning: Prisma Client generation had issues (this may be okay if dev server is running)\n');
+    console.warn('⚠️  Warning: Prisma Client generation failed (often due to a locked file on Windows).');
+    console.warn('   If this persists, stop `npm run dev`, close other Node processes, and re-run: npm run db:generate\n');
   }
 
   // Step 2: Push schema to database
@@ -45,7 +47,8 @@ try {
   console.log('   (This will create all required tables)\n');
   
   try {
-    execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+    // Skip generators here to avoid Windows file-lock issues during db push.
+    execSync('npx prisma db push --accept-data-loss --skip-generate', { stdio: 'inherit' });
     console.log('\n✅ Database schema pushed successfully!\n');
   } catch (error) {
     console.error('\n❌ Error pushing schema to database.');
@@ -54,6 +57,16 @@ try {
     console.error('  2. The database server is running and accessible');
     console.error('  3. You have the necessary permissions\n');
     throw error;
+  }
+
+  // Step 2b: Generate Prisma Client after schema push (best-effort)
+  console.log('📦 Step 2b: Generating Prisma Client (after schema push)...');
+  try {
+    execSync('npx prisma generate', { stdio: 'inherit' });
+    console.log('✅ Prisma Client generated successfully!\n');
+  } catch (error) {
+    console.warn('⚠️  Warning: Prisma Client generation failed (often due to a locked file on Windows).');
+    console.warn('   Stop `npm run dev` and re-run: npm run db:generate\n');
   }
 
   // Step 3: Seed database

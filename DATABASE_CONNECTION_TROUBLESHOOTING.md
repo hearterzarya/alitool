@@ -31,7 +31,8 @@ If you're seeing this error, it means your application cannot connect to your Ne
 5. **Connection Pool Issues**
    - Neon uses connection pooling
    - Make sure you're using the `-pooler` endpoint if available
-   - Connection string should include `?pgbouncer=true` for pooling
+   - Some Neon pooler URLs work without `pgbouncer=true` (use the format Neon provides)
+   - Keep `sslmode=require` and any required options like `channel_binding=require`
 
 ### Common Neon Connection String Formats
 

@@ -1,6 +1,4 @@
-// AliDigitalSolution
-
- Admin Extension - Background Service Worker
+// AliDigitalSolution Admin Extension - Background Service Worker
 // Handles cookie extraction, management, and session handling for admins
 
 /**
@@ -220,9 +218,24 @@ async function getSessionInfo() {
  */
 async function uploadCookiesToAdmin(toolId, cookies, expiryDate) {
   try {
-    // Get admin API URL from storage or use default
+    // Get current active tab to determine API base URL
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    let apiUrl = 'http://localhost:3000';
+    
+    if (tab && tab.url) {
+      try {
+        const url = new URL(tab.url);
+        apiUrl = `${url.protocol}//${url.host}`;
+      } catch (e) {
+        // Use default if URL parsing fails
+      }
+    }
+    
+    // Get admin API URL from storage (override if set)
     const data = await chrome.storage.local.get(['adminApiUrl']);
-    const apiUrl = data.adminApiUrl || 'http://localhost:3000';
+    if (data.adminApiUrl) {
+      apiUrl = data.adminApiUrl;
+    }
     
     const response = await fetch(`${apiUrl}/api/admin/tools/${toolId}/cookies`, {
       method: 'POST',
@@ -236,21 +249,29 @@ async function uploadCookiesToAdmin(toolId, cookies, expiryDate) {
       })
     });
 
-    const result = await response.json();
-    
     if (!response.ok) {
-      throw new Error(result.error || 'Failed to upload cookies');
+      const errorText = await response.text();
+      let errorMessage = 'Failed to upload cookies';
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.error || errorMessage;
+      } catch (e) {
+        errorMessage = errorText || errorMessage;
+      }
+      throw new Error(errorMessage);
     }
+
+    const result = await response.json();
 
     return {
       success: true,
-      message: 'Cookies uploaded successfully'
+      message: result.message || 'Cookies uploaded successfully'
     };
   } catch (error) {
     console.error('Error uploading cookies:', error);
     return {
       success: false,
-      error: error.message
+      error: error.message || 'Failed to upload cookies. Make sure you are logged into the admin panel.'
     };
   }
 }
@@ -261,49 +282,50 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     try {
       switch (message.type) {
         case 'EXTRACT_COOKIES':
-          const extractResult = await extractCookiesFromCurrentTab();
-          sendResponse(extractResult);
+          result = await extractCookiesFromCurrentTab();
+          sendResponse(result);
           break;
 
         case 'GET_COOKIES_FOR_DOMAIN':
-          const cookies = await getAllCookiesForDomain(message.url);
-          sendResponse({ success: true, cookies: cookies });
+          result = await getAllCookiesForDomain(message.url);
+          sendResponse({ success: true, cookies: result });
           break;
 
         case 'CLEAR_COOKIES':
-          const clearResult = await clearAllCookiesForDomain(message.url);
-          sendResponse(clearResult);
+          result = await clearAllCookiesForDomain(message.url);
+          sendResponse(result);
           break;
 
         case 'TEST_COOKIE_INJECTION':
-          const testResult = await testCookieInjection(message.url, message.cookie);
-          sendResponse(testResult);
+          result = await testCookieInjection(message.url, message.cookie);
+          sendResponse(result);
           break;
 
         case 'GET_SESSION_INFO':
-          const sessionInfo = await getSessionInfo();
-          sendResponse(sessionInfo);
+          result = await getSessionInfo();
+          sendResponse(result);
           break;
 
         case 'UPLOAD_COOKIES':
-          const uploadResult = await uploadCookiesToAdmin(
+          result = await uploadCookiesToAdmin(
             message.toolId,
             message.cookies,
             message.expiryDate
           );
-          sendResponse(uploadResult);
+          sendResponse(result);
           break;
 
         case 'FORMAT_COOKIES':
-          const formatted = formatCookiesForExport(message.cookies);
-          sendResponse({ success: true, cookies: formatted });
+          result = formatCookiesForExport(message.cookies);
+          sendResponse({ success: true, cookies: result });
           break;
 
         default:
           sendResponse({ success: false, error: 'Unknown message type' });
       }
     } catch (error) {
-      sendResponse({ success: false, error: error.message });
+      console.error('Extension error:', error);
+      sendResponse({ success: false, error: error.message || 'Unknown error occurred' });
     }
   })();
   
@@ -323,6 +345,4 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
-console.log('AliDigitalSolution
-
- Admin Extension loaded');
+console.log('AliDigitalSolution Admin Extension loaded');

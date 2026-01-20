@@ -21,6 +21,19 @@ This will:
 
 If the automated script doesn't work, you can run the steps manually:
 
+## Switching to a New Database (Neon)
+
+If you changed your Neon database, update your `DATABASE_URL` (recommended) or set it for the current terminal session.
+
+**PowerShell (temporary for this terminal):**
+
+```powershell
+$env:DATABASE_URL="postgresql://user:password@host/db?sslmode=require"
+npm run db:setup
+```
+
+**Recommended (persistent):** update `DATABASE_URL` in `.env` (and `.env.local` if you use it).
+
 ### Step 1: Generate Prisma Client
 ```bash
 npm run db:generate

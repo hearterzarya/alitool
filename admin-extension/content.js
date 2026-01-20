@@ -1,6 +1,4 @@
-// AliDigitalSolution
-
- Admin Extension - Content Script
+// AliDigitalSolution Admin Extension - Content Script
 // Handles session storage access and page interaction
 
 /**
@@ -116,6 +114,4 @@ if (document.readyState === 'loading') {
   });
 }
 
-console.log('AliDigitalSolution
-
- Admin Extension content script loaded');
+console.log('AliDigitalSolution Admin Extension content script loaded');

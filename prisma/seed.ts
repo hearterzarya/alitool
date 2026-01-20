@@ -1,5 +1,6 @@
 import { PrismaClient, ToolCategory } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { seedBundles } from './seed-bundles';
 
 const prisma = new PrismaClient();
 
@@ -146,6 +147,9 @@ async function main() {
     });
     console.log(`Created tool: ${createdTool.name}`);
   }
+
+  // Create bundles (and link tools where possible)
+  await seedBundles(prisma);
 
   console.log('Seeding finished.');
 }

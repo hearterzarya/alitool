@@ -1,6 +1,4 @@
-// AliDigitalSolution
-
- Admin Extension - Popup Script
+// AliDigitalSolution Admin Extension - Popup Script
 
 let currentCookies = [];
 let currentTabUrl = '';
@@ -33,13 +31,21 @@ function setupTabs() {
 
 // Event listeners
 function setupEventListeners() {
-  document.getElementById('extract-btn').addEventListener('click', extractCookies);
-  document.getElementById('refresh-btn').addEventListener('click', loadCurrentTabInfo);
-  document.getElementById('get-cookies-btn').addEventListener('click', getCookiesForDomain);
-  document.getElementById('clear-cookies-btn').addEventListener('click', clearCookies);
-  document.getElementById('test-injection-btn').addEventListener('click', testCookieInjection);
-  document.getElementById('upload-btn').addEventListener('click', uploadCookies);
-  document.getElementById('format-btn').addEventListener('click', formatAndCopy);
+  const extractBtn = document.getElementById('extract-btn');
+  const refreshBtn = document.getElementById('refresh-btn');
+  const getCookiesBtn = document.getElementById('get-cookies-btn');
+  const clearCookiesBtn = document.getElementById('clear-cookies-btn');
+  const testInjectionBtn = document.getElementById('test-injection-btn');
+  const uploadBtn = document.getElementById('upload-btn');
+  const formatBtn = document.getElementById('format-btn');
+  
+  if (extractBtn) extractBtn.addEventListener('click', extractCookies);
+  if (refreshBtn) refreshBtn.addEventListener('click', loadCurrentTabInfo);
+  if (getCookiesBtn) getCookiesBtn.addEventListener('click', getCookiesForDomain);
+  if (clearCookiesBtn) clearCookiesBtn.addEventListener('click', clearCookies);
+  if (testInjectionBtn) testInjectionBtn.addEventListener('click', testCookieInjection);
+  if (uploadBtn) uploadBtn.addEventListener('click', uploadCookies);
+  if (formatBtn) formatBtn.addEventListener('click', formatAndCopy);
 }
 
 // Load current tab info
@@ -61,7 +67,7 @@ async function extractCookies() {
     showStatus('info', 'Extracting cookies...');
     const response = await chrome.runtime.sendMessage({ type: 'EXTRACT_COOKIES' });
     
-    if (response.success) {
+    if (response && response.success) {
       currentCookies = response.cookies;
       displayCookies(response.cookies);
       updateStats(response.cookies);
@@ -104,8 +110,10 @@ function displayCookies(cookies) {
 
 // Update stats
 function updateStats(cookies) {
-  document.getElementById('cookie-count').textContent = cookies.length;
-  document.getElementById('session-count').textContent = cookies.filter(c => c.session).length;
+  const cookieCount = document.getElementById('cookie-count');
+  const sessionCount = document.getElementById('session-count');
+  if (cookieCount) cookieCount.textContent = cookies.length;
+  if (sessionCount) sessionCount.textContent = cookies.filter(c => c.session).length;
 }
 
 // Format cookies for export
@@ -139,7 +147,7 @@ async function getCookiesForDomain() {
       url: domain
     });
     
-    if (response.success) {
+    if (response && response.success) {
       currentCookies = response.cookies;
       displayCookies(response.cookies);
       updateStats(response.cookies);
@@ -161,7 +169,13 @@ async function getCookiesForDomain() {
 // Clear cookies
 async function clearCookies() {
   try {
-    const domain = document.getElementById('domain-input').value.trim();
+    const domainInput = document.getElementById('domain-input');
+    if (!domainInput) {
+      showStatus('error', 'Domain input not found');
+      return;
+    }
+    
+    const domain = domainInput.value.trim();
     if (!domain) {
       showStatus('error', 'Please enter a domain or URL');
       return;
@@ -177,13 +191,16 @@ async function clearCookies() {
       url: domain
     });
     
-    if (response.success) {
+    if (response && response.success) {
       showStatus('success', `Cleared ${response.cleared} of ${response.total} cookies`);
-      document.getElementById('cookie-list').innerHTML = '';
-      document.getElementById('cookie-count').textContent = '0';
-      document.getElementById('session-count').textContent = '0';
+      const cookieList = document.getElementById('cookie-list');
+      const cookieCount = document.getElementById('cookie-count');
+      const sessionCount = document.getElementById('session-count');
+      if (cookieList) cookieList.innerHTML = '';
+      if (cookieCount) cookieCount.textContent = '0';
+      if (sessionCount) sessionCount.textContent = '0';
     } else {
-      showStatus('error', `Error: ${response.error}`);
+      showStatus('error', `Error: ${response?.error || 'Failed to clear cookies'}`);
     }
   } catch (error) {
     showStatus('error', `Error: ${error.message}`);
@@ -193,7 +210,13 @@ async function clearCookies() {
 // Test cookie injection
 async function testCookieInjection() {
   try {
-    const domain = document.getElementById('domain-input').value.trim();
+    const domainInput = document.getElementById('domain-input');
+    if (!domainInput) {
+      showStatus('error', 'Domain input not found');
+      return;
+    }
+    
+    const domain = domainInput.value.trim();
     if (!domain) {
       showStatus('error', 'Please enter a domain or URL');
       return;
@@ -211,10 +234,10 @@ async function testCookieInjection() {
       }
     });
     
-    if (response.success) {
+    if (response && response.success) {
       showStatus('success', 'Test cookie injected successfully!');
     } else {
-      showStatus('error', `Error: ${response.error}`);
+      showStatus('error', `Error: ${response?.error || 'Failed to inject test cookie'}`);
     }
   } catch (error) {
     showStatus('error', `Error: ${error.message}`);
@@ -224,9 +247,18 @@ async function testCookieInjection() {
 // Upload cookies
 async function uploadCookies() {
   try {
-    const toolId = document.getElementById('tool-id-input').value.trim();
-    const cookiesJson = document.getElementById('cookies-json-input').value.trim();
-    const expiryDate = document.getElementById('expiry-date-input').value;
+    const toolIdInput = document.getElementById('tool-id-input');
+    const cookiesInput = document.getElementById('cookies-json-input');
+    const expiryInput = document.getElementById('expiry-date-input');
+    
+    if (!toolIdInput || !cookiesInput) {
+      showStatus('error', 'Required inputs not found');
+      return;
+    }
+    
+    const toolId = toolIdInput.value.trim();
+    const cookiesJson = cookiesInput.value.trim();
+    const expiryDate = expiryInput ? expiryInput.value : null;
     
     if (!toolId) {
       showStatus('error', 'Please enter a Tool ID');
@@ -250,17 +282,53 @@ async function uploadCookies() {
     }
     
     showStatus('info', 'Uploading cookies...');
-    const response = await chrome.runtime.sendMessage({
-      type: 'UPLOAD_COOKIES',
-      toolId: toolId,
-      cookies: cookies,
-      expiryDate: expiryDate || null
-    });
     
-    if (response.success) {
-      showStatus('success', response.message || 'Cookies uploaded successfully!');
-    } else {
-      showStatus('error', `Error: ${response.error}`);
+    // Get current tab URL to determine API base URL
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    let apiBaseUrl = 'http://localhost:3000';
+    
+    if (tab && tab.url) {
+      try {
+        const url = new URL(tab.url);
+        apiBaseUrl = `${url.protocol}//${url.host}`;
+      } catch (e) {
+        // Use default if URL parsing fails
+      }
+    }
+    
+    // Try to get from storage first
+    const storage = await chrome.storage.local.get(['adminApiUrl']);
+    if (storage.adminApiUrl) {
+      apiBaseUrl = storage.adminApiUrl;
+    }
+    
+    // Upload directly via fetch (bypassing background script for better error handling)
+    try {
+      const uploadResponse = await fetch(`${apiBaseUrl}/api/admin/tools/${toolId}/cookies`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          cookies: cookies,
+          expiryDate: expiryDate || null
+        })
+      });
+
+      const result = await uploadResponse.json();
+      
+      if (uploadResponse.ok) {
+        showStatus('success', result.message || 'Cookies uploaded successfully!');
+        // Clear form
+        if (cookiesInput) cookiesInput.value = '';
+        if (toolIdInput) toolIdInput.value = '';
+        if (expiryInput) expiryInput.value = '';
+      } else {
+        showStatus('error', `Error: ${result.error || 'Failed to upload cookies'}`);
+      }
+    } catch (error) {
+      showStatus('error', `Error: ${error.message || 'Failed to upload cookies. Make sure you are logged into the admin panel.'}`);
     }
   } catch (error) {
     showStatus('error', `Error: ${error.message}`);
@@ -270,7 +338,13 @@ async function uploadCookies() {
 // Format and copy
 async function formatAndCopy() {
   try {
-    const cookiesJson = document.getElementById('cookies-json-input').value.trim();
+    const cookiesInput = document.getElementById('cookies-json-input');
+    if (!cookiesInput) {
+      showStatus('error', 'Cookies input not found');
+      return;
+    }
+    
+    const cookiesJson = cookiesInput.value.trim();
     
     if (!cookiesJson) {
       showStatus('error', 'No cookies to format');
@@ -288,7 +362,7 @@ async function formatAndCopy() {
     const formatted = formatCookiesForExport(cookies);
     const formattedJson = JSON.stringify(formatted, null, 2);
     
-    document.getElementById('cookies-json-input').value = formattedJson;
+    cookiesInput.value = formattedJson;
     
     await navigator.clipboard.writeText(formattedJson);
     showStatus('success', 'Formatted and copied to clipboard!');

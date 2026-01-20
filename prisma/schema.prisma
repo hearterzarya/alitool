@@ -299,3 +299,12 @@ model ReviewScreenshot {
 
   @@map("review_screenshots")
 }
+
+// Simple key/value settings table (e.g. tracking pixels, site config)
+model AppSetting {
+  key       String   @id
+  value     String?  @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@map("app_settings")
+}

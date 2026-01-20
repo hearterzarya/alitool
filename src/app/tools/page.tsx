@@ -273,6 +273,13 @@ export default async function ToolsPage({ searchParams }: PageProps) {
     console.error('Database error:', error?.message);
     
     // Check if it's a table missing error or column missing error
+    const isAuthFailed =
+      error?.code === 'P1000' ||
+      error?.message?.includes('Authentication failed against database server');
+    const isDbUnreachable =
+      error?.code === 'P1001' ||
+      error?.message?.includes("Can't reach database server") ||
+      error?.message?.includes('Can\'t reach database server');
     const isTableMissing = error?.message?.includes('does not exist') || 
                            error?.code === 'P2021' ||
                            error?.message?.includes('table');
@@ -285,9 +292,34 @@ export default async function ToolsPage({ searchParams }: PageProps) {
         <div className="text-center glass rounded-xl p-8 border border-slate-200 max-w-2xl">
           <div className="text-6xl mb-4">⚠️</div>
           <h3 className="text-xl font-semibold mb-2 text-slate-900">
-            {isTableMissing ? 'Database Not Set Up' : isColumnMissing ? 'Database Schema Update Required' : 'Error loading tools'}
+            {isTableMissing
+              ? 'Database Not Set Up'
+              : isColumnMissing
+                ? 'Database Schema Update Required'
+                : isAuthFailed || isDbUnreachable
+                  ? 'Database Connection Failed'
+                  : 'Error loading tools'}
           </h3>
-          {isTableMissing ? (
+          {isAuthFailed || isDbUnreachable ? (
+            <>
+              <p className="text-slate-600 mb-4">
+                The app can’t connect to your database. Please verify your <code className="bg-slate-100 px-2 py-1 rounded">DATABASE_URL</code> in{' '}
+                <code className="bg-slate-100 px-2 py-1 rounded">.env</code> and{' '}
+                <code className="bg-slate-100 px-2 py-1 rounded">.env.local</code>, then restart the dev server.
+              </p>
+              <div className="bg-slate-100 rounded-lg p-4 mb-4 text-left">
+                <p className="text-sm font-mono text-slate-800 mb-2">Common fixes:</p>
+                <ul className="text-sm text-slate-700 list-disc pl-5 space-y-1">
+                  <li>Copy a fresh connection string from Neon (credentials may be rotated)</li>
+                  <li>Use the <span className="font-mono">direct</span> endpoint for local dev if the pooler is flaky</li>
+                  <li>Ensure the value is wrapped in quotes if it contains special characters</li>
+                </ul>
+              </div>
+              <p className="text-sm text-slate-500">
+                After updating the env files, stop and restart: <code className="bg-slate-100 px-2 py-1 rounded">npm run dev</code>
+              </p>
+            </>
+          ) : isTableMissing ? (
             <>
               <p className="text-slate-600 mb-4">
                 The database tables haven't been created yet. Please run the setup command to create them.

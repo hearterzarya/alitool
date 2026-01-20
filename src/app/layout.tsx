@@ -6,6 +6,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { ConditionalNavbar } from "@/components/layout/conditional-navbar";
 import { WhatsAppButton } from "@/components/layout/whatsapp-button";
+import { AnalyticsScripts } from "@/components/layout/analytics-scripts";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
+        <AnalyticsScripts />
         <SessionProvider>
           <ConditionalNavbar />
           {children}
