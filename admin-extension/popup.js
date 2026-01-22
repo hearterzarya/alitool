@@ -33,10 +33,10 @@ async function copyCookies() {
   
   try {
     copyBtn.disabled = true;
-    const buttonText = copyBtn.querySelector('.button-text');
-    const buttonIcon = copyBtn.querySelector('.button-icon');
-    if (buttonText) buttonText.textContent = 'Extracting...';
-    if (buttonIcon) buttonIcon.textContent = '⏳';
+    const btnText = copyBtn.querySelector('.button-text');
+    const btnIcon = copyBtn.querySelector('.button-icon');
+    if (btnText) btnText.textContent = 'Extracting...';
+    if (btnIcon) btnIcon.textContent = '⏳';
     showStatus('info', '🔍 Extracting cookies...');
     
     // Get current tab
@@ -156,10 +156,10 @@ async function copyCookies() {
     await navigator.clipboard.writeText(cookiesJson);
     
     // Update button
-    const buttonText = copyBtn.querySelector('.button-text');
-    const buttonIcon = copyBtn.querySelector('.button-icon');
-    if (buttonText) buttonText.textContent = 'Copied!';
-    if (buttonIcon) buttonIcon.textContent = '✅';
+    const btnText = copyBtn.querySelector('.button-text');
+    const btnIcon = copyBtn.querySelector('.button-icon');
+    if (btnText) btnText.textContent = 'Copied!';
+    if (btnIcon) btnIcon.textContent = '✅';
     
     // Show cookie count
     showCookieCount(cookies.length);
