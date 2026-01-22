@@ -35,8 +35,8 @@ async function copyCookies() {
     copyBtn.disabled = true;
     const buttonText = copyBtn.querySelector('.button-text');
     const buttonIcon = copyBtn.querySelector('.button-icon');
-    buttonText.textContent = 'Extracting...';
-    buttonIcon.textContent = '⏳';
+    if (buttonText) buttonText.textContent = 'Extracting...';
+    if (buttonIcon) buttonIcon.textContent = '⏳';
     showStatus('info', '🔍 Extracting cookies...');
     
     // Get current tab
@@ -158,8 +158,8 @@ async function copyCookies() {
     // Update button
     const buttonText = copyBtn.querySelector('.button-text');
     const buttonIcon = copyBtn.querySelector('.button-icon');
-    buttonText.textContent = 'Copied!';
-    buttonIcon.textContent = '✅';
+    if (buttonText) buttonText.textContent = 'Copied!';
+    if (buttonIcon) buttonIcon.textContent = '✅';
     
     // Show cookie count
     showCookieCount(cookies.length);
@@ -189,27 +189,43 @@ async function copyCookies() {
 
 function resetButton() {
   const copyBtn = document.getElementById('copy-cookies-btn');
+  if (!copyBtn) return;
+  
   const buttonText = copyBtn.querySelector('.button-text');
   const buttonIcon = copyBtn.querySelector('.button-icon');
   copyBtn.disabled = false;
-  buttonText.textContent = 'Copy Cookies to Clipboard';
-  buttonIcon.textContent = '📋';
+  if (buttonText) buttonText.textContent = 'Copy Cookies to Clipboard';
+  if (buttonIcon) buttonIcon.textContent = '📋';
 }
 
 function showCookieCount(count) {
   const cookieCount = document.getElementById('cookie-count');
   const cookieCountNumber = document.getElementById('cookie-count-number');
+  if (!cookieCount || !cookieCountNumber) return;
   cookieCountNumber.textContent = count;
   cookieCount.classList.add('show');
 }
 
 function hideCookieCount() {
   const cookieCount = document.getElementById('cookie-count');
+  if (!cookieCount) return;
   cookieCount.classList.remove('show');
 }
 
 function showStatus(type, message) {
   const statusEl = document.getElementById('status');
+  if (!statusEl) return;
+  
   statusEl.className = `status ${type}`;
-  statusEl.innerHTML = `<span class="status-icon">${message.split(' ')[0]}</span><span>${message.substring(message.indexOf(' ') + 1)}</span>`;
+  
+  // Extract icon (first word/emoji) and rest of message
+  const firstSpaceIndex = message.indexOf(' ');
+  if (firstSpaceIndex > 0) {
+    const icon = message.substring(0, firstSpaceIndex);
+    const text = message.substring(firstSpaceIndex + 1);
+    statusEl.innerHTML = `<span class="status-icon">${icon}</span><span>${text}</span>`;
+  } else {
+    // No space found, show message as-is
+    statusEl.textContent = message;
+  }
 }
