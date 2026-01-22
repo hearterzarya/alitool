@@ -127,18 +127,33 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to upload image");
+        let errorMessage = "Failed to upload image";
+        try {
+          const data = await response.json();
+          errorMessage = data.error || errorMessage;
+        } catch (parseError) {
+          // If response is not JSON, use status text
+          errorMessage = response.statusText || `Server error (${response.status})`;
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
+      
+      if (!data.url) {
+        throw new Error("Server did not return image URL");
+      }
+      
       const imageUrl = data.url;
 
       // Update form data with the image URL
       setFormData((prev) => ({ ...prev, icon: imageUrl }));
       setPreviewUrl(imageUrl);
+      setError(""); // Clear any previous errors
     } catch (err: any) {
-      setError(err.message);
+      console.error("Upload error:", err);
+      const errorMessage = err.message || "Failed to upload image. Please try again.";
+      setError(errorMessage);
     } finally {
       setUploading(false);
     }
