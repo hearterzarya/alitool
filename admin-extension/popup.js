@@ -1,9 +1,9 @@
-// Simple Cookie Copier Extension
+// Beautiful Cookie Copier Extension
 
 document.addEventListener('DOMContentLoaded', () => {
   const copyBtn = document.getElementById('copy-cookies-btn');
   const statusEl = document.getElementById('status');
-  const infoText = document.getElementById('info-text');
+  const domainText = document.getElementById('domain-text');
   
   copyBtn.addEventListener('click', copyCookies);
   
@@ -16,10 +16,14 @@ async function loadCurrentTabInfo() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tab && tab.url) {
       const url = new URL(tab.url);
-      document.getElementById('info-text').textContent = `Current: ${url.hostname}`;
+      const domainText = document.getElementById('domain-text');
+      domainText.textContent = url.hostname;
+    } else {
+      document.getElementById('domain-text').textContent = 'No active tab';
     }
   } catch (error) {
     console.error('Error loading tab info:', error);
+    document.getElementById('domain-text').textContent = 'Unable to load';
   }
 }
 
@@ -29,7 +33,11 @@ async function copyCookies() {
   
   try {
     copyBtn.disabled = true;
-    showStatus('info', 'Extracting cookies...');
+    const buttonText = copyBtn.querySelector('.button-text');
+    const buttonIcon = copyBtn.querySelector('.button-icon');
+    buttonText.textContent = 'Extracting...';
+    buttonIcon.textContent = '⏳';
+    showStatus('info', '🔍 Extracting cookies...');
     
     // Get current tab
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -121,8 +129,9 @@ async function copyCookies() {
     }
     
     if (cookies.length === 0) {
-      showStatus('error', 'No cookies found for this website. Make sure you are logged in and the website uses cookies.');
-      copyBtn.disabled = false;
+      showStatus('error', '❌ No cookies found. Make sure you are logged in.');
+      resetButton();
+      hideCookieCount();
       return;
     }
     
@@ -146,23 +155,61 @@ async function copyCookies() {
     // Copy to clipboard
     await navigator.clipboard.writeText(cookiesJson);
     
-    showStatus('success', `✓ Copied ${cookies.length} cookies to clipboard!`);
-    copyBtn.disabled = false;
+    // Update button
+    const buttonText = copyBtn.querySelector('.button-text');
+    const buttonIcon = copyBtn.querySelector('.button-icon');
+    buttonText.textContent = 'Copied!';
+    buttonIcon.textContent = '✅';
     
-    // Clear success message after 3 seconds
+    // Show cookie count
+    showCookieCount(cookies.length);
+    
+    // Show success message
+    showStatus('success', `✅ Successfully copied ${cookies.length} cookie${cookies.length !== 1 ? 's' : ''}!`);
+    
+    // Reset button after 2 seconds
     setTimeout(() => {
+      resetButton();
+      hideCookieCount();
+    }, 2000);
+    
+    // Clear success message after 4 seconds
+    setTimeout(() => {
+      const statusEl = document.getElementById('status');
       statusEl.className = 'status';
       statusEl.textContent = '';
-    }, 3000);
+    }, 4000);
     
   } catch (error) {
-    showStatus('error', `Error: ${error.message}`);
-    copyBtn.disabled = false;
+    showStatus('error', `❌ Error: ${error.message}`);
+    resetButton();
+    hideCookieCount();
   }
+}
+
+function resetButton() {
+  const copyBtn = document.getElementById('copy-cookies-btn');
+  const buttonText = copyBtn.querySelector('.button-text');
+  const buttonIcon = copyBtn.querySelector('.button-icon');
+  copyBtn.disabled = false;
+  buttonText.textContent = 'Copy Cookies to Clipboard';
+  buttonIcon.textContent = '📋';
+}
+
+function showCookieCount(count) {
+  const cookieCount = document.getElementById('cookie-count');
+  const cookieCountNumber = document.getElementById('cookie-count-number');
+  cookieCountNumber.textContent = count;
+  cookieCount.classList.add('show');
+}
+
+function hideCookieCount() {
+  const cookieCount = document.getElementById('cookie-count');
+  cookieCount.classList.remove('show');
 }
 
 function showStatus(type, message) {
   const statusEl = document.getElementById('status');
   statusEl.className = `status ${type}`;
-  statusEl.textContent = message;
+  statusEl.innerHTML = `<span class="status-icon">${message.split(' ')[0]}</span><span>${message.substring(message.indexOf(' ') + 1)}</span>`;
 }
