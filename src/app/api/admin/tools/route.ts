@@ -3,6 +3,35 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || (session.user as any).role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const tools = await prisma.tool.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        icon: true,
+      },
+    });
+
+    return NextResponse.json({ tools });
+  } catch (error: any) {
+    console.error("Error fetching tools:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch tools", details: error.message || "Unknown error" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);

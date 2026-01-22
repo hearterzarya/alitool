@@ -302,8 +302,11 @@
                     💡 <strong>How to find Tool ID:</strong> Go to Admin Panel → Tools → Edit Tool. The Tool ID is displayed at the top of the page or in the Cookie Management section.
                 </div>
                 <div class="input-group">
-                    <label>Tool ID</label>
-                    <input type="text" id="tool-id-input" placeholder="Enter tool ID from admin panel (e.g., abc-123-def-456)">
+                    <label>Select Tool</label>
+                    <select id="tool-select" style="margin-bottom: 8px;">
+                        <option value="">-- Select a tool --</option>
+                    </select>
+                    <input type="text" id="tool-id-input" placeholder="Or enter tool ID manually (e.g., abc-123-def-456)" style="margin-top: 0;">
                 </div>
                 <div class="input-group">
                     <label>Expiry Date (Optional)</label>

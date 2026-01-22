@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupTabs();
   setupEventListeners();
   loadCurrentTabInfo();
+  loadToolsList();
 });
 
 // Tab switching
@@ -38,6 +39,7 @@ function setupEventListeners() {
   const testInjectionBtn = document.getElementById('test-injection-btn');
   const uploadBtn = document.getElementById('upload-btn');
   const formatBtn = document.getElementById('format-btn');
+  const toolSelect = document.getElementById('tool-select');
   
   if (extractBtn) extractBtn.addEventListener('click', extractCookies);
   if (refreshBtn) refreshBtn.addEventListener('click', loadCurrentTabInfo);
@@ -46,6 +48,85 @@ function setupEventListeners() {
   if (testInjectionBtn) testInjectionBtn.addEventListener('click', testCookieInjection);
   if (uploadBtn) uploadBtn.addEventListener('click', uploadCookies);
   if (formatBtn) formatBtn.addEventListener('click', formatAndCopy);
+  if (toolSelect) toolSelect.addEventListener('change', handleToolSelect);
+}
+
+// Handle tool selection
+function handleToolSelect() {
+  const toolSelect = document.getElementById('tool-select');
+  const toolIdInput = document.getElementById('tool-id-input');
+  
+  if (toolSelect && toolIdInput && toolSelect.value) {
+    toolIdInput.value = toolSelect.value;
+  }
+}
+
+// Load tools list from API
+async function loadToolsList() {
+  try {
+    // Get current tab URL to determine API base URL
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    let apiBaseUrl = 'http://localhost:3000';
+    
+    if (tab && tab.url) {
+      try {
+        const url = new URL(tab.url);
+        apiBaseUrl = `${url.protocol}//${url.host}`;
+      } catch (e) {
+        // Use default if URL parsing fails
+      }
+    }
+    
+    // Try to get from storage first
+    const storage = await chrome.storage.local.get(['adminApiUrl']);
+    if (storage.adminApiUrl) {
+      apiBaseUrl = storage.adminApiUrl;
+    }
+    
+    const response = await fetch(`${apiBaseUrl}/api/admin/tools`, {
+      method: 'GET',
+      credentials: 'include', // Include cookies for authentication
+    });
+    
+    if (!response.ok) {
+      // If unauthorized or error, show message but don't block
+      if (response.status === 401) {
+        showStatus('info', 'Please log in to admin panel to see tools list');
+      }
+      return;
+    }
+    
+    const data = await response.json();
+    const toolSelect = document.getElementById('tool-select');
+    
+    if (toolSelect && data.tools && Array.isArray(data.tools)) {
+      // Clear existing options except the first one
+      toolSelect.innerHTML = '<option value="">-- Select a tool --</option>';
+      
+      // Add tools to dropdown
+      data.tools.forEach(tool => {
+        const option = document.createElement('option');
+        option.value = tool.id;
+        option.textContent = `${tool.icon || '🔧'} ${tool.name} (${tool.slug})`;
+        option.setAttribute('data-tool-id', tool.id);
+        toolSelect.appendChild(option);
+      });
+      
+      if (data.tools.length > 0) {
+        showStatus('success', `Loaded ${data.tools.length} tools`);
+        setTimeout(() => {
+          const statusEl = document.getElementById('status');
+          if (statusEl) {
+            statusEl.className = 'status';
+            statusEl.textContent = '';
+          }
+        }, 2000);
+      }
+    }
+  } catch (error) {
+    console.error('Error loading tools list:', error);
+    // Don't show error to user, just log it
+  }
 }
 
 // Load current tab info
