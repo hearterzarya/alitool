@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { writeFile, mkdir, access } from "fs/promises";
+import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
-import { constants } from "fs";
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,17 +40,14 @@ export async function POST(req: NextRequest) {
 
     // Create uploads directory if it doesn't exist
     const uploadsDir = join(process.cwd(), "public", "tool-icons");
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true });
-    }
-    
-    // Verify directory is writable
     try {
-      await access(uploadsDir, constants.W_OK);
-    } catch (accessError) {
-      console.error("Directory not writable:", accessError);
+      if (!existsSync(uploadsDir)) {
+        await mkdir(uploadsDir, { recursive: true });
+      }
+    } catch (mkdirError: any) {
+      console.error("Error creating directory:", mkdirError);
       return NextResponse.json(
-        { error: "Upload directory is not writable. Please check permissions." },
+        { error: `Failed to create upload directory: ${mkdirError.message}` },
         { status: 500 }
       );
     }
