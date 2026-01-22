@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
+import { put } from "@vercel/blob";
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,20 +36,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), "public", "tool-icons");
-    try {
-      if (!existsSync(uploadsDir)) {
-        await mkdir(uploadsDir, { recursive: true });
-      }
-    } catch (mkdirError: any) {
-      console.error("Error creating directory:", mkdirError);
-      return NextResponse.json(
-        { error: `Failed to create upload directory: ${mkdirError.message}` },
-        { status: 500 }
-      );
-    }
-
     // Generate unique filename
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
@@ -71,31 +55,24 @@ export async function POST(req: NextRequest) {
       fileExtension = mimeToExt[file.type] || "png";
     }
     
-    const fileName = `tool-icon-${timestamp}-${randomString}.${fileExtension}`;
-    const filePath = join(uploadsDir, fileName);
+    const fileName = `tool-icons/tool-icon-${timestamp}-${randomString}.${fileExtension}`;
 
-    // Convert file to buffer and save
+    // Upload to Vercel Blob Storage
     try {
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      await writeFile(filePath, buffer);
-      
-      // Verify file was written successfully
-      if (!existsSync(filePath)) {
-        throw new Error("File was not created after write operation");
-      }
-    } catch (writeError: any) {
-      console.error("Error writing file:", writeError);
+      const blob = await put(fileName, file, {
+        access: 'public',
+        contentType: file.type,
+      });
+
+      // Return the public URL
+      return NextResponse.json({ url: blob.url }, { status: 200 });
+    } catch (uploadError: any) {
+      console.error("Error uploading to blob storage:", uploadError);
       return NextResponse.json(
-        { error: `Failed to save file: ${writeError.message || "Permission denied or disk full"}` },
+        { error: `Failed to upload file: ${uploadError.message || "Upload service unavailable"}` },
         { status: 500 }
       );
     }
-
-    // Return the public URL
-    const publicUrl = `/tool-icons/${fileName}`;
-
-    return NextResponse.json({ url: publicUrl }, { status: 200 });
   } catch (error: any) {
     console.error("Error uploading icon:", error);
     
