@@ -129,7 +129,7 @@ function PaymentSuccessContent() {
                     </ul>
                   </div>
                   <a
-                    href="https://wa.me/919876543210?text=Hi! I just purchased a Private Plan. Payment Reference: {paymentData?.merchantReferenceId}"
+                    href="https://wa.me/919155313223?text=Hi! I just purchased a Private Plan. Payment Reference: {paymentData?.merchantReferenceId}"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-lg font-medium transition-all duration-300 hover:scale-105"
@@ -187,7 +187,7 @@ function PaymentSuccessContent() {
                     Please send your payment confirmation and your login credentials on WhatsApp to get your subscription activated.
                   </p>
                   <a
-                    href="https://wa.me/919876543210?text=Hi! I just made a payment. Here are my details:"
+                    href="https://wa.me/919155313223?text=Hi! I just made a payment. Here are my details:"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-lg font-medium transition-all duration-300 hover:scale-105"
@@ -196,7 +196,7 @@ function PaymentSuccessContent() {
                     Contact us on WhatsApp
                   </a>
                   <p className="text-sm text-slate-600 mt-2">
-                    WhatsApp Number: <span className="font-semibold">+91 98765 43210</span>
+                    WhatsApp Number: <span className="font-semibold">+91 91553 13223</span>
                   </p>
                 </div>
               )}

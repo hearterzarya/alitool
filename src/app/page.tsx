@@ -276,7 +276,7 @@ export default async function HomePage() {
               Need help? Have questions? Our team is ready to assist you 24/7 via WhatsApp.
             </p>
             <a
-              href="https://wa.me/919876543210?text=Hi! I need help with my subscription."
+              href="https://wa.me/919155313223?text=Hi! I need help with my subscription."
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-lg font-semibold text-base sm:text-lg transition-all duration-300 hover:scale-105 shadow-lg"
@@ -299,7 +299,7 @@ export default async function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
             <a
-              href="https://wa.me/919876543210?text=Hi! I want to join the community for tool updates and offers."
+              href="https://wa.me/919155313223?text=Hi! I want to join the community for tool updates and offers."
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-lg font-semibold text-sm sm:text-base transition-all duration-300 hover:scale-105"
@@ -345,7 +345,7 @@ export default async function HomePage() {
                 <li><Link href="/contact" className="hover:text-white transition">Contact</Link></li>
                 <li><Link href="/faq" className="hover:text-white transition">FAQ</Link></li>
                 <li>
-                  <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">
+                  <a href="https://wa.me/919155313223" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">
                     WhatsApp Support
                   </a>
                 </li>

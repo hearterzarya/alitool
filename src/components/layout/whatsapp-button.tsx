@@ -8,7 +8,7 @@ interface WhatsAppButtonProps {
 }
 
 export function WhatsAppButton({ 
-  phoneNumber = '+919876543210', // Default number, should be configured
+  phoneNumber = '+919155313223', // Default number, should be configured
   message = 'Hello! I need help with my subscription.'
 }: WhatsAppButtonProps) {
   const whatsappUrl = `https://wa.me/${phoneNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;

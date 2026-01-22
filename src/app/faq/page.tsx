@@ -240,7 +240,7 @@ export default function FAQPage() {
                 asChild
                 className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white"
               >
-                <a href="https://wa.me/yourwhatsappnumber" target="_blank" rel="noopener noreferrer">
+                <a href="https://wa.me/919155313223" target="_blank" rel="noopener noreferrer">
                   <MessageCircle className="mr-2 h-4 w-4" />
                   WhatsApp Support
                 </a>
