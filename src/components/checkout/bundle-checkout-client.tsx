@@ -37,6 +37,14 @@ interface BundleCheckoutClientProps {
   bundle: Bundle;
 }
 
+interface PaymentLinks {
+  upiIntent: string;
+  phonePe: string;
+  paytm: string;
+  gpay: string;
+  dynamicQR: string;
+}
+
 export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -45,7 +53,7 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerMobile, setCustomerMobile] = useState('');
-  const [paymentLinks, setPaymentLinks] = useState<any>(null);
+  const [paymentLinks, setPaymentLinks] = useState<PaymentLinks | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'pending' | 'success' | 'failed'>('idle');
   const [merchantReferenceId, setMerchantReferenceId] = useState<string | null>(null);
   const [checkingStatus, setCheckingStatus] = useState(false);
@@ -142,8 +150,8 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
       const data = await response.json();
 
       if (data.success) {
-        setPaymentLinks(data.paymentLinks);
-        setMerchantReferenceId(data.merchantReferenceId);
+        setPaymentLinks(data.payment.paymentLinks);
+        setMerchantReferenceId(data.payment.merchantReferenceId);
         setPaymentStatus('pending');
       } else {
         setPaymentStatus('failed');
@@ -374,9 +382,9 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
                             Pay via UPI
                           </a>
                         )}
-                        {paymentLinks.phonePeLink && (
+                        {paymentLinks.phonePe && (
                           <a
-                            href={paymentLinks.phonePeLink}
+                            href={paymentLinks.phonePe}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="block w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-center font-medium transition-colors"
@@ -384,9 +392,9 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
                             Pay via PhonePe
                           </a>
                         )}
-                        {paymentLinks.paytmLink && (
+                        {paymentLinks.paytm && (
                           <a
-                            href={paymentLinks.paytmLink}
+                            href={paymentLinks.paytm}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="block w-full px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-center font-medium transition-colors"
@@ -394,9 +402,9 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
                             Pay via Paytm
                           </a>
                         )}
-                        {paymentLinks.gpayLink && (
+                        {paymentLinks.gpay && (
                           <a
-                            href={paymentLinks.gpayLink}
+                            href={paymentLinks.gpay}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="block w-full px-4 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-center font-medium transition-colors"
