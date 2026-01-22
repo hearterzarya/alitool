@@ -1,15 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "AliDigitalSolution Admin - Cookie Manager",
+  "name": "Copy Cookies",
   "version": "1.0.0",
-  "description": "Admin extension for managing cookies and sessions for tools",
+  "description": "Extract and copy cookies from the current tab",
   "permissions": [
     "cookies",
     "tabs",
-    "storage",
-    "activeTab",
-    "scripting",
-    "webRequest"
+    "activeTab"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -17,13 +14,6 @@
   "background": {
     "service_worker": "background.js"
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
-      "run_at": "document_end"
-    }
-  ],
   "icons": {
     "48": "logo.png",
     "128": "logo.png"
@@ -33,13 +23,7 @@
       "48": "logo.png",
       "128": "logo.png"
     },
-    "default_title": "AliDigitalSolution Admin - Cookie Manager",
+    "default_title": "Copy Cookies",
     "default_popup": "popup.html"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["logo.png"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  }
 }
