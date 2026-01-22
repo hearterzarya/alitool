@@ -1,0 +1,310 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Users
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  passwordHash  String?
+  name          String?
+  role          Role           @default(USER)
+  status        UserStatus      @default(FREE)
+  emailVerified DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  subscriptions ToolSubscription[]
+  payments     Payment[]
+
+  @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
+  TEST_USER
+}
+
+enum UserStatus {
+  FREE
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+// Tools (AI services available for purchase)
+model Tool {
+  id               String        @id @default(uuid())
+  name             String        // "ChatGPT Plus"
+  slug             String        @unique
+  description      String        @db.Text
+  shortDescription String?
+  category         ToolCategory
+  icon             String?       // Icon URL or emoji
+  toolUrl          String        // https://chat.openai.com
+  priceMonthly     Int           // in paise (e.g., 5000 = ₹50) - deprecated, use plan prices
+  
+  // Plan pricing
+  sharedPlanPrice  Int?          // Shared plan price in paise
+  privatePlanPrice Int?          // Private plan price in paise
+  sharedPlanFeatures String?     @db.Text // JSON array or comma-separated features
+  privatePlanFeatures String?    @db.Text // JSON array or comma-separated features
+  sharedPlanEnabled Boolean      @default(false) // Enable/disable shared plan
+  privatePlanEnabled Boolean     @default(false) // Enable/disable private plan
+
+  // Cookie storage (encrypted)
+  cookiesEncrypted String?       @db.Text
+  cookiesUpdatedAt DateTime?
+  cookiesExpiryDate DateTime?    // Admin sets expected expiry
+
+  isActive         Boolean       @default(true)
+  isFeatured       Boolean       @default(false)  // Featured in slider
+  sortOrder        Int           @default(0)
+
+  stripePriceId    String?       // Stripe Price ID for subscription
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  subscriptions    ToolSubscription[]
+  payments         Payment[]
+  bundleTools      BundleTool[]
+
+  @@map("tools")
+}
+
+enum ToolCategory {
+  AI_WRITING
+  SEO_TOOLS
+  DESIGN
+  PRODUCTIVITY
+  CODE_DEV
+  VIDEO_AUDIO
+  OTHER
+}
+
+// User subscriptions to individual tools
+model ToolSubscription {
+  id                   String             @id @default(uuid())
+  userId               String
+  toolId               String
+
+  // Plan type
+  planType             PlanType           @default(SHARED)
+  
+  // Subscription status
+  status               SubscriptionStatus @default(ACTIVE)
+  
+  // Activation status (for private plans)
+  activationStatus     ActivationStatus   @default(ACTIVE) // ACTIVE for shared (instant), PENDING for private
+  activatedAt          DateTime?          // When admin activated (for private plans)
+  activatedBy          String?             // Admin ID who activated
+
+  // Credentials
+  sharedCredentials    SharedCredentials? // For shared plans
+  privateCredentials   PrivateCredentials? // For private plans
+
+  // Stripe subscription details
+  stripeSubscriptionId String?            @unique
+  stripeCustomerId     String?
+
+  // Billing cycle
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+
+  cancelAtPeriodEnd    Boolean            @default(false)
+  canceledAt           DateTime?
+
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tool                 Tool               @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, toolId])
+  @@map("tool_subscriptions")
+}
+
+enum PlanType {
+  SHARED
+  PRIVATE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  INCOMPLETE
+}
+
+enum ActivationStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
+}
+
+// Shared credentials (4-5 users per account)
+model SharedCredentials {
+  id                   String             @id @default(uuid())
+  subscriptionId       String             @unique
+  email                String
+  password             String             @db.Text // Encrypted
+  sharedAccountId      String             // Reference to shared account pool
+  maxUsers             Int                @default(5)
+  currentUsers         Int                @default(1)
+  credentialsUpdatedAt DateTime           @default(now())
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  subscription         ToolSubscription   @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("shared_credentials")
+}
+
+// Private credentials (one user per account)
+model PrivateCredentials {
+  id                   String             @id @default(uuid())
+  subscriptionId       String             @unique
+  email                String
+  password             String             @db.Text // Encrypted
+  credentialsUpdatedAt DateTime           @default(now())
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  subscription         ToolSubscription   @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("private_credentials")
+}
+
+// Payment transactions (Paygic)
+model Payment {
+  id                   String        @id @default(uuid())
+  userId               String
+  toolId               String?
+  bundleId             String?       // For bundle purchases
+  planName             String?       // For bundle purchases (Starter, Pro, Elite) or plan type
+  planType             PlanType?     // SHARED or PRIVATE for tool purchases
+  amount               Int           // Amount in paise (e.g., 99900 = ₹999)
+  
+  // Paygic details
+  merchantReferenceId  String        @unique // Our unique reference ID
+  paygicReferenceId    String?       // Paygic's reference ID
+  paygicToken          String?       // Token used for this payment
+  
+  // Payment links
+  upiIntent            String?       @db.Text
+  phonePeLink          String?       @db.Text
+  paytmLink            String?       @db.Text
+  gpayLink             String?       @db.Text
+  dynamicQR            String?       @db.Text
+  
+  // Status
+  status               PaymentStatus @default(PENDING)
+  txnStatus            String?       // Paygic transaction status
+  
+  // Customer details
+  customerName         String?
+  customerEmail        String?
+  customerMobile       String?
+  
+  // Timestamps
+  expiresAt            DateTime?     // Payment link expiry
+  successDate          DateTime?     // When payment succeeded
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @default(now())
+  
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tool                 Tool?         @relation(fields: [toolId], references: [id], onDelete: SetNull)
+  bundle               Bundle?       @relation(fields: [bundleId], references: [id], onDelete: SetNull)
+  
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  EXPIRED
+  CANCELLED
+}
+
+// Bundles (collections of tools)
+model Bundle {
+  id                String        @id @default(uuid())
+  name              String        // "AI Content & Design Suite"
+  slug              String        @unique
+  description       String        @db.Text
+  shortDescription  String?
+  icon              String?        // Icon URL or emoji
+  priceMonthly      Int           // Monthly price in paise
+  priceSixMonth     Int?          // 6-month price in paise
+  priceYearly       Int?          // Yearly price in paise
+  features          String?       @db.Text // JSON array or comma-separated features
+  isActive          Boolean       @default(true)
+  isTrending        Boolean       @default(false) // Featured in trending slider
+  sortOrder         Int           @default(0)
+  targetAudience    String?       // "Creators, bloggers, freelancers"
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  tools             BundleTool[]
+  payments          Payment[]
+
+  @@map("bundles")
+}
+
+// Many-to-many relationship between Bundles and Tools
+model BundleTool {
+  id        String   @id @default(uuid())
+  bundleId  String
+  toolId    String
+  sortOrder Int      @default(0)
+  
+  bundle    Bundle   @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  tool      Tool     @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  
+  @@unique([bundleId, toolId])
+  @@map("bundle_tools")
+}
+
+// Admin activity log (track cookie updates)
+model AdminLog {
+  id          String   @id @default(uuid())
+  adminId     String
+  action      String   // "UPDATED_COOKIES", "CREATED_TOOL", etc.
+  toolId      String?
+  details     String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  @@map("admin_logs")
+}
+
+model ReviewScreenshot {
+  id          String   @id @default(uuid())
+  imageUrl    String   // URL to the uploaded screenshot
+  caption     String?  // Optional caption/description
+  sortOrder   Int      @default(0) // For ordering in gallery
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("review_screenshots")
+}
+
+// Simple key/value settings table (e.g. tracking pixels, site config)
+model AppSetting {
+  key       String   @id
+  value     String?  @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@map("app_settings")
+}
