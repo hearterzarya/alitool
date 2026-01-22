@@ -105,8 +105,7 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
     return null;
   }
 
-  const getPriceInPaise = () => {
-    // Returns price in paise (for display)
+  const getPrice = () => {
     switch (selectedPlan) {
       case 'sixMonth':
         return bundle.priceSixMonth || bundle.priceMonthly * 6;
@@ -117,24 +116,23 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
     }
   };
 
-  const getPriceInRupees = () => {
-    // Returns price in rupees (for payment API)
-    return getPriceInPaise() / 100;
-  };
-
   const handleCreatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setPaymentStatus('idle');
 
     try {
+      // Convert price from paise to rupees for payment API
+      const priceInPaise = getPrice();
+      const priceInRupees = priceInPaise / 100;
+
       const response = await fetch('/api/payments/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bundleId: bundle.id,
           planName: `${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan`,
-          amount: getPriceInRupees(),
+          amount: priceInRupees, // Send in rupees, not paise
           customerName,
           customerEmail,
           customerMobile,
@@ -282,7 +280,7 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
                       >
                         <div className="font-semibold">Yearly</div>
                         <div className="text-sm text-slate-600">
-                          {formatPrice(bundle.priceYearly)} (Save {Math.round((1 - (bundle.priceYearly || bundle.priceMonthly * 12) / (bundle.priceMonthly * 12)) * 100)}%)
+                          {formatPrice(bundle.priceYearly)} (Save {Math.round((1 - bundle.priceYearly / (bundle.priceMonthly * 12)) * 100)}%)
                         </div>
                       </button>
                     )}
@@ -334,7 +332,7 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
                       <div className="flex justify-between items-center mb-4">
                         <span className="text-lg font-semibold text-slate-900">Total</span>
                         <span className="text-2xl font-bold text-purple-600">
-                          {formatPrice(getPriceInPaise())}
+                          {formatPrice(getPrice())}
                         </span>
                       </div>
                       <Button

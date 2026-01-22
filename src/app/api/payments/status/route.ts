@@ -30,7 +30,19 @@ export async function POST(req: NextRequest) {
     // Get payment from database
     const payment = await prisma.payment.findUnique({
       where: { merchantReferenceId },
-      include: { user: true, tool: true },
+      include: { 
+        user: true, 
+        tool: true,
+        bundle: {
+          include: {
+            tools: {
+              include: {
+                tool: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!payment) {
@@ -81,10 +93,10 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // If payment is successful, create subscription
+    // If payment is successful, create subscription(s)
     if (statusResponse.txnStatus === 'SUCCESS' && updatedPayment.status === 'SUCCESS') {
       if (updatedPayment.toolId) {
-        // Get plan type from payment (SHARED or PRIVATE)
+        // Single tool payment
         const planType = ((updatedPayment as any).planType || PlanType.SHARED) as PlanType;
         
         try {
@@ -96,6 +108,85 @@ export async function POST(req: NextRequest) {
           );
         } catch (error: any) {
           console.error('Error creating subscription after payment:', error);
+          // Continue to return payment status even if subscription creation fails
+        }
+      } else if (updatedPayment.bundleId && payment.bundle) {
+        // Bundle payment - create subscriptions for all tools in bundle
+        try {
+          const planName = updatedPayment.planName || 'Monthly Plan';
+          // Determine subscription period based on plan name
+          let subscriptionDays = 30; // Default monthly
+          if (planName.toLowerCase().includes('6-month') || planName.toLowerCase().includes('six')) {
+            subscriptionDays = 180;
+          } else if (planName.toLowerCase().includes('yearly') || planName.toLowerCase().includes('year')) {
+            subscriptionDays = 365;
+          }
+
+          const now = new Date();
+          const periodEnd = new Date(now);
+          periodEnd.setDate(periodEnd.getDate() + subscriptionDays);
+
+          // Create subscriptions for each tool in the bundle
+          for (const bundleTool of payment.bundle.tools) {
+            const toolId = bundleTool.toolId;
+            
+            // Check if subscription already exists
+            const existingSubscription = await prisma.toolSubscription.findUnique({
+              where: {
+                userId_toolId: {
+                  userId: payment.userId,
+                  toolId,
+                },
+              },
+            });
+
+            if (existingSubscription) {
+              // Update existing subscription
+              await prisma.toolSubscription.update({
+                where: { id: existingSubscription.id },
+                data: {
+                  planType: PlanType.SHARED,
+                  status: 'ACTIVE',
+                  activationStatus: 'ACTIVE',
+                  currentPeriodStart: now,
+                  currentPeriodEnd: periodEnd,
+                  canceledAt: null,
+                  cancelAtPeriodEnd: false,
+                },
+              });
+            } else {
+              // Create new subscription with SHARED plan (bundles use shared accounts)
+              await createSubscriptionAfterPayment(
+                payment.userId,
+                toolId,
+                PlanType.SHARED,
+                updatedPayment.id
+              );
+
+              // Update subscription period if needed
+              const newSubscription = await prisma.toolSubscription.findFirst({
+                where: {
+                  userId: payment.userId,
+                  toolId,
+                },
+                orderBy: { createdAt: 'desc' },
+              });
+
+              if (newSubscription) {
+                await prisma.toolSubscription.update({
+                  where: { id: newSubscription.id },
+                  data: {
+                    currentPeriodStart: now,
+                    currentPeriodEnd: periodEnd,
+                  },
+                });
+              }
+            }
+          }
+
+          console.log(`Created subscriptions for bundle ${payment.bundleId} with ${payment.bundle.tools.length} tools`);
+        } catch (error: any) {
+          console.error('Error creating bundle subscriptions after payment:', error);
           // Continue to return payment status even if subscription creation fails
         }
       }
