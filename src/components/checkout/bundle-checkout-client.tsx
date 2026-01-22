@@ -105,7 +105,8 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
     return null;
   }
 
-  const getPrice = () => {
+  const getPriceInPaise = () => {
+    // Returns price in paise (for display)
     switch (selectedPlan) {
       case 'sixMonth':
         return bundle.priceSixMonth || bundle.priceMonthly * 6;
@@ -114,6 +115,11 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
       default:
         return bundle.priceMonthly;
     }
+  };
+
+  const getPriceInRupees = () => {
+    // Returns price in rupees (for payment API)
+    return getPriceInPaise() / 100;
   };
 
   const handleCreatePayment = async (e: React.FormEvent) => {
@@ -128,7 +134,7 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
         body: JSON.stringify({
           bundleId: bundle.id,
           planName: `${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan`,
-          amount: getPrice(),
+          amount: getPriceInRupees(),
           customerName,
           customerEmail,
           customerMobile,
@@ -276,7 +282,7 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
                       >
                         <div className="font-semibold">Yearly</div>
                         <div className="text-sm text-slate-600">
-                          {formatPrice(bundle.priceYearly)} (Save {Math.round((1 - bundle.priceYearly / (bundle.priceMonthly * 12)) * 100)}%)
+                          {formatPrice(bundle.priceYearly)} (Save {Math.round((1 - (bundle.priceYearly || bundle.priceMonthly * 12) / (bundle.priceMonthly * 12)) * 100)}%)
                         </div>
                       </button>
                     )}
@@ -328,7 +334,7 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
                       <div className="flex justify-between items-center mb-4">
                         <span className="text-lg font-semibold text-slate-900">Total</span>
                         <span className="text-2xl font-bold text-purple-600">
-                          {formatPrice(getPrice())}
+                          {formatPrice(getPriceInPaise())}
                         </span>
                       </div>
                       <Button
