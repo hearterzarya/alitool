@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, User, Wrench, Star, FileText, HelpCircle, Menu, X, Home } from "lucide-react";
+import { Sparkles, User, Wrench, Star, FileText, HelpCircle, Menu, X, Home, Shield } from "lucide-react";
 import { useState } from "react";
 
 export function Navbar() {
@@ -54,13 +54,13 @@ export function Navbar() {
                 </Link>
               );
             })}
-            {session && (
+            {session && (session.user as any)?.role !== 'ADMIN' && (
               <Link
                 href="/dashboard"
-                  className="flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-all duration-300 group relative"
-                  >
-                    <User className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                    <span>Dashboard</span>
+                className="flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-all duration-300 group relative"
+              >
+                <User className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                <span>Dashboard</span>
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 rounded-full" />
               </Link>
             )}
@@ -76,11 +76,30 @@ export function Navbar() {
                   asChild 
                   variant="ghost" 
                   size="sm"
-                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-100 border-0"
+                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-100 border-0 relative group"
                 >
-                  <Link href="/dashboard" className="flex items-center space-x-2">
-                    <User className="h-4 w-4" />
-                    <span className="hidden lg:inline">{session.user?.name || session.user?.email?.split('@')[0]}</span>
+                  <Link 
+                    href={(session.user as any)?.role === 'ADMIN' ? "/admin" : "/dashboard"}
+                    className="flex items-center space-x-2"
+                  >
+                    <div className="relative">
+                      {(session.user as any)?.role === 'ADMIN' ? (
+                        <Shield className="h-4 w-4 text-purple-600" />
+                      ) : (
+                        <User className="h-4 w-4" />
+                      )}
+                      {(session.user as any)?.role === 'ADMIN' && (
+                        <span className="absolute -top-1 -right-1 h-2 w-2 bg-purple-600 rounded-full border-2 border-white"></span>
+                      )}
+                    </div>
+                    <span className="hidden lg:inline">
+                      {session.user?.name || session.user?.email?.split('@')[0]}
+                    </span>
+                    {(session.user as any)?.role === 'ADMIN' && (
+                      <span className="hidden lg:inline ml-1.5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-purple-100 text-purple-700 rounded-md border border-purple-200">
+                        Admin
+                      </span>
+                    )}
                   </Link>
                 </Button>
                 <Button
@@ -147,12 +166,26 @@ export function Navbar() {
               })}
               {session && (
                 <Link
-                  href="/dashboard"
+                  href={(session.user as any)?.role === 'ADMIN' ? "/admin" : "/dashboard"}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300"
+                  className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-all duration-300"
                 >
-                  <User className="h-4 w-4" />
-                  <span>Dashboard</span>
+                  <div className="relative">
+                    {(session.user as any)?.role === 'ADMIN' ? (
+                      <Shield className="h-4 w-4 text-purple-600" />
+                    ) : (
+                      <User className="h-4 w-4" />
+                    )}
+                    {(session.user as any)?.role === 'ADMIN' && (
+                      <span className="absolute -top-1 -right-1 h-2 w-2 bg-purple-600 rounded-full border-2 border-white"></span>
+                    )}
+                  </div>
+                  <span>{(session.user as any)?.role === 'ADMIN' ? 'Admin Panel' : 'Dashboard'}</span>
+                  {(session.user as any)?.role === 'ADMIN' && (
+                    <span className="ml-auto px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-purple-100 text-purple-700 rounded-md border border-purple-200">
+                      Admin
+                    </span>
+                  )}
                 </Link>
               )}
               <div className="pt-4 border-t border-slate-200 space-y-2">

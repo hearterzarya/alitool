@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
-import Link from "next/link";
-import { LayoutDashboard, Wrench, Users, CreditCard, BarChart3, Receipt, Download, Star, Package, Settings } from "lucide-react";
+import { AdminHeader } from "@/components/admin/admin-header";
+import { AdminSidebar } from "@/components/admin/admin-sidebar";
 
 export default async function AdminLayout({
   children,
@@ -20,61 +20,21 @@ export default async function AdminLayout({
     redirect("/dashboard");
   }
 
-  const menuItems = [
-    { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/admin/tools", label: "Tools", icon: Wrench },
-    { href: "/admin/bundles", label: "Bundles", icon: Package },
-    { href: "/admin/users", label: "Users", icon: Users },
-    { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
-    { href: "/admin/payments", label: "Payments", icon: Receipt },
-    { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-    { href: "/admin/settings", label: "Settings", icon: Settings },
-    { href: "/admin/extension", label: "Admin Extension", icon: Download },
-    { href: "/admin/reviews", label: "Reviews & Proofs", icon: Star },
-  ];
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-background mt-12">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800">
+      {/* Admin Header */}
+      <AdminHeader user={session.user} />
+      
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        {/* <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Panel</h1>
-          <p className="text-gray-600 dark:text-gray-400">Manage tools, users, and subscriptions</p>
-        </div> */}
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Sidebar */}
-          <aside className="md:col-span-1">
-            <div className="bg-white dark:bg-gray-900 rounded-lg p-6 sticky top-24">
-              <nav className="space-y-2">
-                {menuItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                    >
-                      <Icon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                      <span className="text-sm font-medium">{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </nav>
-
-              <div className="mt-6 pt-6 border-t">
-                <Link
-                  href="/dashboard"
-                  className="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition text-sm text-gray-600 dark:text-gray-400"
-                >
-                  ← Back to User Dashboard
-                </Link>
-              </div>
-            </div>
-          </aside>
+          <AdminSidebar />
 
           {/* Main Content */}
-          <main className="md:col-span-3">
-            {children}
+          <main className="lg:col-span-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-slate-200 dark:border-gray-700 p-6 lg:p-8">
+              {children}
+            </div>
           </main>
         </div>
       </div>

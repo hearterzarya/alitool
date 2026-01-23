@@ -32,19 +32,17 @@ export default function LoginPage() {
       if (result?.error) {
         setError("Invalid email or password");
       } else {
-        // Wait a moment for session to be established, then check role
-        setTimeout(async () => {
-          const response = await fetch('/api/auth/session');
-          const session = await response.json();
-          const userRole = (session?.user as any)?.role;
-          
-          if (userRole === 'ADMIN') {
-            router.push("/admin");
-          } else {
-            router.push("/dashboard");
-          }
-          router.refresh();
-        }, 100);
+        // Fetch session immediately after successful login
+        const response = await fetch('/api/auth/session', { cache: 'no-store' });
+        const session = await response.json();
+        const userRole = (session?.user as any)?.role;
+        
+        if (userRole === 'ADMIN') {
+          router.push("/admin");
+        } else {
+          router.push("/dashboard");
+        }
+        router.refresh();
       }
     } catch (error) {
       setError("Something went wrong");

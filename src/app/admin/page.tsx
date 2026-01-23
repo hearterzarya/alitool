@@ -77,14 +77,14 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold">Dashboard Overview</h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Monitor your platform performance
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Dashboard Overview</h2>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">
+            Monitor your platform performance and manage your tools
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
           <Link href="/admin/tools/new">Add New Tool</Link>
         </Button>
       </div>

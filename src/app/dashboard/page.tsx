@@ -8,7 +8,7 @@ import { TutorialSection } from "@/components/dashboard/tutorial-section";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { formatPrice, formatDate } from "@/lib/utils";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, AlertCircle, RefreshCw } from "lucide-react";
 import { ToolIcon } from "@/components/tools/tool-icon";
 
 export default async function DashboardPage() {
@@ -23,17 +23,33 @@ export default async function DashboardPage() {
   const isTestUser = userRole === 'TEST_USER' || userRole === 'ADMIN';
 
   // Fetch user data to check if they're a new customer
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      createdAt: true,
-      subscriptions: {
-        where: { status: 'ACTIVE' },
-        select: { id: true },
+  let user: { id: string; createdAt: Date; subscriptions: Array<{ id: string }> } | null = null;
+  let dbError: string | null = null;
+
+  try {
+    user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        createdAt: true,
+        subscriptions: {
+          where: { status: 'ACTIVE' },
+          select: { id: true },
+        },
       },
-    },
-  });
+    });
+  } catch (error: any) {
+    console.error('Database error fetching user:', error);
+    dbError = error.message || 'Database connection failed';
+    
+    // Check if it's a connection error
+    if (error.message?.includes("Can't reach database server") || 
+        error.message?.includes('P1001') ||
+        error.code === 'P1001' ||
+        error.code === 'P2024') {
+      dbError = 'Database connection failed. Please check your database connection.';
+    }
+  }
 
   // Check if user is new (created within last 7 days and has no active subscriptions)
   const isNewCustomer = user && (
@@ -49,39 +65,178 @@ export default async function DashboardPage() {
     createdAt: Date;
   }> = [];
 
-  if (isTestUser) {
-    // Fetch all active tools for test users
-    const allTools = await prisma.tool.findMany({
-      where: {
-        isActive: true,
-      },
-      orderBy: {
-        sortOrder: 'asc',
-      },
-    });
+  if (dbError) {
+    // If database error, show error message
+    return (
+      <div className="space-y-6">
+        <Card className="border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-900">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <CardTitle className="text-red-900 dark:text-red-100">
+                Database Connection Error
+              </CardTitle>
+            </div>
+            <CardDescription className="text-red-700 dark:text-red-300">
+              {dbError}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2 text-sm text-red-800 dark:text-red-200">
+                <p><strong>To fix this issue:</strong></p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>Check your <code className="bg-red-100 dark:bg-red-900 px-1 rounded">DATABASE_URL</code> in your <code className="bg-red-100 dark:bg-red-900 px-1 rounded">.env</code> file</li>
+                  <li>Ensure your Neon PostgreSQL database is running</li>
+                  <li>Verify network connectivity to the database server</li>
+                  <li>Check if your database credentials are correct and not expired</li>
+                </ul>
+              </div>
+              <Button asChild className="bg-red-600 hover:bg-red-700 text-white">
+                <Link href="/dashboard" className="flex items-center">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry Connection
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-    // Convert tools to subscription-like format for display
-    subscriptions = allTools.map((tool) => ({
-      id: `test-${tool.id}`,
-      tool: tool,
-      status: 'ACTIVE',
-      currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-      createdAt: new Date(),
-    }));
-  } else {
-    // Fetch user's active subscriptions for regular users
-    subscriptions = await prisma.toolSubscription.findMany({
-      where: {
-        userId: userId,
-        status: "ACTIVE",
-      },
-      include: {
-        tool: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+  try {
+    if (isTestUser) {
+      // Fetch all active tools for test users
+      const allTools = await prisma.tool.findMany({
+        where: {
+          isActive: true,
+        },
+        orderBy: {
+          sortOrder: 'asc',
+        },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          shortDescription: true,
+          category: true,
+          icon: true,
+          toolUrl: true,
+          priceMonthly: true,
+          sharedPlanPrice: true,
+          privatePlanPrice: true,
+          sharedPlanFeatures: true,
+          privatePlanFeatures: true,
+          sharedPlanEnabled: true,
+          privatePlanEnabled: true,
+          isActive: true,
+          isFeatured: true,
+          sortOrder: true,
+          stripePriceId: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      // Convert tools to subscription-like format for display
+      subscriptions = allTools.map((tool) => ({
+        id: `test-${tool.id}`,
+        tool: tool,
+        status: 'ACTIVE',
+        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        createdAt: new Date(),
+      }));
+    } else {
+      // Fetch user's active subscriptions for regular users
+      subscriptions = await prisma.toolSubscription.findMany({
+        where: {
+          userId: userId,
+          status: "ACTIVE",
+        },
+        include: {
+          tool: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              description: true,
+              shortDescription: true,
+              category: true,
+              icon: true,
+              toolUrl: true,
+              priceMonthly: true,
+              sharedPlanPrice: true,
+              privatePlanPrice: true,
+              sharedPlanFeatures: true,
+              privatePlanFeatures: true,
+              sharedPlanEnabled: true,
+              privatePlanEnabled: true,
+              isActive: true,
+              isFeatured: true,
+              sortOrder: true,
+              stripePriceId: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+    }
+  } catch (error: any) {
+    console.error('Database error fetching subscriptions:', error);
+    dbError = error.message || 'Failed to load subscriptions';
+    
+    if (error.message?.includes("Can't reach database server") || 
+        error.message?.includes('P1001') ||
+        error.code === 'P1001' ||
+        error.code === 'P2024') {
+      dbError = 'Database connection failed. Please check your database connection.';
+    }
+  }
+
+  // Show error if database failed during subscription fetch
+  if (dbError && subscriptions.length === 0) {
+    return (
+      <div className="space-y-6">
+        <Card className="border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-900">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <CardTitle className="text-red-900 dark:text-red-100">
+                Database Connection Error
+              </CardTitle>
+            </div>
+            <CardDescription className="text-red-700 dark:text-red-300">
+              {dbError}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2 text-sm text-red-800 dark:text-red-200">
+                <p><strong>To fix this issue:</strong></p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>Check your <code className="bg-red-100 dark:bg-red-900 px-1 rounded">DATABASE_URL</code> in your <code className="bg-red-100 dark:bg-red-900 px-1 rounded">.env</code> file</li>
+                  <li>Ensure your Neon PostgreSQL database is running</li>
+                  <li>Verify network connectivity to the database server</li>
+                  <li>Check if your database credentials are correct and not expired</li>
+                </ul>
+              </div>
+              <Button asChild className="bg-red-600 hover:bg-red-700 text-white">
+                <Link href="/dashboard" className="flex items-center">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry Connection
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
