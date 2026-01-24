@@ -30,20 +30,6 @@ export function AccessToolButton({ tool }: AccessToolButtonProps) {
     setSuccess(false);
 
     try {
-      // If cookies are not configured, open tool URL directly
-      if (!tool.cookiesEncrypted) {
-        if (tool.toolUrl) {
-          window.open(tool.toolUrl, '_blank');
-          setSuccess(true);
-          setLoading(false);
-          setTimeout(() => setSuccess(false), 2000);
-        } else {
-          alert("Tool URL is not configured. Please contact support.");
-          setLoading(false);
-        }
-        return;
-      }
-
       // Check if extension is installed
       const hasExtension = await checkExtension();
 
@@ -58,17 +44,16 @@ export function AccessToolButton({ tool }: AccessToolButtonProps) {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || "Failed to fetch cookies";
         
-        // If cookies API fails but we have a tool URL, open it directly
-        if (tool.toolUrl && errorData.error?.includes("Cookies not configured")) {
-          window.open(tool.toolUrl, '_blank');
-          setSuccess(true);
-          setLoading(false);
-          setTimeout(() => setSuccess(false), 2000);
-          return;
+        // Provide specific error messages
+        if (response.status === 404 && errorMessage.includes("not configured")) {
+          throw new Error("Cookies are not configured for this tool. Please contact support.");
+        } else if (response.status === 403) {
+          throw new Error("You don't have access to this tool. Please check your subscription.");
+        } else {
+          throw new Error(errorMessage);
         }
-        
-        throw new Error(errorData.error || "Failed to fetch cookies");
       }
 
       const { cookies, url } = await response.json();
@@ -96,20 +81,13 @@ export function AccessToolButton({ tool }: AccessToolButtonProps) {
         } else if (event.data.type === "GROWTOOLS_ACCESS_ERROR" && event.data.toolId === tool.id) {
           setLoading(false);
           window.removeEventListener("message", messageHandler);
-          // If extension fails but we have a URL, try opening directly
-          if (tool.toolUrl) {
-            window.open(tool.toolUrl, '_blank');
-            setSuccess(true);
-            setTimeout(() => setSuccess(false), 2000);
-          } else {
-            alert(`Failed to access tool: ${event.data.error || "Unknown error"}`);
-          }
+          alert(`Failed to access tool: ${event.data.error || "Unknown error"}`);
         }
       };
 
       window.addEventListener("message", messageHandler);
 
-      // Timeout after 5 seconds
+      // Timeout after 10 seconds (increased for slower connections)
       setTimeout(() => {
         window.removeEventListener("message", messageHandler);
         if (loading) {
@@ -118,19 +96,11 @@ export function AccessToolButton({ tool }: AccessToolButtonProps) {
           setSuccess(true);
           setTimeout(() => setSuccess(false), 2000);
         }
-      }, 5000);
+      }, 10000);
     } catch (error: any) {
       console.error("Error accessing tool:", error);
       setLoading(false);
-      
-      // If we have a tool URL, try opening it directly as fallback
-      if (tool.toolUrl) {
-        window.open(tool.toolUrl, '_blank');
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 2000);
-      } else {
-        alert(error.message || "Failed to access tool. Please try again.");
-      }
+      alert(error.message || "Failed to access tool. Please try again.");
     }
   };
 
@@ -173,18 +143,15 @@ export function AccessToolButton({ tool }: AccessToolButtonProps) {
       <Button
         className="w-full"
         onClick={handleAccessTool}
-        disabled={loading}
-        variant={success ? "default" : !tool.cookiesEncrypted ? "outline" : "default"}
+        disabled={loading || !tool.cookiesEncrypted}
+        variant={success ? "default" : "default"}
       >
         {loading ? (
           "Opening..."
         ) : success ? (
           "✓ Opened!"
         ) : !tool.cookiesEncrypted ? (
-          <>
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Open Tool (No Auto-Login)
-          </>
+          "Cookies not configured"
         ) : (
           <>
             <ExternalLink className="h-4 w-4 mr-2" />

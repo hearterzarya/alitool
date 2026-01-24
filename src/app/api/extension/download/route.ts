@@ -28,10 +28,7 @@ export async function GET() {
       throw new Error('Extension file not found');
     }
     
-    // Convert Buffer to Uint8Array for NextResponse (Uint8Array is a valid BodyInit type)
-    const uint8Array = new Uint8Array(fileBuffer);
-    
-    return new NextResponse(uint8Array, {
+    return new NextResponse(fileBuffer, {
       headers: {
         'Content-Type': 'application/zip',
         'Content-Disposition': `attachment; filename="${fileName}"`,
