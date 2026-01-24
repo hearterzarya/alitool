@@ -28,13 +28,10 @@ export async function GET() {
       throw new Error('Extension file not found');
     }
     
-    // Convert Buffer to ArrayBuffer for NextResponse
-    const arrayBuffer = fileBuffer.buffer.slice(
-      fileBuffer.byteOffset,
-      fileBuffer.byteOffset + fileBuffer.byteLength
-    );
+    // Convert Buffer to Uint8Array for NextResponse (Uint8Array is a valid BodyInit type)
+    const uint8Array = new Uint8Array(fileBuffer);
     
-    return new NextResponse(arrayBuffer, {
+    return new NextResponse(uint8Array, {
       headers: {
         'Content-Type': 'application/zip',
         'Content-Disposition': `attachment; filename="${fileName}"`,
