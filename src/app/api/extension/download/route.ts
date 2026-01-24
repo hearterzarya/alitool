@@ -4,14 +4,34 @@ import { join } from 'path';
 
 export async function GET() {
   try {
-    const filePath = join(process.cwd(), 'public', 'extension', 'growtools-extension.zip');
+    // Try both possible extension names
+    const possiblePaths = [
+      join(process.cwd(), 'public', 'extension', 'growtools-extension.zip'),
+      join(process.cwd(), 'public', 'extension', 'alitool-extension.zip'),
+    ];
     
-    const fileBuffer = await readFile(filePath);
+    let fileBuffer: Buffer | null = null;
+    let fileName = 'alitool-extension.zip';
+    
+    for (const filePath of possiblePaths) {
+      try {
+        fileBuffer = await readFile(filePath);
+        fileName = filePath.includes('growtools') ? 'growtools-extension.zip' : 'alitool-extension.zip';
+        break;
+      } catch (error) {
+        // Try next path
+        continue;
+      }
+    }
+    
+    if (!fileBuffer) {
+      throw new Error('Extension file not found');
+    }
     
     return new NextResponse(fileBuffer, {
       headers: {
         'Content-Type': 'application/zip',
-        'Content-Disposition': 'attachment; filename="growtools-extension.zip"',
+        'Content-Disposition': `attachment; filename="${fileName}"`,
         'Content-Length': fileBuffer.length.toString(),
       },
     });

@@ -1,4 +1,4 @@
-// GrowTools Extension - Background Service Worker
+// AliDigitalSolution Extension - Background Service Worker
 // Handles cookie injection and tool access
 
 /**

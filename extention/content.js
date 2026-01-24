@@ -1,4 +1,4 @@
-// GrowTools Extension - Content Script
+// AliDigitalSolution Extension - Content Script
 // Listens for messages from the web app and forwards them to background script
 
 // Check if extension APIs are available
@@ -15,7 +15,7 @@ window.addEventListener('message', (event) => {
   
   // Check if extension context is available
   if (!isExtensionContext()) {
-    console.warn('GrowTools extension context not available');
+    console.warn('AliDigitalSolution extension context not available');
     return;
   }
   
@@ -24,7 +24,7 @@ window.addEventListener('message', (event) => {
   if (messageTypes.includes(event.data && event.data.type)) {
     try {
       // Connect to background script
-      const port = chrome.runtime.connect({ name: 'growtools_content' });
+      const port = chrome.runtime.connect({ name: 'alitool_content' });
       
       if (!port) {
         console.error('Failed to connect to background script');

@@ -54,8 +54,8 @@ export default function ExtensionDownloadPage() {
                     Click the download button below to get the extension ZIP file.
                   </p>
                   <a
-                    href="/extension/growtools-extension.zip"
-                    download="growtools-extension.zip"
+                    href="/api/extension/download"
+                    download="alitool-extension.zip"
                     className="inline-block"
                   >
                     <Button 

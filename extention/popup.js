@@ -1,12 +1,23 @@
-// GrowTools Extension - Popup Script
+// AliDigitalSolution Extension - Popup Script
 
 // Get extension version from manifest
 const manifest = chrome.runtime.getManifest();
 document.getElementById('version').textContent = manifest.version;
 
+// Get dashboard URL from storage or use default
+async function getDashboardUrl() {
+  try {
+    const result = await chrome.storage.sync.get(['dashboardUrl']);
+    return result.dashboardUrl || 'https://alitool.vercel.app/dashboard';
+  } catch (error) {
+    return 'https://alitool.vercel.app/dashboard';
+  }
+}
+
 // Open dashboard button
-document.getElementById('openDashboard').addEventListener('click', () => {
-  chrome.tabs.create({ url: 'http://localhost:3000/dashboard' });
+document.getElementById('openDashboard').addEventListener('click', async () => {
+  const dashboardUrl = await getDashboardUrl();
+  chrome.tabs.create({ url: dashboardUrl });
 });
 
 // Refresh status button

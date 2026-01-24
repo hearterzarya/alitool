@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "GrowTools - Premium Tools Access",
+    "name": "AliDigitalSolution - Premium Tools Access",
     "version": "1.0.0",
     "description": "Access premium AI tools with automatic cookie injection and session management",
     "permissions": [
@@ -32,7 +32,7 @@
           "48": "logo.png",
           "128": "logo.png"
       },
-      "default_title": "GrowTools - Premium Tools",
+      "default_title": "AliDigitalSolution - Premium Tools",
       "default_popup": "popup.html"
     },
     "web_accessible_resources": [
