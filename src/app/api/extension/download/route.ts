@@ -28,7 +28,8 @@ export async function GET() {
       throw new Error('Extension file not found');
     }
     
-    return new NextResponse(fileBuffer, {
+    // Return Buffer as Response body (NextResponse accepts Buffer)
+    return new NextResponse(fileBuffer as any, {
       headers: {
         'Content-Type': 'application/zip',
         'Content-Disposition': `attachment; filename="${fileName}"`,
