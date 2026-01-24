@@ -8,9 +8,9 @@ document.getElementById('version').textContent = manifest.version;
 async function getDashboardUrl() {
   try {
     const result = await chrome.storage.sync.get(['dashboardUrl']);
-    return result.dashboardUrl || 'https://alitool.vercel.app/dashboard';
+    return result.dashboardUrl || 'https://alidigitalsolution.in/dashboard';
   } catch (error) {
-    return 'https://alitool.vercel.app/dashboard';
+    return 'https://alidigitalsolution.in/dashboard';
   }
 }
 
