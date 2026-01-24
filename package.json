@@ -15,7 +15,8 @@
     "db:setup": "node scripts/setup-db.js",
     "create-admin": "tsx scripts/create-admin.ts",
     "grant-test-access": "tsx scripts/grant-test-access.ts",
-    "revoke-test-access": "tsx scripts/revoke-test-access.ts"
+    "revoke-test-access": "tsx scripts/revoke-test-access.ts",
+    "build-extension": "node scripts/build-extension.js"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -51,6 +52,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "archiver": "^7.0.1",
     "autoprefixer": "^10.4.20",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
