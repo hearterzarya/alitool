@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sparkles, Mail, Lock, User, ArrowRight, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { GoogleSignInButton } from "@/components/auth/google-signin-button";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -59,18 +60,14 @@ export default function RegisterPage() {
         return;
       }
 
-      // Auto sign in after registration
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError("Account created but sign in failed. Please try logging in.");
+      // Store password temporarily for auto-login after verification
+      if (data.userId) {
+        sessionStorage.setItem('temp_password', password);
+        // Redirect to OTP verification page
+        router.push(`/verify-otp?email=${encodeURIComponent(email)}&userId=${data.userId}&autoLogin=true`);
       } else {
-        router.push("/dashboard");
-        router.refresh();
+        // If no userId, still redirect to verify (for existing user case)
+        router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
       }
     } catch (error) {
       setError("Something went wrong");
@@ -244,6 +241,23 @@ export default function RegisterPage() {
               )}
             </Button>
           </form>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white text-slate-500">Or continue with</span>
+            </div>
+          </div>
+
+          {/* Google Sign-in Button */}
+          <GoogleSignInButton 
+            text="Sign up with Google"
+            className="mb-4"
+            callbackUrl="/dashboard"
+          />
 
           {/* Divider */}
           <div className="relative my-6">

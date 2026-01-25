@@ -1,21 +1,67 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sparkles, Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Sparkles, Mail, Lock, ArrowRight, Eye, EyeOff, RefreshCw, CheckCircle2 } from "lucide-react";
+import { GoogleSignInButton } from "@/components/auth/google-signin-button";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+
+  // Check for success messages and errors from query params
+  useEffect(() => {
+    if (searchParams.get('verified') === 'true') {
+      setSuccess("Email verified successfully! You can now login.");
+      setTimeout(() => setSuccess(""), 5000);
+    }
+    if (searchParams.get('passwordReset') === 'true') {
+      setSuccess("Password reset successfully! You can now login with your new password.");
+      setTimeout(() => setSuccess(""), 5000);
+    }
+    
+    // Handle OAuth errors
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      let errorMessage = 'An error occurred during sign-in. Please try again.';
+      
+      switch (errorParam) {
+        case 'Callback':
+        case 'OAuthCallback':
+          errorMessage = 'OAuth callback failed. This might be due to a configuration issue. Please try again or contact support.';
+          break;
+        case 'OAuthAccountNotLinked':
+          errorMessage = 'An account with this email already exists. Please sign in with your password instead.';
+          break;
+        case 'OAuthCreateAccount':
+          errorMessage = 'Failed to create account. Please try again or contact support.';
+          break;
+        case 'Configuration':
+          errorMessage = 'Authentication is not properly configured. Please contact support.';
+          break;
+        default:
+          errorMessage = `Sign-in error: ${errorParam}. Please try again.`;
+      }
+      
+      setError(errorMessage);
+      // Clear error after 10 seconds
+      setTimeout(() => setError(""), 10000);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +76,13 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        if (result.error === "EMAIL_NOT_VERIFIED") {
+          setEmailNotVerified(true);
+          setError("Please verify your email before logging in. Check your inbox for the verification code.");
+        } else {
+          setError("Invalid email or password");
+          setEmailNotVerified(false);
+        }
       } else {
         // Fetch session immediately after successful login
         const response = await fetch('/api/auth/session', { cache: 'no-store' });
@@ -86,10 +138,79 @@ export default function LoginPage() {
         {/* Login Card */}
         <div className="glass rounded-2xl p-8 border border-slate-200 shadow-2xl backdrop-blur-xl animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {success && (
+              <div className="bg-green-500/10 border border-green-500/50 text-green-700 text-sm p-4 rounded-lg flex items-center space-x-2 animate-fade-in">
+                <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                <span>{success}</span>
+              </div>
+            )}
             {error && (
-              <div className="bg-red-500/10 border border-red-500/50 text-red-300 text-sm p-4 rounded-lg flex items-center space-x-2 animate-fade-in">
-                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
-                <span>{error}</span>
+              <div className={`${emailNotVerified ? 'bg-orange-500/10 border-orange-500/50 text-orange-700' : 'bg-red-500/10 border-red-500/50 text-red-300'} text-sm p-4 rounded-lg space-y-3 animate-fade-in`}>
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 ${emailNotVerified ? 'bg-orange-400' : 'bg-red-400'} rounded-full animate-pulse`} />
+                  <span>{error}</span>
+                </div>
+                {emailNotVerified && (
+                  <div className="space-y-2 pt-2 border-t border-orange-500/20">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        setResendLoading(true);
+                        setResendSuccess(false);
+                        try {
+                          const response = await fetch('/api/auth/resend-otp', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email }),
+                          });
+                          const data = await response.json();
+                          if (response.ok) {
+                            setResendSuccess(true);
+                            setTimeout(() => {
+                              router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
+                            }, 1500);
+                          } else {
+                            setError(data.error || "Failed to resend code");
+                          }
+                        } catch (err) {
+                          setError("Failed to resend code. Please try again.");
+                        } finally {
+                          setResendLoading(false);
+                        }
+                      }}
+                      disabled={resendLoading}
+                      className="w-full text-xs"
+                    >
+                      {resendLoading ? (
+                        <>
+                          <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
+                          Sending...
+                        </>
+                      ) : resendSuccess ? (
+                        <>
+                          <CheckCircle2 className="h-3 w-3 mr-2" />
+                          Code sent! Redirecting...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="h-3 w-3 mr-2" />
+                          Resend Verification Code
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => router.push(`/verify-otp?email=${encodeURIComponent(email)}`)}
+                      className="w-full text-xs"
+                    >
+                      Or verify manually →
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -174,9 +295,24 @@ export default function LoginPage() {
               <div className="w-full border-t border-slate-200" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-slate-500">New to AliDigitalSolution
+              <span className="px-4 bg-white text-slate-500">Or continue with</span>
+            </div>
+          </div>
 
-?</span>
+          {/* Google Sign-in Button */}
+          <GoogleSignInButton 
+            text="Sign in with Google"
+            className="mb-4"
+            callbackUrl="/dashboard"
+          />
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white text-slate-500">New to AliDigitalSolution?</span>
             </div>
           </div>
 

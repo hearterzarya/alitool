@@ -30,6 +30,53 @@ export function AccessToolButton({ tool }: AccessToolButtonProps) {
     setSuccess(false);
 
     try {
+      // First check subscription status
+      const subscriptionResponse = await fetch(`/api/subscriptions/check?toolId=${tool.id}`);
+      if (subscriptionResponse.ok) {
+        const subData = await subscriptionResponse.json();
+        if (subData.success && subData.subscription) {
+          const sub = subData.subscription;
+          const now = new Date();
+          const expiryDate = new Date(sub.currentPeriodEnd);
+          
+          // Check if subscription is expired
+          if (expiryDate < now) {
+            alert('Your subscription has expired. Please renew to continue accessing this tool.');
+            setLoading(false);
+            return;
+          }
+          
+          // Check if subscription is expiring soon (3 days or less)
+          const daysRemaining = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          if (daysRemaining <= 3 && daysRemaining > 0) {
+            const shouldContinue = confirm(
+              `Your subscription expires in ${daysRemaining} ${daysRemaining === 1 ? 'day' : 'days'}. Continue?`
+            );
+            if (!shouldContinue) {
+              setLoading(false);
+              return;
+            }
+          }
+          
+          // Check activation status
+          if (sub.activationStatus === 'PENDING') {
+            alert('Your subscription is pending activation. You will receive confirmation via Email or WhatsApp.');
+            setLoading(false);
+            return;
+          }
+          
+          if (sub.activationStatus === 'SUSPENDED') {
+            alert('Your subscription has been suspended. Please contact support.');
+            setLoading(false);
+            return;
+          }
+        } else {
+          alert('You do not have an active subscription for this tool.');
+          setLoading(false);
+          return;
+        }
+      }
+
       // Check if extension is installed
       const hasExtension = await checkExtension();
 

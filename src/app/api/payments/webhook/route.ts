@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createSubscriptionAfterPayment } from '@/lib/subscription-utils';
 import { PlanType } from '@prisma/client';
+import { sendOrderConfirmationEmail } from '@/lib/order-email';
 
 /**
  * Paygic Webhook Handler
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // If payment is successful, create or update subscription(s)
+    // If payment is successful, create or update subscription(s) and send email
     if (txnStatus === 'SUCCESS' && updatedPayment.status === 'SUCCESS') {
       if (updatedPayment.toolId) {
         // Single tool payment
@@ -80,6 +81,9 @@ export async function POST(req: NextRequest) {
             planType,
             updatedPayment.id
           );
+          
+          // Send order confirmation email
+          await sendOrderConfirmationEmail(updatedPayment.id);
         } catch (error: any) {
           console.error('Error creating subscription after payment:', error);
           // Don't fail webhook, log error for manual review
@@ -159,6 +163,9 @@ export async function POST(req: NextRequest) {
           }
 
           console.log(`Created subscriptions for bundle ${payment.bundleId} with ${payment.bundle.tools.length} tools`);
+          
+          // Send order confirmation email for bundle
+          await sendOrderConfirmationEmail(updatedPayment.id);
         } catch (error: any) {
           console.error('Error creating bundle subscriptions after payment:', error);
           // Don't fail webhook, log error for manual review

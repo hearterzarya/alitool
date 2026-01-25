@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { ShoppingCart, AlertCircle, RefreshCw } from "lucide-react";
 import { ToolIcon } from "@/components/tools/tool-icon";
+import { SubscriptionStatusBadge } from "@/components/dashboard/subscription-status-badge";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -61,6 +62,7 @@ export default async function DashboardPage() {
     id: string;
     tool: any;
     status: string;
+    activationStatus?: string;
     currentPeriodEnd: Date;
     createdAt: Date;
   }> = [];
@@ -146,17 +148,22 @@ export default async function DashboardPage() {
         id: `test-${tool.id}`,
         tool: tool,
         status: 'ACTIVE',
+        activationStatus: 'ACTIVE',
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
         createdAt: new Date(),
       }));
     } else {
-      // Fetch user's active subscriptions for regular users
+      // Fetch user's subscriptions (including expired ones for display)
       subscriptions = await prisma.toolSubscription.findMany({
         where: {
           userId: userId,
-          status: "ACTIVE",
         },
-        include: {
+        select: {
+          id: true,
+          status: true,
+          activationStatus: true,
+          currentPeriodEnd: true,
+          createdAt: true,
           tool: {
             select: {
               id: true,
@@ -309,9 +316,11 @@ export default async function DashboardPage() {
                         </CardDescription>
                       </div>
                     </div>
-                    <Badge variant={subscription.status === "ACTIVE" ? "default" : "secondary"}>
-                      {subscription.status}
-                    </Badge>
+                    <SubscriptionStatusBadge
+                      currentPeriodEnd={subscription.currentPeriodEnd}
+                      subscriptionStatus={subscription.status}
+                      activationStatus={(subscription as any).activationStatus || 'ACTIVE'}
+                    />
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -319,7 +328,9 @@ export default async function DashboardPage() {
                     {!isTestUser && (
                       <>
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Next billing</span>
+                          <span className="text-gray-600 dark:text-gray-400">
+                            {new Date(subscription.currentPeriodEnd) > new Date() ? 'Expires on' : 'Expired on'}
+                          </span>
                           <span className="font-medium">
                             {formatDate(subscription.currentPeriodEnd)}
                           </span>

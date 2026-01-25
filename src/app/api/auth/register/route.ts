@@ -1,15 +1,48 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
+import { generateOtpCode, hashOtpCode } from "@/lib/otp";
+import { sendEmail, generateOtpEmailHtml } from "@/lib/email";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+
+const registerSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  name: z.string().optional(),
+});
 
 export async function POST(req: Request) {
   try {
-    const { email, password, name } = await req.json();
-
-    if (!email || !password) {
+    const body = await req.json();
+    
+    // Validate input
+    const validationResult = registerSchema.safeParse(body);
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: "Email and password are required" },
+        { error: validationResult.error.errors[0].message },
         { status: 400 }
+      );
+    }
+
+    const { email, password, name } = validationResult.data;
+
+    // Rate limiting per IP
+    const clientIp = getClientIp(req);
+    const rateLimit = checkRateLimit({
+      identifier: clientIp,
+      action: 'register',
+      maxAttempts: 5,
+      windowMs: 15 * 60 * 1000, // 15 minutes
+    });
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { 
+          error: "Too many registration attempts. Please try again later.",
+          retryAfter: Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000),
+        },
+        { status: 429 }
       );
     }
 
@@ -31,7 +64,7 @@ export async function POST(req: Request) {
     let existingUser;
     try {
       existingUser = await prisma.user.findUnique({
-        where: { email },
+        where: { email: email.toLowerCase() },
       });
     } catch (prismaError: any) {
       console.error("Prisma query error:", prismaError);
@@ -61,31 +94,79 @@ export async function POST(req: Request) {
     }
 
     if (existingUser) {
+      // Don't reveal if user exists (security best practice)
+      // But still check rate limit for email
+      const emailRateLimit = checkRateLimit({
+        identifier: email.toLowerCase(),
+        action: 'otp_request',
+        maxAttempts: 3,
+        windowMs: 60 * 1000, // 1 minute cooldown
+      });
+
+      if (!emailRateLimit.allowed) {
+        return NextResponse.json(
+          { error: "Please wait before requesting another code." },
+          { status: 429 }
+        );
+      }
+
+      // Generic error to prevent user enumeration
       return NextResponse.json(
-        { error: "User already exists" },
-        { status: 400 }
+        { error: "If this email exists, a verification code has been sent." },
+        { status: 200 } // Return 200 to not reveal if user exists
       );
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
+    // Generate OTP
+    const otpCode = generateOtpCode();
+    const otpHash = await hashOtpCode(otpCode);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Create user (unverified)
+    // Note: isEmailVerified defaults to false in schema, so we don't need to set it explicitly
     const user = await prisma.user.create({
       data: {
-        email,
+        email: email.toLowerCase(),
         name: name || null,
         passwordHash: hashedPassword,
+        otpTokens: {
+          create: {
+            email: email.toLowerCase(),
+            codeHash: otpHash,
+            purpose: 'EMAIL_VERIFY',
+            expiresAt,
+            maxAttempts: 5,
+          },
+        },
       },
     });
 
+    // Send OTP email
+    try {
+      await sendEmail({
+        to: email,
+        subject: 'Your AliDigitalSolution verification code',
+        html: generateOtpEmailHtml(otpCode, 'verification'),
+      });
+    } catch (emailError: any) {
+      // In development, email might be logged to console instead
+      // In production, this is a real error
+      if (process.env.NODE_ENV === 'production') {
+        console.error('Failed to send OTP email:', emailError);
+        // Don't fail registration in production, user can request resend
+      }
+      // In development, error is already handled in sendEmail with console logging
+    }
+
+    // Return success (don't include OTP in response)
     return NextResponse.json(
       {
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-        },
+        success: true,
+        message: "Account created. Please check your email for verification code.",
+        userId: user.id,
       },
       { status: 201 }
     );

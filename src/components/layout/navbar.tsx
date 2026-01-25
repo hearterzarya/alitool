@@ -74,9 +74,12 @@ export function Navbar() {
               <>
                 <Button 
                   asChild 
-                  variant="ghost" 
+                  variant={(session.user as any)?.role === 'ADMIN' ? "default" : "ghost"}
                   size="sm"
-                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-100 border-0 relative group"
+                  className={(session.user as any)?.role === 'ADMIN' 
+                    ? "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white border-0 shadow-lg hover:shadow-purple-500/50 relative group"
+                    : "text-slate-700 hover:text-slate-900 hover:bg-slate-100 border-0 relative group"
+                  }
                 >
                   <Link 
                     href={(session.user as any)?.role === 'ADMIN' ? "/admin" : "/dashboard"}
@@ -84,20 +87,20 @@ export function Navbar() {
                   >
                     <div className="relative">
                       {(session.user as any)?.role === 'ADMIN' ? (
-                        <Shield className="h-4 w-4 text-purple-600" />
+                        <Shield className="h-4 w-4" />
                       ) : (
                         <User className="h-4 w-4" />
                       )}
                       {(session.user as any)?.role === 'ADMIN' && (
-                        <span className="absolute -top-1 -right-1 h-2 w-2 bg-purple-600 rounded-full border-2 border-white"></span>
+                        <span className="absolute -top-1 -right-1 h-2 w-2 bg-yellow-400 rounded-full border-2 border-white animate-pulse"></span>
                       )}
                     </div>
                     <span className="hidden lg:inline">
                       {session.user?.name || session.user?.email?.split('@')[0]}
                     </span>
                     {(session.user as any)?.role === 'ADMIN' && (
-                      <span className="hidden lg:inline ml-1.5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-purple-100 text-purple-700 rounded-md border border-purple-200">
-                        Admin
+                      <span className="hidden lg:inline ml-1.5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-white/20 text-white rounded-md border border-white/30">
+                        ADMIN
                       </span>
                     )}
                   </Link>

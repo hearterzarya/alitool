@@ -28,8 +28,8 @@ export async function GET() {
       throw new Error('Extension file not found');
     }
     
-    // Return Buffer as Response body (NextResponse accepts Buffer)
-    return new NextResponse(fileBuffer as any, {
+    // Return Buffer as Response body - use Response constructor which accepts Buffer
+    return new Response(fileBuffer, {
       headers: {
         'Content-Type': 'application/zip',
         'Content-Disposition': `attachment; filename="${fileName}"`,

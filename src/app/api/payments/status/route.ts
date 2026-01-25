@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { createPaygicToken, checkPaygicStatus } from '@/lib/paygic';
 import { createSubscriptionAfterPayment } from '@/lib/subscription-utils';
 import { PlanType } from '@prisma/client';
+import { sendOrderConfirmationEmail } from '@/lib/order-email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -106,6 +107,9 @@ export async function POST(req: NextRequest) {
             planType,
             updatedPayment.id
           );
+          
+          // Send order confirmation email
+          await sendOrderConfirmationEmail(updatedPayment.id);
         } catch (error: any) {
           console.error('Error creating subscription after payment:', error);
           // Continue to return payment status even if subscription creation fails
@@ -185,6 +189,9 @@ export async function POST(req: NextRequest) {
           }
 
           console.log(`Created subscriptions for bundle ${payment.bundleId} with ${payment.bundle.tools.length} tools`);
+          
+          // Send order confirmation email for bundle
+          await sendOrderConfirmationEmail(updatedPayment.id);
         } catch (error: any) {
           console.error('Error creating bundle subscriptions after payment:', error);
           // Continue to return payment status even if subscription creation fails

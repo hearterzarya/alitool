@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,12 +19,17 @@ interface ToolCardProps {
     category: string;
     icon?: string;
     priceMonthly: number;
+    sharedPlanPrice?: number | null;
+    privatePlanPrice?: number | null;
+    sharedPlanEnabled?: boolean;
+    privatePlanEnabled?: boolean;
     isActive: boolean;
   };
   showSubscribeButton?: boolean;
 }
 
 export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
+  const router = useRouter();
   const categoryLabels: Record<string, string> = {
     AI_WRITING: "AI Writing",
     SEO_TOOLS: "SEO & Marketing",
@@ -34,10 +40,52 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
     OTHER: "Other",
   };
 
-  // Calculate discount (assuming 75% off for demo)
-  const originalPrice = tool.priceMonthly * 4; // 4x for 75% discount
-  const discountPercent = 75;
-  const currentPrice = tool.priceMonthly;
+  // Determine the price to display
+  // Priority: sharedPlanPrice > privatePlanPrice > priceMonthly
+  // If both plans are enabled, show the lower price
+  const getDisplayPrice = () => {
+    const sharedPrice = tool.sharedPlanPrice;
+    const privatePrice = tool.privatePlanPrice;
+    const fallbackPrice = tool.priceMonthly;
+
+    // If both plans are enabled, show the lower price
+    if (tool.sharedPlanEnabled && tool.privatePlanEnabled) {
+      if (sharedPrice && privatePrice) {
+        return Math.min(sharedPrice, privatePrice);
+      }
+      if (sharedPrice) return sharedPrice;
+      if (privatePrice) return privatePrice;
+      return fallbackPrice;
+    }
+
+    // If only shared plan is enabled
+    if (tool.sharedPlanEnabled && sharedPrice) {
+      return sharedPrice;
+    }
+
+    // If only private plan is enabled
+    if (tool.privatePlanEnabled && privatePrice) {
+      return privatePrice;
+    }
+
+    // Fallback to priceMonthly
+    return fallbackPrice;
+  };
+
+  const displayPrice = getDisplayPrice();
+  
+  // Calculate discount if we have both shared and private prices
+  let originalPrice: number | null = null;
+  let discountPercent: number | null = null;
+  
+  if (tool.sharedPlanEnabled && tool.privatePlanEnabled && tool.sharedPlanPrice && tool.privatePlanPrice) {
+    const higherPrice = Math.max(tool.sharedPlanPrice, tool.privatePlanPrice);
+    const lowerPrice = Math.min(tool.sharedPlanPrice, tool.privatePlanPrice);
+    if (higherPrice > lowerPrice) {
+      originalPrice = higherPrice;
+      discountPercent = Math.round(((higherPrice - lowerPrice) / higherPrice) * 100);
+    }
+  }
 
   // Generate features from description
   const getFeatures = () => {
@@ -48,9 +96,15 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
 
   const features = getFeatures();
 
+  const handleCardClick = () => {
+    router.push(`/checkout/${tool.id}`);
+  };
+
   return (
-    <Link href={`/checkout/${tool.id}`} className="block h-full">
-      <Card className="group relative overflow-hidden glass border border-slate-200 hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-purple-500/20 h-full flex flex-col cursor-pointer">
+    <Card 
+      className="group relative overflow-hidden glass border border-slate-200 hover:border-purple-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-purple-500/20 h-full flex flex-col cursor-pointer"
+      onClick={handleCardClick}
+    >
       {/* Gradient overlay on hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-blue-600/0 group-hover:from-purple-600/10 group-hover:to-blue-600/10 transition-all duration-300 pointer-events-none" />
       
@@ -103,42 +157,72 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
 
       <CardContent className="pt-0 space-y-4">
         {/* Pricing */}
-        <div className="flex items-baseline space-x-2">
-          <div className="text-2xl font-bold gradient-text">
-            {formatPrice(currentPrice)}
+        <div className="space-y-2">
+          <div className="flex items-baseline space-x-2 flex-wrap">
+            <div className="text-2xl font-bold gradient-text">
+              {formatPrice(displayPrice)}
+            </div>
+            {originalPrice && discountPercent && (
+              <>
+                <div className="text-sm text-slate-500 line-through">
+                  {formatPrice(originalPrice)}
+                </div>
+                <Badge className="bg-red-100 text-red-700 border-red-300 text-xs">
+                  {discountPercent}% OFF
+                </Badge>
+              </>
+            )}
           </div>
-          <div className="text-sm text-slate-500 line-through">
-            {formatPrice(originalPrice)}
+          <div className="text-xs text-slate-500">
+            {tool.sharedPlanEnabled && tool.privatePlanEnabled 
+              ? 'Starting from' 
+              : tool.sharedPlanEnabled 
+                ? 'Shared plan' 
+                : tool.privatePlanEnabled 
+                  ? 'Private plan' 
+                  : ''} per month
           </div>
-          <Badge className="bg-red-100 text-red-700 border-red-300 text-xs">
-            {discountPercent}% OFF
-          </Badge>
+          {tool.sharedPlanEnabled && tool.privatePlanEnabled && (
+            <div className="flex gap-2 text-xs">
+              {tool.sharedPlanPrice && (
+                <Badge variant="outline" className="text-xs">
+                  Shared: {formatPrice(tool.sharedPlanPrice)}
+                </Badge>
+              )}
+              {tool.privatePlanPrice && (
+                <Badge variant="outline" className="text-xs">
+                  Private: {formatPrice(tool.privatePlanPrice)}
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
-        <div className="text-xs text-slate-500">per month</div>
 
         {/* Action Buttons */}
         <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
           {showSubscribeButton && tool.isActive ? (
             <>
               <Button 
-                asChild
                 size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/checkout/${tool.id}`);
+                }}
                 className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white border-0 shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105 text-xs"
               >
-                <Link href={`/checkout/${tool.id}`} className="flex items-center justify-center">
-                  <ShoppingCart className="h-3 w-3 mr-1" />
-                  Add to Cart
-                </Link>
+                <ShoppingCart className="h-3 w-3 mr-1" />
+                Add to Cart
               </Button>
               <Button 
-                asChild
                 size="sm"
                 variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/checkout/${tool.id}`);
+                }}
                 className="glass border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all text-xs"
               >
-                <Link href={`/checkout/${tool.id}`} className="flex items-center justify-center">
-                  <Eye className="h-3 w-3" />
-                </Link>
+                <Eye className="h-3 w-3" />
               </Button>
             </>
           ) : !tool.isActive ? (
@@ -152,6 +236,5 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
       {/* Shine effect on hover */}
       <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none" />
     </Card>
-    </Link>
   );
 }

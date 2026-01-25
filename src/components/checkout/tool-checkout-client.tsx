@@ -143,9 +143,19 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
     );
   }
 
+  // Handle unauthenticated state with useEffect to avoid setState during render
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push(`/login?redirect=/checkout/${tool.id}`);
+    }
+  }, [status, router, tool.id]);
+
   if (status === 'unauthenticated') {
-    router.push(`/login?redirect=/checkout/${tool.id}`);
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-purple-50 to-blue-50">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+      </div>
+    );
   }
 
   const handleCreatePayment = async (e: React.FormEvent) => {

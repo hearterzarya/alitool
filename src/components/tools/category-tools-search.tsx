@@ -100,6 +100,10 @@ export function CategoryToolsSearch({ tools: initialTools, categoryLabel }: Cate
                 shortDescription: tool.shortDescription || undefined,
                 description: tool.description || undefined,
                 icon: tool.icon || undefined,
+                sharedPlanPrice: tool.sharedPlanPrice || undefined,
+                privatePlanPrice: tool.privatePlanPrice || undefined,
+                sharedPlanEnabled: tool.sharedPlanEnabled || false,
+                privatePlanEnabled: tool.privatePlanEnabled || false,
               }} />
             </div>
           ))}
