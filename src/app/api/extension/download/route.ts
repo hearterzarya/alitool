@@ -28,8 +28,8 @@ export async function GET() {
       throw new Error('Extension file not found');
     }
     
-    // Return Buffer as Response body - use Response constructor which accepts Buffer
-    return new Response(fileBuffer, {
+    // Return Buffer as Response body - convert to Uint8Array for TypeScript compatibility
+    return new Response(new Uint8Array(fileBuffer), {
       headers: {
         'Content-Type': 'application/zip',
         'Content-Disposition': `attachment; filename="${fileName}"`,
