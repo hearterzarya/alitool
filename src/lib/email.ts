@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
+import { formatPrice } from '@/lib/utils';
 
 interface SendEmailOptions {
   to: string;
@@ -254,7 +255,8 @@ export function generateOrderConfirmationEmailHtml({
   credentials?: { email: string; password: string };
   dashboardUrl: string;
 }): string {
-  const amountInRupees = (amount / 100).toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+  // Use formatPrice for consistent INR formatting across the application
+  const amountInRupees = formatPrice(amount);
   const formattedDate = paymentDate.toLocaleString('en-IN', { 
     dateStyle: 'long', 
     timeStyle: 'short' 
@@ -419,7 +421,8 @@ export function generateBundleOrderConfirmationEmailHtml({
   paymentDate: Date;
   dashboardUrl: string;
 }): string {
-  const amountInRupees = (amount / 100).toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+  // Use formatPrice for consistent INR formatting across the application
+  const amountInRupees = formatPrice(amount);
   const formattedDate = paymentDate.toLocaleString('en-IN', { 
     dateStyle: 'long', 
     timeStyle: 'short' 

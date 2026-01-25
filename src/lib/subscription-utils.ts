@@ -12,11 +12,12 @@ export async function createSubscriptionAfterPayment(
   userId: string,
   toolId: string,
   planType: PlanTypeEnum,
-  paymentId: string
+  paymentId: string,
+  durationDays: number = 30 // Default to 30 days (monthly), can be 365 for yearly
 ) {
   const now = new Date();
   const periodEnd = new Date(now);
-  periodEnd.setDate(periodEnd.getDate() + 30); // 30 days subscription
+  periodEnd.setDate(periodEnd.getDate() + durationDays);
 
   // Check if subscription already exists
   const existingSubscription = await prisma.toolSubscription.findUnique({

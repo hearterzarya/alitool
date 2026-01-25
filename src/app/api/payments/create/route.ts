@@ -21,20 +21,42 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { toolId, bundleId, planName, planType, amount, customerName, customerEmail, customerMobile } = body;
+    const { 
+      toolId, 
+      bundleId, 
+      planName, 
+      planType, 
+      duration,
+      amount, 
+      couponId,
+      discountAmount,
+      customerName, 
+      customerEmail, 
+      customerMobile 
+    } = body;
 
     // Validate required fields
-    // Amount can be less than 1 rupee (e.g., 0.01 for 1 paise)
-    if (!amount || amount <= 0) {
+    if (!customerEmail || !customerMobile) {
       return NextResponse.json(
-        { error: 'Invalid amount' },
+        { error: 'Customer email and mobile are required' },
         { status: 400 }
       );
     }
 
-    if (!customerEmail || !customerMobile) {
+    // Validate mobile number format (Indian 10-digit)
+    const mobileRegex = /^[6-9]\d{9}$/;
+    const cleanMobile = customerMobile.replace(/\D/g, '');
+    if (!mobileRegex.test(cleanMobile)) {
       return NextResponse.json(
-        { error: 'Customer email and mobile are required' },
+        { error: 'Invalid mobile number. Please enter a valid 10-digit Indian mobile number.' },
+        { status: 400 }
+      );
+    }
+
+    // Validate that either toolId or bundleId is provided
+    if (!toolId && !bundleId) {
+      return NextResponse.json(
+        { error: 'Either toolId or bundleId is required' },
         { status: 400 }
       );
     }
@@ -56,10 +78,12 @@ export async function POST(req: NextRequest) {
         );
       }
       
-      // Use the provided amount (which includes plan-specific pricing)
-      // Only fallback to tool.priceMonthly if amount is not provided or invalid
+      // Use the provided amount (which is already in rupees from client)
+      // Client sends amount in rupees, so we use it directly
       if (!amount || amount <= 0) {
-        finalAmount = tool.priceMonthly / 100; // Convert from paise to rupees
+        // Fallback: calculate from tool price if amount not provided
+        const toolPrice = typeof tool.priceMonthly === 'bigint' ? Number(tool.priceMonthly) : (tool.priceMonthly || 0);
+        finalAmount = toolPrice / 100; // Convert from paise to rupees
         console.log('Using tool default price (no plan specified):', {
           toolId: tool.id,
           toolName: tool.name,
@@ -67,16 +91,16 @@ export async function POST(req: NextRequest) {
           priceInRupees: finalAmount,
         });
       } else {
-        // Use the plan-specific amount provided by the client
+        // Use the plan-specific amount provided by the client (already in rupees)
         finalAmount = amount;
-        console.log('Using plan-specific price:', {
+        console.log('Using plan-specific price from client:', {
           toolId: tool.id,
           toolName: tool.name,
           planName: planName,
-          planPriceInRupees: finalAmount,
-          toolDefaultPrice: tool.priceMonthly / 100,
-          sharedPlanPrice: tool.sharedPlanPrice ? tool.sharedPlanPrice / 100 : null,
-          privatePlanPrice: tool.privatePlanPrice ? tool.privatePlanPrice / 100 : null,
+          planType: planType,
+          duration: duration,
+          amountInRupees: finalAmount,
+          discountAmount: discountAmount || 0,
         });
       }
     } else if (bundleId) {
@@ -95,22 +119,34 @@ export async function POST(req: NextRequest) {
           }
           
           // Use the provided amount (which includes plan-specific pricing)
+          // Amount is already in rupees from client
           if (!amount || amount <= 0) {
-            finalAmount = bundle.priceMonthly / 100; // Convert from paise to rupees
-            console.log('Using bundle default price:', {
+            // Fallback: calculate from bundle priceMonthly if amount not provided
+            const bundlePrice = typeof bundle.priceMonthly === 'bigint' ? Number(bundle.priceMonthly) : (bundle.priceMonthly || 0);
+            finalAmount = bundlePrice / 100; // Convert from paise to rupees
+            console.log('Using bundle default price (fallback):', {
               bundleId: bundle.id,
               bundleName: bundle.name,
-              priceMonthly: bundle.priceMonthly,
+              priceMonthly: bundlePrice,
               priceInRupees: finalAmount,
             });
           } else {
+            // Use the amount provided by the client (already in rupees)
             finalAmount = amount;
-            console.log('Using plan-specific bundle price:', {
+            console.log('Using plan-specific bundle price from client:', {
               bundleId: bundle.id,
               bundleName: bundle.name,
               planName: planName,
               planPriceInRupees: finalAmount,
             });
+          }
+
+          // Validate final amount
+          if (finalAmount <= 0) {
+            return NextResponse.json(
+              { error: 'Invalid bundle price. Please contact support.' },
+              { status: 400 }
+            );
           }
         } else {
           console.warn('Bundle model not available in Prisma client. Please run: npx prisma generate');
@@ -135,15 +171,19 @@ export async function POST(req: NextRequest) {
     const token = await createPaygicToken();
 
     // Paygic expects amount in rupees (as a string)
-    // Use finalAmount which is already in rupees
-    const amountInRupees = Math.round(finalAmount * 100) / 100; // Round to 2 decimal places
+    // finalAmount is already in rupees from client
+    // Round to 2 decimal places for Paygic
+    const amountInRupees = Math.round(finalAmount * 100) / 100;
     const amountForPaygic = amountInRupees.toString();
     
     console.log('Payment creation:', {
       amountInRupees: finalAmount,
       amountForPaygic,
       toolId,
-      toolPriceMonthly: tool?.priceMonthly,
+      bundleId,
+      planType,
+      duration,
+      discountAmount: discountAmount || 0,
       originalProvidedAmount: amount,
     });
     
@@ -162,16 +202,23 @@ export async function POST(req: NextRequest) {
       merchantReferenceId,
       customer_name: customerName || session.user.name || 'Customer',
       customer_email: customerEmail,
-      customer_mobile: customerMobile,
+      customer_mobile: customerMobile.replace(/\D/g, ''), // Clean mobile number
     });
 
     // Save payment to database
     const paymentData: any = {
       userId: (session.user as any).id,
       toolId: toolId || null,
-      planName: planName || null,
+      planName: duration ? `${planName || 'Plan'} - ${
+        duration === '1year' ? '1 Year' :
+        duration === '6months' ? '6 Months' :
+        duration === '3months' ? '3 Months' :
+        '1 Month'
+      }` : (planName || null),
       planType: planType || (toolId ? PlanType.SHARED : null), // Default to SHARED for tool purchases
-      amount: Math.round(finalAmount * 100), // Store in paise
+      amount: Math.round(finalAmount * 100), // Store in paise (original amount before discount)
+      discountAmount: discountAmount ? Math.round(discountAmount * 100) : 0, // Store discount in paise
+      couponId: couponId || null,
       merchantReferenceId,
       paygicToken: token,
       upiIntent: paygicResponse.data.intent,
@@ -181,7 +228,7 @@ export async function POST(req: NextRequest) {
       dynamicQR: paygicResponse.data.dynamicQR,
       customerName: customerName || session.user.name || null,
       customerEmail,
-      customerMobile,
+      customerMobile: customerMobile.replace(/\D/g, ''), // Clean mobile number
       expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes expiry
       status: 'PENDING',
     };

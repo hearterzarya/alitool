@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { ToolCheckoutClient } from '@/components/checkout/tool-checkout-client';
+import { headers } from 'next/headers';
+import { serializeTool } from '@/lib/utils';
 
 // Force dynamic rendering to prevent static generation issues
 export const dynamic = 'force-dynamic';
@@ -9,11 +11,17 @@ export const revalidate = 0;
 
 export default async function ToolCheckoutPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ toolId: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   try {
     const { toolId } = await params;
+    const search = searchParams ? await searchParams : {};
+    const plan = search.plan as string | undefined;
+    const duration = search.duration as string | undefined;
+    const couponId = search.couponId as string | undefined;
     
     console.log('ToolCheckoutPage - toolId:', toolId);
 
@@ -57,7 +65,17 @@ export default async function ToolCheckoutPage({
       );
     }
 
-    return <ToolCheckoutClient tool={tool} />;
+    // Serialize tool to convert BigInt to numbers
+    const serializedTool = serializeTool(tool);
+
+    return (
+      <ToolCheckoutClient 
+        tool={serializedTool} 
+        initialPlan={plan as 'shared' | 'private' | undefined}
+        initialDuration={duration as '1month' | '3months' | '6months' | '1year' | undefined}
+        initialCouponId={couponId}
+      />
+    );
   } catch (error) {
     console.error('Error loading tool checkout:', error);
     notFound();

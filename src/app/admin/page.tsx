@@ -29,7 +29,7 @@ export default async function AdminDashboard() {
         where: { status: "ACTIVE" },
         include: { tool: true },
       }).then((subs) =>
-        subs.reduce((sum, sub) => sum + sub.tool.priceMonthly, 0)
+        subs.reduce((sum, sub) => sum + Number(sub.tool.priceMonthly || 0), 0)
       ).catch(() => 0),
       prisma.user.findMany({
         take: 5,

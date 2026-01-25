@@ -3,38 +3,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { formatPrice, formatDate } from "@/lib/utils";
-import { Pencil, Plus, AlertCircle, CheckCircle, Wrench } from "lucide-react";
+import { formatPrice, formatDate, serializeTool } from "@/lib/utils";
+import { getMinimumStartingPrice } from "@/lib/price-utils";
+import { Pencil, Plus, AlertCircle, CheckCircle, Wrench, Trash2 } from "lucide-react";
 import { ToolIcon } from "@/components/tools/tool-icon";
+import { DeleteToolButton } from "@/components/admin/delete-tool-button";
 
 export default async function ToolsManagementPage() {
   const tools = await prisma.tool.findMany({
     orderBy: { sortOrder: "asc" },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      description: true,
-      shortDescription: true,
-      category: true,
-      icon: true,
-      toolUrl: true,
-      priceMonthly: true,
-      sharedPlanPrice: true,
-      privatePlanPrice: true,
-      sharedPlanFeatures: true,
-      privatePlanFeatures: true,
-      sharedPlanEnabled: true,
-      privatePlanEnabled: true,
-      cookiesEncrypted: true,
-      cookiesUpdatedAt: true,
-      cookiesExpiryDate: true,
-      isActive: true,
-      isFeatured: true,
-      sortOrder: true,
-      stripePriceId: true,
-      createdAt: true,
-      updatedAt: true,
+    include: {
       subscriptions: {
         where: { status: "ACTIVE" },
         select: {
@@ -83,6 +61,25 @@ export default async function ToolsManagementPage() {
             ? new Date(tool.cookiesExpiryDate) < new Date()
             : false;
           const needsAttention = !hasCookies || cookiesExpired;
+          
+          // Serialize tool to convert BigInt to number
+          // Note: serializeTool already filters corrupted prices via safeConvertPrice
+          const serializedTool = serializeTool(tool);
+          
+          // Get minimum starting price from all available plans
+          // This function checks: 1-month prices > base plan prices > priceMonthly
+          const minimumPrice = getMinimumStartingPrice(serializedTool);
+          
+          // Debug: Log if price seems wrong (only in dev)
+          if (process.env.NODE_ENV === 'development' && minimumPrice === 0 && tool.priceMonthly) {
+            console.log('No valid price found for tool:', tool.name, {
+              priceMonthly: tool.priceMonthly,
+              sharedPlanPrice1Month: tool.sharedPlanPrice1Month,
+              privatePlanPrice1Month: tool.privatePlanPrice1Month,
+              sharedPlanPrice: tool.sharedPlanPrice,
+              privatePlanPrice: tool.privatePlanPrice,
+            });
+          }
 
           return (
             <Card key={tool.id} className={needsAttention ? "border-orange-200" : ""}>
@@ -110,12 +107,19 @@ export default async function ToolsManagementPage() {
                       </div>
                     </div>
                   </div>
-                  <Button asChild variant="outline" size="sm">
-                    <Link href={`/admin/tools/${tool.id}/edit`}>
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Edit
-                    </Link>
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/admin/tools/${tool.id}/edit`}>
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Edit
+                      </Link>
+                    </Button>
+                    <DeleteToolButton
+                      toolId={tool.id}
+                      toolName={tool.name}
+                      hasActiveSubscriptions={tool.subscriptions.length > 0}
+                    />
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -125,8 +129,16 @@ export default async function ToolsManagementPage() {
                     <p className="font-medium">{tool.category.replace(/_/g, " ")}</p>
                   </div>
                   <div>
-                    <p className="text-gray-600 dark:text-gray-400">Price</p>
-                    <p className="font-medium">{formatPrice(tool.priceMonthly)}/mo</p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {tool.sharedPlanEnabled && tool.privatePlanEnabled ? "Starting from" : "Price"}
+                    </p>
+                    <p className="font-medium">
+                      {minimumPrice > 0 ? (
+                        <span className="text-green-600 font-semibold">{formatPrice(minimumPrice)}/mo</span>
+                      ) : (
+                        <span className="text-gray-400 italic">Not set</span>
+                      )}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-600 dark:text-gray-400">Active Subscriptions</p>

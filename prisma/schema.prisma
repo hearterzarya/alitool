@@ -100,15 +100,32 @@ model Tool {
   category         ToolCategory
   icon             String? // Icon URL or emoji
   toolUrl          String // https://chat.openai.com
-  priceMonthly     Int // in paise (e.g., 5000 = ₹50) - deprecated, use plan prices
+  priceMonthly     BigInt // in paise (e.g., 5000 = ₹50) - deprecated, use plan prices
 
-  // Plan pricing
-  sharedPlanPrice     Int? // Shared plan price in paise
-  privatePlanPrice    Int? // Private plan price in paise
+  // Plan pricing - Duration specific prices (in paise)
+  // Shared Plan Prices
+  sharedPlanPrice1Month  BigInt? // 1 month price in paise
+  sharedPlanPrice3Months BigInt? // 3 months price in paise
+  sharedPlanPrice6Months BigInt? // 6 months price in paise
+  sharedPlanPrice1Year   BigInt? // 1 year price in paise
+  // Private Plan Prices
+  privatePlanPrice1Month  BigInt? // 1 month price in paise
+  privatePlanPrice3Months BigInt? // 3 months price in paise
+  privatePlanPrice6Months BigInt? // 6 months price in paise
+  privatePlanPrice1Year   BigInt? // 1 year price in paise
+  
+  // Legacy fields (kept for backward compatibility)
+  sharedPlanPrice     BigInt? // Shared plan price in paise (deprecated, use duration-specific prices)
+  privatePlanPrice    BigInt? // Private plan price in paise (deprecated, use duration-specific prices)
+  
   sharedPlanFeatures  String? @db.Text // JSON array or comma-separated features
   privatePlanFeatures String? @db.Text // JSON array or comma-separated features
   sharedPlanEnabled   Boolean @default(false) // Enable/disable shared plan
   privatePlanEnabled  Boolean @default(false) // Enable/disable private plan
+  sharedPlanName      String? // Custom name for shared plan
+  privatePlanName      String? // Custom name for private plan
+  sharedPlanDescription String? @db.Text // Custom description for shared plan
+  privatePlanDescription String? @db.Text // Custom description for private plan
 
   // Cookie storage (encrypted)
   cookiesEncrypted  String?   @db.Text
@@ -118,6 +135,7 @@ model Tool {
   isActive   Boolean @default(true)
   isFeatured Boolean @default(false) // Featured in slider
   sortOrder  Int     @default(0)
+  isOutOfStock Boolean @default(false) // Out of stock status
 
   stripePriceId String? // Stripe Price ID for subscription
 
@@ -235,6 +253,37 @@ model PrivateCredentials {
   @@map("private_credentials")
 }
 
+// Coupon Codes
+model Coupon {
+  id          String   @id @default(uuid())
+  code        String   @unique // Coupon code (e.g., "SAVE20")
+  description String?  @db.Text
+  discountType DiscountType // PERCENTAGE or FIXED
+  discountValue Int // Percentage (0-100) or fixed amount in paise
+  minAmount   Int? // Minimum purchase amount in paise (optional)
+  maxDiscount Int? // Maximum discount in paise (for percentage coupons)
+  maxUses     Int? // Maximum number of times coupon can be used (null = unlimited)
+  usedCount   Int     @default(0) // Number of times already used
+  validFrom   DateTime @default(now())
+  validUntil  DateTime? // Expiry date (null = no expiry)
+  isActive    Boolean  @default(true)
+  
+  // Usage tracking
+  payments    Payment[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([code])
+  @@index([isActive, validUntil])
+  @@map("coupons")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
 // Payment transactions (Paygic)
 model Payment {
   id       String    @id @default(uuid())
@@ -244,6 +293,8 @@ model Payment {
   planName String? // For bundle purchases (Starter, Pro, Elite) or plan type
   planType PlanType? // SHARED or PRIVATE for tool purchases
   amount   Int // Amount in paise (e.g., 99900 = ₹999)
+  couponId String? // Applied coupon
+  discountAmount Int @default(0) // Discount applied in paise
 
   // Paygic details
   merchantReferenceId String  @unique // Our unique reference ID
@@ -275,6 +326,7 @@ model Payment {
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   tool   Tool?   @relation(fields: [toolId], references: [id], onDelete: SetNull)
   bundle Bundle? @relation(fields: [bundleId], references: [id], onDelete: SetNull)
+  coupon Coupon? @relation(fields: [couponId], references: [id], onDelete: SetNull)
 
   @@map("payments")
 }
@@ -295,9 +347,9 @@ model Bundle {
   description      String  @db.Text
   shortDescription String?
   icon             String? // Icon URL or emoji
-  priceMonthly     Int // Monthly price in paise
-  priceSixMonth    Int? // 6-month price in paise
-  priceYearly      Int? // Yearly price in paise
+  priceMonthly     BigInt // Monthly price in paise
+  priceSixMonth    BigInt? // 6-month price in paise
+  priceYearly      BigInt? // Yearly price in paise
   features         String? @db.Text // JSON array or comma-separated features
   isActive         Boolean @default(true)
   isTrending       Boolean @default(false) // Featured in trending slider

@@ -68,18 +68,51 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // If payment is successful, increment coupon usage count
+    if (txnStatus === 'SUCCESS' && updatedPayment.status === 'SUCCESS' && updatedPayment.couponId) {
+      try {
+        await prisma.coupon.update({
+          where: { id: updatedPayment.couponId },
+          data: {
+            usedCount: {
+              increment: 1,
+            },
+          },
+        });
+      } catch (error) {
+        console.error('Error updating coupon usage count:', error);
+        // Don't fail webhook, just log error
+      }
+    }
+
     // If payment is successful, create or update subscription(s) and send email
     if (txnStatus === 'SUCCESS' && updatedPayment.status === 'SUCCESS') {
       if (updatedPayment.toolId) {
         // Single tool payment
         const planType = ((updatedPayment as any).planType || PlanType.SHARED) as PlanType;
         
+        // Determine duration from payment planName or duration field
+        // Check planName for duration indicators
+        const planName = updatedPayment.planName?.toLowerCase() || '';
+        let duration = 30; // Default to 1 month
+        
+        if (planName.includes('1 year') || planName.includes('year') || (updatedPayment as any).duration === '1year') {
+          duration = 365;
+        } else if (planName.includes('6 months') || planName.includes('6month') || (updatedPayment as any).duration === '6months') {
+          duration = 180;
+        } else if (planName.includes('3 months') || planName.includes('3month') || (updatedPayment as any).duration === '3months') {
+          duration = 90;
+        } else if (planName.includes('1 month') || planName.includes('1month') || (updatedPayment as any).duration === '1month') {
+          duration = 30;
+        }
+        
         try {
           await createSubscriptionAfterPayment(
             payment.userId,
             updatedPayment.toolId,
             planType,
-            updatedPayment.id
+            updatedPayment.id,
+            duration
           );
           
           // Send order confirmation email

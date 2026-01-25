@@ -1,14 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ToolIcon } from '@/components/tools/tool-icon';
+import { formatPrice } from '@/lib/utils';
+import { 
+  toNumber, 
+  getBasePrice, 
+  getOneMonthPrice, 
+  getPriceForDuration,
+  calculateDiscountPercent,
+  type PlanType,
+  type Duration
+} from '@/lib/price-utils';
 import { 
   CreditCard, 
   Smartphone, 
@@ -18,11 +29,24 @@ import {
   XCircle,
   ArrowLeft,
   ExternalLink,
-  Star
+  Star,
+  Tag,
+  RefreshCw,
+  X,
+  Plus,
+  Minus,
+  ShoppingBag
 } from 'lucide-react';
 import Link from 'next/link';
 import { ToolCategory } from '@prisma/client';
 import { QRCodeSVG } from 'qrcode.react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface PaymentLinks {
   upiIntent: string;
@@ -42,6 +66,16 @@ interface Tool {
   icon?: string | null;
   toolUrl: string;
   priceMonthly: number;
+  // Duration-specific prices
+  sharedPlanPrice1Month?: number | null;
+  sharedPlanPrice3Months?: number | null;
+  sharedPlanPrice6Months?: number | null;
+  sharedPlanPrice1Year?: number | null;
+  privatePlanPrice1Month?: number | null;
+  privatePlanPrice3Months?: number | null;
+  privatePlanPrice6Months?: number | null;
+  privatePlanPrice1Year?: number | null;
+  // Legacy fields
   sharedPlanPrice?: number | null;
   privatePlanPrice?: number | null;
   sharedPlanFeatures?: string | null;
@@ -53,6 +87,9 @@ interface Tool {
 
 interface ToolCheckoutClientProps {
   tool: Tool;
+  initialPlan?: 'shared' | 'private';
+  initialDuration?: '1month' | '3months' | '6months' | '1year';
+  initialCouponId?: string;
 }
 
 const categoryLabels: Record<ToolCategory, string> = {
@@ -65,7 +102,12 @@ const categoryLabels: Record<ToolCategory, string> = {
   OTHER: "Other",
 };
 
-export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
+export function ToolCheckoutClient({ 
+  tool, 
+  initialPlan,
+  initialDuration,
+  initialCouponId 
+}: ToolCheckoutClientProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -77,18 +119,112 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
   const [checkingStatus, setCheckingStatus] = useState(false);
 
   // Plan selection
-  // Plan selection - default to first available plan
   const getDefaultPlan = (): 'shared' | 'private' => {
+    if (initialPlan) return initialPlan;
     if (tool.sharedPlanEnabled) return 'shared';
     if (tool.privatePlanEnabled) return 'private';
-    return 'shared'; // fallback
+    return 'shared';
   };
   const [selectedPlan, setSelectedPlan] = useState<'shared' | 'private'>(getDefaultPlan());
   
+  // Prevent plan change if plan is provided in URL
+  const isPlanLocked = !!initialPlan;
+  
+  // Duration selection
+  const [selectedDuration, setSelectedDuration] = useState<'1month' | '3months' | '6months' | '1year'>(
+    (initialDuration as '1month' | '3months' | '6months' | '1year') || '1month'
+  );
+
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [couponError, setCouponError] = useState('');
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+
+  // Load and validate initial coupon if provided from product page (runs once on mount)
+  useEffect(() => {
+    if (initialCouponId && !appliedCoupon) {
+      // Fetch coupon details and validate it
+      const loadAndValidateCoupon = async () => {
+        try {
+          console.log('Loading coupon from product page:', initialCouponId);
+          
+          // First, get coupon details
+          const couponRes = await fetch(`/api/admin/coupons/${initialCouponId}`);
+          if (!couponRes.ok) {
+            console.error('Failed to fetch coupon:', couponRes.status);
+            return;
+          }
+          
+          const couponData = await couponRes.json();
+          
+          if (couponData.coupon) {
+            console.log('Coupon found:', couponData.coupon.code);
+            
+            // Calculate current price based on selected plan and duration (use duration-specific prices if available)
+            const currentBasePrice = getBasePrice(tool, selectedPlan);
+            const currentOneMonthPrice = getOneMonthPrice(tool, selectedPlan, currentBasePrice);
+            const currentPrice = getPriceForDuration(tool, selectedPlan, selectedDuration, currentOneMonthPrice);
+            const amountInPaise = Math.floor(currentPrice);
+            
+            console.log('Validating coupon with amount:', amountInPaise, 'paise');
+            
+            // Validate coupon with current price
+            const validateRes = await fetch('/api/coupons/validate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                code: couponData.coupon.code,
+                amount: amountInPaise,
+              }),
+            });
+            
+            if (validateRes.ok) {
+              const validateData = await validateRes.json();
+              console.log('Coupon validation result:', validateData);
+              
+              if (validateData.valid) {
+                console.log('✅ Coupon applied successfully:', {
+                  code: validateData.coupon.code,
+                  discountAmount: validateData.discountAmount,
+                  originalAmount: validateData.originalAmount,
+                  finalAmount: validateData.finalAmount
+                });
+                setAppliedCoupon(validateData);
+                setCouponCode(couponData.coupon.code);
+                setCouponError('');
+              } else {
+                console.error('❌ Coupon validation failed:', validateData.error);
+                setCouponError(validateData.error || 'Coupon is not valid for this purchase');
+              }
+            } else {
+              const errorData = await validateRes.json().catch(() => ({ error: 'Failed to validate coupon' }));
+              console.error('❌ Coupon validation error:', errorData);
+              setCouponError(errorData.error || 'Failed to validate coupon');
+            }
+          } else {
+            console.error('Coupon data not found in response');
+          }
+        } catch (error) {
+          console.error('Error loading coupon:', error);
+          setCouponError('Failed to load coupon. Please try again.');
+        }
+      };
+      
+      // Small delay to ensure component is fully mounted
+      const timeoutId = setTimeout(loadAndValidateCoupon, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [initialCouponId]); // Only run when initialCouponId changes, not on plan/duration changes
+  
   // Form state
   const [customerName, setCustomerName] = useState('');
+  const [customerFirstName, setCustomerFirstName] = useState('');
+  const [customerLastName, setCustomerLastName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerMobile, setCustomerMobile] = useState('');
+  const [orderNotes, setOrderNotes] = useState('');
+  const [showCouponInput, setShowCouponInput] = useState(false);
 
   // Initialize form with session data
   useEffect(() => {
@@ -98,11 +234,36 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
     }
   }, [session]);
 
-  // Poll payment status
+  // Handle unauthenticated state with useEffect to avoid setState during render
+  // This must be called before any early returns to maintain hook order
   useEffect(() => {
-    if (!merchantReferenceId || paymentStatus !== 'pending') return;
+    if (status === 'unauthenticated') {
+      router.push(`/login?redirect=/checkout/${tool.id}`);
+    }
+  }, [status, router, tool.id]);
+
+  // Poll payment status - Improved with better error handling and UI updates
+  useEffect(() => {
+    if (!merchantReferenceId || !paymentCreated) return;
+    
+    // Don't poll if already successful or failed
+    if (paymentStatus === 'success' || paymentStatus === 'failed') {
+      return;
+    }
+
+    let pollCount = 0;
+    const maxPolls = 100; // Maximum 5 minutes (100 * 3 seconds)
 
     const interval = setInterval(async () => {
+      pollCount++;
+      
+      // Stop polling after max attempts
+      if (pollCount > maxPolls) {
+        clearInterval(interval);
+        setCheckingStatus(false);
+        return;
+      }
+
       try {
         setCheckingStatus(true);
         const response = await fetch('/api/payments/status', {
@@ -111,30 +272,48 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
           body: JSON.stringify({ merchantReferenceId }),
         });
 
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
         
-        if (data.success && data.payment.status === 'SUCCESS') {
-          setPaymentStatus('success');
-          clearInterval(interval);
-          // Redirect to success page after 2 seconds
-          setTimeout(() => {
-            router.push(`/payment/success?ref=${merchantReferenceId}`);
-          }, 2000);
-        } else if (data.success && data.payment.status === 'FAILED') {
-          setPaymentStatus('failed');
-          clearInterval(interval);
+        if (data.success && data.payment) {
+          const status = data.payment.status || data.payment.txnStatus;
+          
+          if (status === 'SUCCESS') {
+            setPaymentStatus('success');
+            setCheckingStatus(false);
+            clearInterval(interval);
+            
+            // Show success message and redirect after 3 seconds
+            setTimeout(() => {
+              router.push(`/payment/success?ref=${merchantReferenceId}`);
+            }, 3000);
+          } else if (status === 'FAILED' || status === 'EXPIRED') {
+            setPaymentStatus('failed');
+            setCheckingStatus(false);
+            clearInterval(interval);
+          }
+          // If still PENDING, continue polling
+        } else {
+          console.error('Payment status check failed:', data.error);
         }
       } catch (error) {
         console.error('Error checking payment status:', error);
-      } finally {
+        // Continue polling on error (might be temporary network issue)
         setCheckingStatus(false);
       }
     }, 3000); // Check every 3 seconds
 
     return () => clearInterval(interval);
-  }, [merchantReferenceId, paymentStatus, router]);
+  }, [merchantReferenceId, paymentCreated, paymentStatus, router]);
 
-  // Redirect if not authenticated
+  // Quantity state (for display purposes, subscriptions are typically 1)
+  // Must be declared before early returns to maintain hook order
+  const [quantity, setQuantity] = useState(1);
+
+  // Redirect if not authenticated - early returns after all hooks
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-purple-50 to-blue-50">
@@ -142,13 +321,6 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
       </div>
     );
   }
-
-  // Handle unauthenticated state with useEffect to avoid setState during render
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push(`/login?redirect=/checkout/${tool.id}`);
-    }
-  }, [status, router, tool.id]);
 
   if (status === 'unauthenticated') {
     return (
@@ -158,10 +330,104 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
     );
   }
 
+  // Professional price calculation using validated utilities
+  // Prices are stored in paise (e.g., 19900 = ₹199)
+  // All prices are validated and filtered for corrupted data
+  const basePrice = getBasePrice(tool, selectedPlan);
+  const oneMonthPrice = getOneMonthPrice(tool, selectedPlan, basePrice);
+  const planPrice = getPriceForDuration(tool, selectedPlan, selectedDuration, oneMonthPrice);
+  
+  // Safety check: Ensure we have valid prices before proceeding
+  if (planPrice <= 0 || oneMonthPrice <= 0) {
+    console.error('Invalid prices detected for tool:', tool.name, {
+      basePrice,
+      oneMonthPrice,
+      planPrice,
+      selectedPlan,
+      selectedDuration,
+    });
+  }
+  
+  // Helper functions for component logic
+  const getOneMonthPriceLocal = () => oneMonthPrice;
+  const getPriceForDurationLocal = (duration: Duration) => 
+    getPriceForDuration(tool, selectedPlan, duration, oneMonthPrice);
+
+  // Revalidate coupon when plan or duration changes (if coupon is already applied)
+  // This runs separately from initial coupon loading
+  const prevPlanRef = useRef(selectedPlan);
+  const prevDurationRef = useRef(selectedDuration);
+  
+  useEffect(() => {
+    // Only revalidate if plan or duration actually changed (not on initial mount)
+    const planChanged = prevPlanRef.current !== selectedPlan;
+    const durationChanged = prevDurationRef.current !== selectedDuration;
+    
+    if (appliedCoupon?.coupon?.code && planPrice > 0 && (planChanged || durationChanged)) {
+      console.log('Plan or duration changed, revalidating coupon...');
+      
+      const revalidateCoupon = async () => {
+        try {
+          const amountInPaise = Math.floor(planPrice);
+          console.log('Revalidating coupon with new amount:', amountInPaise);
+          
+          const response = await fetch('/api/coupons/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              code: appliedCoupon.coupon.code,
+              amount: amountInPaise,
+            }),
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.valid) {
+              console.log('Coupon revalidated successfully, new discount:', data.discountAmount);
+              setAppliedCoupon(data);
+              setCouponError('');
+            } else {
+              console.log('Coupon no longer valid:', data.error);
+              // Coupon no longer valid, remove it
+              setAppliedCoupon(null);
+              setCouponCode('');
+              setCouponError(data.error || 'Coupon is no longer valid for this purchase');
+            }
+          }
+        } catch (error) {
+          console.error('Error revalidating coupon:', error);
+        }
+      };
+      
+      // Small delay to avoid too many requests
+      const timeoutId = setTimeout(revalidateCoupon, 500);
+      return () => clearTimeout(timeoutId);
+    }
+    
+    // Update refs
+    prevPlanRef.current = selectedPlan;
+    prevDurationRef.current = selectedDuration;
+  }, [selectedPlan, selectedDuration, planPrice, appliedCoupon]);
+
+  // Apply coupon discount if available (per unit)
+  let finalPricePerUnit = planPrice;
+  if (appliedCoupon && appliedCoupon.discountAmount && appliedCoupon.discountAmount > 0) {
+    finalPricePerUnit = planPrice - appliedCoupon.discountAmount;
+    if (finalPricePerUnit < 0) finalPricePerUnit = 0; // Can't be negative
+  }
+  
+  // Final price with quantity (for display and payment)
+  const finalPrice = finalPricePerUnit * quantity;
+
   const handleCreatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!customerEmail || !customerMobile) {
+    // Use first name + last name if available, otherwise use full name
+    const fullName = (customerFirstName && customerLastName) 
+      ? `${customerFirstName} ${customerLastName}`.trim()
+      : customerName || `${customerFirstName} ${customerLastName}`.trim();
+    
+    if (!customerEmail || !customerMobile || !fullName) {
       alert('Please fill in all required fields');
       return;
     }
@@ -176,17 +442,21 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
     setLoading(true);
 
     try {
-      // Get price based on selected plan
-      const planPrice = selectedPlan === 'shared' 
-        ? (tool.sharedPlanPrice || tool.priceMonthly)
-        : (tool.privatePlanPrice || tool.priceMonthly);
-      const amount = planPrice / 100; // Convert from paise to rupees
+      // Calculate amount (finalPrice already includes quantity)
+      const amount = finalPrice / 100; // Convert from paise to rupees
       
       console.log('Creating payment:', {
         toolId: tool.id,
         plan: selectedPlan,
-        planPrice: planPrice,
+        duration: selectedDuration,
+        quantity: quantity,
+        basePrice,
+        planPrice,
+        discountAmount: appliedCoupon?.discountAmount || 0,
+        finalPricePerUnit: finalPricePerUnit,
+        finalPrice: finalPrice,
         amountInRupees: amount,
+        couponId: appliedCoupon?.coupon?.id,
       });
       
       const response = await fetch('/api/payments/create', {
@@ -195,8 +465,11 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
         body: JSON.stringify({
           toolId: tool.id,
           planName: selectedPlan === 'shared' ? 'Shared Plan' : 'Private Plan',
-          planType: selectedPlan === 'shared' ? 'SHARED' : 'PRIVATE', // Will be converted to enum in API
+          planType: selectedPlan === 'shared' ? 'SHARED' : 'PRIVATE',
+          duration: selectedDuration,
           amount,
+          couponId: appliedCoupon?.coupon?.id,
+          discountAmount: appliedCoupon ? appliedCoupon.discountAmount / 100 : 0,
           customerName,
           customerEmail,
           customerMobile: customerMobile.replace(/\D/g, ''),
@@ -209,8 +482,12 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
         setPaymentLinks(data.payment.paymentLinks);
         setMerchantReferenceId(data.payment.merchantReferenceId);
         setPaymentCreated(true);
+        setPaymentStatus('pending'); // Ensure status is set to pending for polling
+        // Scroll to payment options
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         alert(data.error || 'Failed to create payment');
+        setLoading(false);
       }
     } catch (error) {
       console.error('Error creating payment:', error);
@@ -223,23 +500,61 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
   const handleUPIPayment = (link: string) => {
     if (link) {
       window.open(link, '_blank');
+      // Reset checking status to show polling immediately
+      setCheckingStatus(true);
     }
   };
 
-  // Get selected plan details
-  const selectedPlanPrice = selectedPlan === 'shared' 
-    ? (tool.sharedPlanPrice || tool.priceMonthly)
-    : (tool.privatePlanPrice || tool.priceMonthly);
+  // Manual refresh payment status
+  const handleRefreshStatus = async () => {
+    if (!merchantReferenceId) return;
+    
+    setCheckingStatus(true);
+    try {
+      const response = await fetch('/api/payments/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ merchantReferenceId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.payment) {
+        const status = data.payment.status || data.payment.txnStatus;
+        
+        if (status === 'SUCCESS') {
+          setPaymentStatus('success');
+          setTimeout(() => {
+            router.push(`/payment/success?ref=${merchantReferenceId}`);
+          }, 2000);
+        } else if (status === 'FAILED' || status === 'EXPIRED') {
+          setPaymentStatus('failed');
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing payment status:', error);
+      alert('Failed to check payment status. Please try again.');
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
+
   const selectedPlanFeatures = selectedPlan === 'shared'
     ? (tool.sharedPlanFeatures || '')
     : (tool.privatePlanFeatures || '');
   
-  // Calculate pricing with discount
-  const originalPrice = selectedPlanPrice * 4; // 4x for 75% discount
-  const currentPrice = selectedPlanPrice;
-  const discountPercent = 75;
-  const displayAmount = `₹${(currentPrice / 100).toLocaleString('en-IN')}`;
-  const displayOriginalAmount = `₹${(originalPrice / 100).toLocaleString('en-IN')}`;
+  // Calculate pricing with discount for display
+  const originalPrice = selectedDuration !== '1month' 
+    ? oneMonthPrice * (selectedDuration === '3months' ? 3 : selectedDuration === '6months' ? 6 : 12) * quantity
+    : finalPrice;
+  const actualDiscount = originalPrice - finalPrice;
+  const discountPercent = calculateDiscountPercent(originalPrice, finalPrice);
+  const displayAmount = formatPrice(finalPrice);
+  const displayOriginalAmount = formatPrice(originalPrice);
   
   // Parse features (split by newline or comma)
   const parseFeatures = (features: string) => {
@@ -251,178 +566,451 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
   const privateFeatures = parseFeatures(tool.privatePlanFeatures || '');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-blue-50 pt-16 pb-12">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link 
-            href="/tools"
-            className="inline-flex items-center text-slate-600 hover:text-slate-900 mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Tools
-          </Link>
-          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-2">
-            Complete Your Purchase
-          </h1>
-          <p className="text-slate-600">
-            Secure payment via UPI, PhonePe, Paytm, or Google Pay
-          </p>
-        </div>
+    <div className="min-h-screen bg-white pt-20 pb-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Coupon Banner - Only show before payment is created */}
+        {!paymentCreated && !showCouponInput && (
+          <div className="mb-6 flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 text-sm text-slate-700">
+              <span>Have a coupon?</span>
+              <button
+                onClick={() => setShowCouponInput(true)}
+                className="text-blue-600 hover:text-blue-700 font-medium underline"
+              >
+                Click here to enter your code
+              </button>
+            </div>
+            <Link
+              href="/admin/coupons"
+              className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+            >
+              <Tag className="h-4 w-4" />
+              <span>View Available Coupons</span>
+            </Link>
+          </div>
+        )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Payment Form / Options */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Tool Info Card */}
-            <Card className="glass border-slate-200">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-4">
-                    <ToolIcon icon={tool.icon} name={tool.name} size="lg" />
-                    <div>
-                      <CardTitle className="text-2xl text-slate-900 mb-2">
-                        {tool.name}
-                      </CardTitle>
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Badge className="glass border-slate-200 text-slate-700">
-                          {categoryLabels[tool.category] || tool.category}
-                        </Badge>
-                        <div className="flex items-center space-x-1 bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-medium">
-                          <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                          <span>4.9</span>
-                        </div>
-                      </div>
-                      <CardDescription className="text-slate-600">
-                        {tool.shortDescription || tool.description}
-                      </CardDescription>
-                    </div>
-                  </div>
+        {/* Coupon Input Section - Only show before payment is created */}
+        {!paymentCreated && showCouponInput && (
+          <Card className="mb-6 border-slate-200">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Input
+                  placeholder="Enter coupon code"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  disabled={!!appliedCoupon || validatingCoupon}
+                  className="flex-1"
+                />
+                {appliedCoupon ? (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => { 
+                      setAppliedCoupon(null); 
+                      setCouponCode(''); 
+                      setCouponError('');
+                      setShowCouponInput(false);
+                    }}
+                  >
+                    Remove
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={async () => {
+                      if (!couponCode.trim()) {
+                        setCouponError('Please enter a coupon code');
+                        return;
+                      }
+                      setValidatingCoupon(true);
+                      setCouponError('');
+                      try {
+                        // Calculate current price based on selected plan and duration (use duration-specific prices if available)
+                        const currentBasePrice = toNumber(
+                          selectedPlan === 'shared' 
+                            ? (tool.sharedPlanPrice && tool.sharedPlanPrice > 0 ? tool.sharedPlanPrice : tool.priceMonthly)
+                            : (tool.privatePlanPrice && tool.privatePlanPrice > 0 ? tool.privatePlanPrice : tool.priceMonthly)
+                        );
+                        
+                        // Use the calculated price for the selected duration (uses duration-specific prices if set)
+                        const currentPrice = getPriceForDurationLocal(selectedDuration);
+                        const amountInPaise = Math.floor(currentPrice);
+                        
+                        console.log('Applying coupon with:', {
+                          code: couponCode.toUpperCase(),
+                          plan: selectedPlan,
+                          duration: selectedDuration,
+                          basePrice: currentBasePrice,
+                          priceWithDuration: currentPrice,
+                          amountInPaise
+                        });
+                        
+                        const response = await fetch('/api/coupons/validate', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ 
+                            code: couponCode.toUpperCase(), 
+                            amount: amountInPaise
+                          }),
+                        });
+                        
+                        if (!response.ok) {
+                          const errorData = await response.json().catch(() => ({ error: 'Failed to validate coupon' }));
+                          console.error('Coupon validation failed:', errorData);
+                          setCouponError(errorData.error || 'Invalid coupon code');
+                          setAppliedCoupon(null);
+                          return;
+                        }
+                        
+                        const data = await response.json();
+                        console.log('Coupon validation response:', data);
+                        
+                        if (data.valid) {
+                          console.log('✅ Coupon applied successfully:', {
+                            code: data.coupon.code,
+                            discountAmount: data.discountAmount,
+                            originalAmount: data.originalAmount,
+                            finalAmount: data.finalAmount
+                          });
+                          setAppliedCoupon(data);
+                          setCouponError('');
+                          setShowCouponInput(false); // Hide input after successful application
+                        } else {
+                          console.error('❌ Coupon validation returned invalid:', data);
+                          setCouponError(data.error || 'Invalid coupon code');
+                          setAppliedCoupon(null);
+                        }
+                      } catch (error) {
+                        setCouponError('Failed to validate coupon');
+                        setAppliedCoupon(null);
+                      } finally {
+                        setValidatingCoupon(false);
+                      }
+                    }}
+                    disabled={validatingCoupon || !couponCode.trim()}
+                  >
+                    {validatingCoupon ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      'Apply'
+                    )}
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCouponInput(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              {couponError && (
+                <p className="text-red-600 text-sm mt-2">{couponError}</p>
+              )}
+              {appliedCoupon && (
+                <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm">
+                  <p className="text-green-700 font-medium">
+                    ✓ Coupon applied: {appliedCoupon.coupon.code}
+                  </p>
                 </div>
-              </CardHeader>
-            </Card>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
-            {/* Plan Selection Card - Only show if at least one plan is enabled */}
-            {(tool.sharedPlanEnabled || tool.privatePlanEnabled) && (
-              <Card className="glass border-slate-200">
-                <CardHeader>
-                  <CardTitle className="text-slate-900">Select Plan</CardTitle>
-                  <CardDescription>Choose between Shared or Private plan</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className={`grid gap-4 ${tool.sharedPlanEnabled && tool.privatePlanEnabled ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-                    {/* Shared Plan */}
-                    {tool.sharedPlanEnabled && (
-                      <div
-                        onClick={() => setSelectedPlan('shared')}
-                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                          selectedPlan === 'shared'
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            <Badge className="bg-blue-600 text-white font-semibold">SHARED</Badge>
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              Instant Access
-                            </Badge>
-                            {selectedPlan === 'shared' && (
-                              <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-2xl font-bold text-slate-900 mb-2">
-                          ₹{((tool.sharedPlanPrice || tool.priceMonthly) / 100).toLocaleString('en-IN')}/month
-                        </div>
-                        <p className="text-sm text-slate-600 mb-3">
-                          <strong>Instant Activation:</strong> Get immediate access after payment. Shared account (4-5 users).
-                        </p>
-                        <div className="space-y-1">
-                          {sharedFeatures.length > 0 ? (
-                            sharedFeatures.map((feature, idx) => (
-                              <div key={idx} className="flex items-center text-sm text-slate-700">
-                                <CheckCircle2 className="h-4 w-4 text-blue-500 mr-2" />
-                                <span>{feature}</span>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-sm text-slate-500">No features listed</div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Private Plan */}
-                    {tool.privatePlanEnabled && (
-                      <div
-                        onClick={() => setSelectedPlan('private')}
-                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                          selectedPlan === 'private'
-                            ? 'border-purple-500 bg-purple-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            <Badge className="bg-purple-600 text-white font-semibold">PRIVATE</Badge>
-                            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                              Manual Activation
-                            </Badge>
-                            {selectedPlan === 'private' && (
-                              <div className="h-2 w-2 bg-purple-500 rounded-full"></div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-2xl font-bold text-slate-900 mb-2">
-                          ₹{((tool.privatePlanPrice || tool.priceMonthly) / 100).toLocaleString('en-IN')}/month
-                        </div>
-                        <p className="text-sm text-slate-600 mb-3">
-                          <strong>Manual Activation:</strong> Dedicated account. Activation via Email/WhatsApp after payment.
-                        </p>
-                        <div className="space-y-1">
-                          {privateFeatures.length > 0 ? (
-                            privateFeatures.map((feature, idx) => (
-                              <div key={idx} className="flex items-center text-sm text-slate-700">
-                                <CheckCircle2 className="h-4 w-4 text-purple-500 mr-2" />
-                                <span>{feature}</span>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-sm text-slate-500">No features listed</div>
-                          )}
-                        </div>
-                      </div>
-                    )}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column - Billing Details or QR Code */}
+          <div className="space-y-6">
+            {/* QR Code Section - Show when payment is created */}
+            {paymentCreated && (
+              <>
+                <Card className="border-slate-200 shadow-sm">
+                <CardHeader className="border-b border-slate-200">
+                  <div className="flex items-center gap-2">
+                    <QrCode className="h-5 w-5 text-purple-600" />
+                    <CardTitle className="text-slate-900 text-lg font-bold">
+                      Pay with UPI QR Code
+                    </CardTitle>
                   </div>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <p className="text-sm text-slate-600 mb-6">
+                    It uses UPI apps like BHIM, Paytm, Google Pay, PhonePe or any Banking UPI app to make payment.
+                  </p>
+                  
+                  {/* QR Code */}
+                  {paymentLinks?.upiIntent && (
+                    <div className="flex justify-center p-6 bg-white rounded-lg border-2 border-slate-200">
+                      <QRCodeSVG
+                        value={paymentLinks.upiIntent}
+                        size={300}
+                        level="H"
+                        includeMargin={true}
+                        className="rounded-lg"
+                      />
+                    </div>
+                  )}
+
+                  {/* Payment Status - Show in QR section */}
+                  {checkingStatus && paymentStatus === 'pending' && (
+                    <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
+                      <Loader2 className="h-6 w-6 text-blue-600 animate-spin mx-auto mb-2" />
+                      <p className="text-blue-800 font-medium text-sm">Checking payment status...</p>
+                    </div>
+                  )}
+
+                  {paymentStatus === 'success' && (
+                    <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+                      <CheckCircle2 className="h-6 w-6 text-green-600 mx-auto mb-2" />
+                      <p className="text-green-800 font-bold">Payment Successful! 🎉</p>
+                      <p className="text-green-700 text-sm mt-1">Redirecting...</p>
+                    </div>
+                  )}
+
+                  {paymentStatus === 'failed' && (
+                    <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-center">
+                      <XCircle className="h-6 w-6 text-red-600 mx-auto mb-2" />
+                      <p className="text-red-800 font-bold">Payment Failed</p>
+                      <Button
+                        onClick={() => {
+                          setPaymentStatus('pending');
+                          setPaymentCreated(false);
+                          setPaymentLinks(null);
+                        }}
+                        variant="outline"
+                        className="mt-3 border-red-300 text-red-700 hover:bg-red-100"
+                      >
+                        Try Again
+                      </Button>
+                    </div>
+                  )}
+
+                  {paymentStatus === 'pending' && !checkingStatus && paymentCreated && (
+                    <div className="mt-6 text-center">
+                      <Button
+                        onClick={handleRefreshStatus}
+                        variant="outline"
+                        size="sm"
+                        className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Check Payment Status
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+                </Card>
+
+                {/* Payment Options - Below QR Code */}
+                <Card className="border-slate-200 shadow-sm">
+                  <CardHeader className="border-b border-slate-200">
+                    <CardTitle className="text-slate-900 text-lg font-bold">
+                      Payment Options
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    {paymentLinks && (
+                      <div className="space-y-4">
+                        {paymentLinks.upiIntent && (
+                          <Button
+                            onClick={() => handleUPIPayment(paymentLinks.upiIntent!)}
+                            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white h-14 text-base font-semibold"
+                          >
+                            <Smartphone className="h-5 w-5 mr-2" />
+                            Pay with UPI
+                            <ExternalLink className="h-4 w-4 ml-2" />
+                          </Button>
+                        )}
+
+                        <div className="grid grid-cols-1 gap-3">
+                          {paymentLinks.phonePe && (
+                            <Button
+                              onClick={() => handleUPIPayment(paymentLinks.phonePe!)}
+                              variant="outline"
+                              className="w-full border-2 border-slate-300 hover:border-blue-400 hover:bg-blue-50 h-14 text-base font-medium"
+                            >
+                              <div className="flex items-center justify-center gap-2">
+                                <span>PhonePe</span>
+                                <ExternalLink className="h-4 w-4" />
+                              </div>
+                            </Button>
+                          )}
+                          {paymentLinks.paytm && (
+                            <Button
+                              onClick={() => handleUPIPayment(paymentLinks.paytm!)}
+                              variant="outline"
+                              className="w-full border-2 border-slate-300 hover:border-blue-400 hover:bg-blue-50 h-14 text-base font-medium"
+                            >
+                              <div className="flex items-center justify-center gap-2">
+                                <span>Paytm</span>
+                                <ExternalLink className="h-4 w-4" />
+                              </div>
+                            </Button>
+                          )}
+                          {paymentLinks.gpay && (
+                            <Button
+                              onClick={() => handleUPIPayment(paymentLinks.gpay!)}
+                              variant="outline"
+                              className="w-full border-2 border-slate-300 hover:border-blue-400 hover:bg-blue-50 h-14 text-base font-medium"
+                            >
+                              <div className="flex items-center justify-center gap-2">
+                                <span>Google Pay</span>
+                                <ExternalLink className="h-4 w-4" />
+                              </div>
+                            </Button>
+                          )}
+                        </div>
+
+                        <div className="pt-4 mt-4 border-t border-slate-200">
+                          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                            <p className="text-xs text-amber-800 text-center font-medium">
+                              ⏰ Payment link expires in 5 minutes
+                            </p>
+                            <p className="text-xs text-amber-700 text-center mt-1">
+                              Please complete the payment before it expires
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
+            )}
+
+            {/* Plan Selection - Show before payment is created */}
+            {!paymentCreated && (tool.sharedPlanEnabled || tool.privatePlanEnabled) && (
+              <Card className="border-slate-200 shadow-sm">
+                <CardHeader className="border-b border-slate-200">
+                  <CardTitle className="text-slate-900 text-lg font-bold uppercase tracking-wide">
+                    {initialPlan ? 'Selected Plan' : 'Select Plan'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  {initialPlan ? (
+                    <div className={`p-4 border-2 rounded-lg ${
+                      selectedPlan === 'shared'
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-purple-500 bg-purple-50'
+                    }`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge className={selectedPlan === 'shared' ? 'bg-blue-600 text-white' : 'bg-purple-600 text-white'}>
+                          {selectedPlan === 'shared' ? 'SHARED PLAN' : 'PRIVATE PLAN'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-slate-600">
+                        {selectedPlan === 'shared' 
+                          ? 'Get immediate access after payment. Shared account (4-5 users).'
+                          : 'Dedicated account. Activation via Email/WhatsApp after payment.'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className={`grid gap-3 ${tool.sharedPlanEnabled && tool.privatePlanEnabled ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                      {tool.sharedPlanEnabled && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPlan('shared')}
+                          className={`p-4 border-2 rounded-lg text-left transition-all ${
+                            selectedPlan === 'shared'
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-slate-200 hover:border-blue-300'
+                          }`}
+                        >
+                          <div className="font-semibold text-slate-900 mb-1">Shared Plan</div>
+                          <div className="text-xs text-slate-600">Instant Access</div>
+                        </button>
+                      )}
+                      {tool.privatePlanEnabled && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPlan('private')}
+                          className={`p-4 border-2 rounded-lg text-left transition-all ${
+                            selectedPlan === 'private'
+                              ? 'border-purple-500 bg-purple-50'
+                              : 'border-slate-200 hover:border-purple-300'
+                          }`}
+                        >
+                          <div className="font-semibold text-slate-900 mb-1">Private Plan</div>
+                          <div className="text-xs text-slate-600">Manual Activation</div>
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
 
-            {!paymentCreated ? (
-              <Card className="glass border-slate-200">
-                <CardHeader>
-                  <CardTitle className="text-slate-900">Payment Details</CardTitle>
-                  <CardDescription>
-                    Enter your details to proceed with payment
-                  </CardDescription>
+            {/* Duration Selection - Show before payment is created */}
+            {!paymentCreated && (
+              <Card className="border-slate-200 shadow-sm">
+                <CardHeader className="border-b border-slate-200">
+                  <CardTitle className="text-slate-900 text-lg font-bold uppercase tracking-wide">
+                    Subscription Duration
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleCreatePayment} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="text-slate-700">Full Name</Label>
-                      <Input
-                        id="name"
-                        type="text"
-                        value={customerName}
-                        onChange={(e) => setCustomerName(e.target.value)}
-                        placeholder="Enter your full name"
-                        required
-                        className="bg-white border-slate-300"
-                      />
-                    </div>
+                <CardContent className="pt-6">
+                  <Select
+                    value={selectedDuration}
+                    onValueChange={(value: '1month' | '3months' | '6months' | '1year') => {
+                      setSelectedDuration(value);
+                    }}
+                  >
+                    <SelectTrigger className="h-11">
+                      <SelectValue>
+                        {selectedDuration === '1month' && `1 Month - ${formatPrice(getPriceForDurationLocal('1month'))}`}
+                        {selectedDuration === '3months' && `3 Months - ${formatPrice(getPriceForDurationLocal('3months'))}`}
+                        {selectedDuration === '6months' && `6 Months - ${formatPrice(getPriceForDurationLocal('6months'))}`}
+                        {selectedDuration === '1year' && `1 Year - ${formatPrice(getPriceForDurationLocal('1year'))}`}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1month">
+                        1 Month - {formatPrice(getPriceForDurationLocal('1month'))}
+                      </SelectItem>
+                      <SelectItem value="3months">
+                        3 Months - {formatPrice(getPriceForDurationLocal('3months'))} {(() => {
+                          const threeMonthPrice = getPriceForDurationLocal('3months');
+                          const originalPrice = oneMonthPrice * 3;
+                          const savingsPercent = calculateDiscountPercent(originalPrice, threeMonthPrice);
+                          return savingsPercent > 0 ? `(Save ${savingsPercent}%)` : '';
+                        })()}
+                      </SelectItem>
+                      <SelectItem value="6months">
+                        6 Months - {formatPrice(getPriceForDurationLocal('6months'))} {(() => {
+                          const sixMonthPrice = getPriceForDurationLocal('6months');
+                          const originalPrice = oneMonthPrice * 6;
+                          const savingsPercent = calculateDiscountPercent(originalPrice, sixMonthPrice);
+                          return savingsPercent > 0 ? `(Save ${savingsPercent}%)` : '';
+                        })()}
+                      </SelectItem>
+                      <SelectItem value="1year">
+                        1 Year - {formatPrice(getPriceForDurationLocal('1year'))} {(() => {
+                          const oneYearPrice = getPriceForDurationLocal('1year');
+                          const originalPrice = oneMonthPrice * 12;
+                          const savingsPercent = calculateDiscountPercent(originalPrice, oneYearPrice);
+                          return savingsPercent > 0 ? `(Save ${savingsPercent}%)` : '';
+                        })()}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </CardContent>
+              </Card>
+            )}
 
+            {/* BILLING DETAILS */}
+            {!paymentCreated ? (
+              <Card className="border-slate-200 shadow-sm">
+                <CardHeader className="border-b border-slate-200">
+                  <CardTitle className="text-slate-900 text-lg font-bold uppercase tracking-wide">
+                    Billing Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <form onSubmit={handleCreatePayment} className="space-y-5">
+                    {/* Email */}
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="text-slate-700">Email Address</Label>
+                      <Label htmlFor="email" className="text-slate-700 font-medium text-sm">
+                        Email address <span className="text-red-500">*</span>
+                      </Label>
                       <Input
                         id="email"
                         type="email"
@@ -430,40 +1018,72 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
                         onChange={(e) => setCustomerEmail(e.target.value)}
                         placeholder="your@email.com"
                         required
-                        className="bg-white border-slate-300"
+                        className="bg-white border-slate-300 h-11"
                       />
                     </div>
 
+                    {/* First Name / Last Name */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName" className="text-slate-700 font-medium text-sm">
+                          First name <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="firstName"
+                          type="text"
+                          value={customerFirstName}
+                          onChange={(e) => setCustomerFirstName(e.target.value)}
+                          placeholder="John"
+                          required
+                          className="bg-white border-slate-300 h-11"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName" className="text-slate-700 font-medium text-sm">
+                          Last name <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="lastName"
+                          type="text"
+                          value={customerLastName}
+                          onChange={(e) => setCustomerLastName(e.target.value)}
+                          placeholder="Doe"
+                          required
+                          className="bg-white border-slate-300 h-11"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Phone Number */}
                     <div className="space-y-2">
-                      <Label htmlFor="mobile" className="text-slate-700">Mobile Number</Label>
+                      <Label htmlFor="mobile" className="text-slate-700 font-medium text-sm">
+                        Phone Number <span className="text-red-500">*</span>
+                      </Label>
                       <Input
                         id="mobile"
                         type="tel"
                         value={customerMobile}
                         onChange={(e) => setCustomerMobile(e.target.value)}
-                        placeholder="10-digit mobile number"
+                        placeholder="9876543210"
                         required
                         maxLength={10}
-                        className="bg-white border-slate-300"
+                        className="bg-white border-slate-300 h-11"
                       />
-                      <p className="text-xs text-slate-500">
-                        Enter your 10-digit mobile number (without +91)
-                      </p>
                     </div>
 
                     <Button
                       type="submit"
-                      disabled={loading}
-                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white"
+                      disabled={loading || planPrice <= 0 || finalPrice <= 0}
+                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white h-12 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {loading ? (
                         <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Creating Payment...
+                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                          Processing...
                         </>
                       ) : (
                         <>
-                          <CreditCard className="h-4 w-4 mr-2" />
+                          <CreditCard className="h-5 w-5 mr-2" />
                           Proceed to Payment
                         </>
                       )}
@@ -471,184 +1091,182 @@ export function ToolCheckoutClient({ tool }: ToolCheckoutClientProps) {
                   </form>
                 </CardContent>
               </Card>
-            ) : (
-              <Card className="glass border-slate-200">
-                <CardHeader>
-                  <CardTitle className="text-slate-900 flex items-center justify-between">
-                    <span>Choose Payment Method</span>
-                    {checkingStatus && (
-                      <Badge className="bg-blue-100 text-blue-700">
-                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                        Checking...
-                      </Badge>
-                    )}
+            ) : null}
+
+            {/* ADDITIONAL INFORMATION */}
+            {!paymentCreated && (
+              <Card className="border-slate-200 shadow-sm">
+                <CardHeader className="border-b border-slate-200">
+                  <CardTitle className="text-slate-900 text-lg font-bold uppercase tracking-wide">
+                    Additional Information
                   </CardTitle>
-                  <CardDescription>
-                    Select your preferred payment method to complete the transaction
-                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* UPI Intent */}
-                  {paymentLinks?.upiIntent && (
-                    <Button
-                      onClick={() => handleUPIPayment(paymentLinks.upiIntent)}
-                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white h-auto py-4"
-                    >
-                      <Smartphone className="h-5 w-5 mr-2" />
-                      <div className="text-left flex-1">
-                        <div className="font-semibold">Pay with UPI</div>
-                        <div className="text-xs opacity-90">Open any UPI app</div>
-                      </div>
-                      <ExternalLink className="h-4 w-4" />
-                    </Button>
-                  )}
-
-                  {/* PhonePe */}
-                  {paymentLinks?.phonePe && (
-                    <Button
-                      onClick={() => handleUPIPayment(paymentLinks.phonePe)}
-                      variant="outline"
-                      className="w-full border-slate-300 hover:bg-slate-50 h-auto py-4"
-                    >
-                      <div className="text-left flex-1">
-                        <div className="font-semibold text-slate-900">PhonePe</div>
-                        <div className="text-xs text-slate-600">Pay with PhonePe app</div>
-                      </div>
-                      <ExternalLink className="h-4 w-4 text-slate-600" />
-                    </Button>
-                  )}
-
-                  {/* Paytm */}
-                  {paymentLinks?.paytm && (
-                    <Button
-                      onClick={() => handleUPIPayment(paymentLinks.paytm)}
-                      variant="outline"
-                      className="w-full border-slate-300 hover:bg-slate-50 h-auto py-4"
-                    >
-                      <div className="text-left flex-1">
-                        <div className="font-semibold text-slate-900">Paytm</div>
-                        <div className="text-xs text-slate-600">Pay with Paytm app</div>
-                      </div>
-                      <ExternalLink className="h-4 w-4 text-slate-600" />
-                    </Button>
-                  )}
-
-                  {/* Google Pay */}
-                  {paymentLinks?.gpay && (
-                    <Button
-                      onClick={() => handleUPIPayment(paymentLinks.gpay)}
-                      variant="outline"
-                      className="w-full border-slate-300 hover:bg-slate-50 h-auto py-4"
-                    >
-                      <div className="text-left flex-1">
-                        <div className="font-semibold text-slate-900">Google Pay</div>
-                        <div className="text-xs text-slate-600">Pay with Google Pay app</div>
-                      </div>
-                      <ExternalLink className="h-4 w-4 text-slate-600" />
-                    </Button>
-                  )}
-
-                  {/* QR Code */}
-                  {paymentLinks?.upiIntent && (
-                    <Card className="border-slate-200 bg-white">
-                      <CardHeader>
-                        <CardTitle className="text-sm text-slate-900 flex items-center">
-                          <QrCode className="h-4 w-4 mr-2" />
-                          Scan QR Code
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex justify-center mb-4 p-4 bg-white rounded-lg border border-slate-200">
-                          <QRCodeSVG
-                            value={paymentLinks.upiIntent}
-                            size={192}
-                            level="H"
-                            includeMargin={true}
-                            className="rounded-lg"
-                          />
-                        </div>
-                        <p className="text-xs text-center text-slate-600">
-                          Scan this QR code with any UPI app to pay
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Payment Status */}
-                  {paymentStatus === 'success' && (
-                    <div className="flex items-center justify-center p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <CheckCircle2 className="h-5 w-5 text-green-600 mr-2" />
-                      <span className="text-green-700 font-medium">Payment Successful!</span>
-                    </div>
-                  )}
-
-                  {paymentStatus === 'failed' && (
-                    <div className="flex items-center justify-center p-4 bg-red-50 border border-red-200 rounded-lg">
-                      <XCircle className="h-5 w-5 text-red-600 mr-2" />
-                      <span className="text-red-700 font-medium">Payment Failed</span>
-                    </div>
-                  )}
-
-                  <div className="pt-4 border-t border-slate-200">
-                    <p className="text-xs text-slate-500 text-center">
-                      Payment link expires in 5 minutes. Please complete the payment before it expires.
-                    </p>
+                <CardContent className="pt-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="orderNotes" className="text-slate-700 font-medium text-sm">
+                      Order notes (optional)
+                    </Label>
+                    <Textarea
+                      id="orderNotes"
+                      value={orderNotes}
+                      onChange={(e) => setOrderNotes(e.target.value)}
+                      placeholder="Notes about your order, e.g. special notes for delivery."
+                      rows={4}
+                      className="bg-white border-slate-300 resize-none"
+                    />
                   </div>
                 </CardContent>
               </Card>
             )}
           </div>
 
-          {/* Order Summary */}
-          <div className="lg:col-span-1">
-            <Card className="glass border-slate-200 sticky top-24">
-              <CardHeader>
-                <CardTitle className="text-slate-900">Order Summary</CardTitle>
+          {/* Right Column - Your Order and Payment Options */}
+          <div className="space-y-6">
+            {/* YOUR ORDER */}
+            <Card className="border-slate-200 shadow-sm sticky top-24">
+              <CardHeader className="border-b border-slate-200">
+                <CardTitle className="text-slate-900 text-lg font-bold uppercase tracking-wide">
+                  Your Order
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-slate-600">{tool.name}</span>
-                  </div>
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Badge className={selectedPlan === 'shared' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}>
-                      {selectedPlan === 'shared' ? 'Shared Plan' : 'Private Plan'}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-slate-500">
-                    Monthly subscription
-                  </p>
+              <CardContent className="p-6">
+                {/* Product Header */}
+                <div className="grid grid-cols-2 gap-4 mb-4 pb-3 border-b border-slate-200">
+                  <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Product</div>
+                  <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide text-right">Subtotal</div>
                 </div>
 
-                <div className="border-t border-slate-200 pt-4">
-                  <div className="flex items-baseline space-x-2 mb-2">
-                    <div className="text-2xl font-bold text-slate-900">{displayAmount}</div>
-                    <div className="text-sm text-slate-500 line-through">
-                      {displayOriginalAmount}
+                {/* Product Item */}
+                <div className="mb-6">
+                  <div className="flex items-start gap-4 mb-4">
+                    {/* Remove button (hidden for subscriptions) */}
+                    <div className="w-6"></div>
+                    
+                    {/* Product Thumbnail */}
+                    <div className="flex-shrink-0">
+                      <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center border border-slate-200">
+                        <ToolIcon icon={tool.icon} name={tool.name} size="sm" />
+                      </div>
                     </div>
-                    <Badge className="bg-red-100 text-red-700 border-red-300 text-xs">
-                      {discountPercent}% OFF
-                    </Badge>
+
+                    {/* Product Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-slate-900 text-sm mb-1">
+                            {tool.name} - {
+                              selectedDuration === '1month' ? '1 Month' :
+                              selectedDuration === '3months' ? '3 Months' :
+                              selectedDuration === '6months' ? '6 Months' :
+                              '1 Year'
+                            }
+                          </h3>
+                          <p className="text-xs text-slate-600 mb-3">
+                            {selectedPlan === 'shared' ? 'Shared Plan' : 'Private Plan'}
+                          </p>
+                          
+                          {/* Quantity Selector */}
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                              className="w-8 h-8 flex items-center justify-center border border-slate-300 rounded hover:bg-slate-50 transition-colors"
+                              disabled={quantity <= 1}
+                            >
+                              <Minus className="h-4 w-4 text-slate-600" />
+                            </button>
+                            <span className="w-12 text-center font-medium text-slate-900">{quantity}</span>
+                            <button
+                              type="button"
+                              onClick={() => setQuantity(quantity + 1)}
+                              className="w-8 h-8 flex items-center justify-center border border-slate-300 rounded hover:bg-slate-50 transition-colors"
+                            >
+                              <Plus className="h-4 w-4 text-slate-600" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Product Subtotal */}
+                        <div className="text-right">
+                          {planPrice > 0 ? (
+                            <div className="font-semibold text-slate-900">
+                              {formatPrice(planPrice * quantity)}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-red-600 italic">
+                              Price not available
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-xs text-slate-500 mb-4">per month</div>
                 </div>
 
-                <div className="border-t border-slate-200 pt-4 space-y-2">
-                  <div className="flex items-center text-sm text-slate-600">
-                    <CheckCircle2 className="h-4 w-4 text-green-600 mr-2" />
-                    Secure Payment
+                {/* Order Totals */}
+                <div className="space-y-3 pt-4 border-t border-slate-200">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-700 font-medium">Subtotal:</span>
+                    {planPrice > 0 ? (
+                      <span className="text-blue-600 font-bold">
+                        {formatPrice(planPrice * quantity)}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-red-600 italic">
+                        Price not available
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center text-sm text-slate-600">
-                    <CheckCircle2 className="h-4 w-4 text-green-600 mr-2" />
-                    Instant Activation
-                  </div>
-                  <div className="flex items-center text-sm text-slate-600">
-                    <CheckCircle2 className="h-4 w-4 text-green-600 mr-2" />
-                    24/7 Support
+                  
+                  {selectedDuration !== '1month' && (() => {
+                    const originalPrice = oneMonthPrice * (selectedDuration === '3months' ? 3 : selectedDuration === '6months' ? 6 : 12);
+                    const discount = (originalPrice - planPrice) * quantity;
+                    const discountPercent = calculateDiscountPercent(originalPrice, planPrice);
+                    if (discount > 0) {
+                      return (
+                        <div className="flex justify-between items-center text-green-600">
+                          <span className="text-sm">
+                            {selectedDuration === '3months' ? `3 Months Discount (${discountPercent}%)` :
+                             selectedDuration === '6months' ? `6 Months Discount (${discountPercent}%)` :
+                             `Yearly Discount (${discountPercent}%)`}:
+                          </span>
+                          <span className="text-sm font-medium">
+                            -{formatPrice(discount)}
+                          </span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                  
+                  {!paymentCreated && appliedCoupon && (
+                    <div className="flex justify-between items-center text-green-600">
+                      <span className="text-sm">Coupon ({appliedCoupon.coupon.code}):</span>
+                      <span className="text-sm font-medium">
+                        -{formatPrice(appliedCoupon.discountAmount * quantity)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Total */}
+                <div className="pt-4 mt-4 border-t-2 border-slate-300">
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-bold text-slate-900">Total:</span>
+                    {finalPrice > 0 ? (
+                      <span className="text-2xl font-bold text-blue-600">
+                        {formatPrice(finalPrice)}
+                      </span>
+                    ) : (
+                      <span className="text-lg font-medium text-red-600">
+                        Price not available
+                      </span>
+                    )}
                   </div>
                 </div>
               </CardContent>
             </Card>
+
           </div>
         </div>
       </div>

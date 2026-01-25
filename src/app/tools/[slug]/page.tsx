@@ -1,0 +1,95 @@
+import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import { ToolProductPageClient } from "@/components/tools/tool-product-page";
+import { Metadata } from "next";
+import { serializeTool } from "@/lib/utils";
+
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const tool = await prisma.tool.findUnique({
+    where: { slug },
+    select: {
+      name: true,
+      shortDescription: true,
+      description: true,
+    },
+  });
+
+  if (!tool) {
+    return {
+      title: "Tool Not Found",
+    };
+  }
+
+  return {
+    title: `${tool.name} - AliDigitalSolution`,
+    description: tool.shortDescription || tool.description || `Get ${tool.name} subscription at affordable prices`,
+  };
+}
+
+export default async function ToolProductPageRoute({ params }: PageProps) {
+  const { slug } = await params;
+
+  const tool = await prisma.tool.findUnique({
+    where: { slug },
+    include: {
+      subscriptions: {
+        where: { status: "ACTIVE" },
+        select: {
+          id: true,
+        },
+      },
+    },
+  });
+
+  if (!tool) {
+    notFound();
+  }
+
+  if (!tool.isActive) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-blue-50 pt-16 pb-12">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-8 text-center">
+            <h1 className="text-2xl font-bold text-slate-900 mb-4">
+              Tool Unavailable
+            </h1>
+            <p className="text-slate-600 mb-6">
+              This tool is currently unavailable.
+            </p>
+            <a
+              href="/tools"
+              className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium"
+            >
+              ← Back to Tools
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Get related tools (same category, excluding current tool)
+  // Fetch all price fields to ensure proper price calculation
+  const relatedTools = await prisma.tool.findMany({
+    where: {
+      category: tool.category,
+      id: { not: tool.id },
+      isActive: true,
+    },
+    take: 4,
+    // Don't use select - let Prisma fetch all fields, then serializeTool will handle conversion
+  });
+
+  // Serialize tool to convert BigInt to numbers
+  const serializedTool = serializeTool(tool);
+  
+  // Serialize related tools as well
+  const serializedRelatedTools = relatedTools.map(t => serializeTool(t));
+
+  return <ToolProductPageClient tool={serializedTool} relatedTools={serializedRelatedTools} />;
+}

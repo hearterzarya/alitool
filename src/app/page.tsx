@@ -8,6 +8,7 @@ import { TrendingBundlesSlider } from "@/components/tools/trending-bundles-slide
 import { ToolIcon } from "@/components/tools/tool-icon";
 import { ToolNamesSlider } from "@/components/tools/tool-names-slider";
 import { IndividualToolsSearch } from "@/components/tools/individual-tools-search";
+import { formatPrice, serializeBundle } from "@/lib/utils";
 
 export const dynamic = 'force-dynamic';
 
@@ -163,7 +164,7 @@ export default async function HomePage() {
       {trendingBundles.length > 0 && (
         <section className="py-8 sm:py-12 bg-white">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <TrendingBundlesSlider bundles={trendingBundles} />
+            <TrendingBundlesSlider bundles={trendingBundles.map(b => serializeBundle(b))} />
           </div>
         </section>
       )}
@@ -180,27 +181,29 @@ export default async function HomePage() {
 
           {allBundles.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {allBundles.map((bundle) => (
+              {allBundles.map((bundle) => {
+                const serializedBundle = serializeBundle(bundle);
+                return (
                 <Card 
-                  key={bundle.id}
+                  key={serializedBundle.id}
                   className="group relative overflow-hidden border-2 border-slate-200 hover:border-purple-300 bg-white hover:shadow-xl transition-all duration-300 hover:-translate-y-1 sm:hover:-translate-y-2 h-full flex flex-col"
                 >
                   <CardHeader className="pb-4">
                     <div className="flex items-center justify-between mb-3 sm:mb-4">
-                      <div className="text-3xl sm:text-4xl">{bundle.icon || "📦"}</div>
+                      <div className="text-3xl sm:text-4xl">{serializedBundle.icon || "📦"}</div>
                       <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs sm:text-sm">
                         Bundle
                       </Badge>
                     </div>
-                    <CardTitle className="text-xl sm:text-2xl mb-2">{bundle.name}</CardTitle>
+                    <CardTitle className="text-xl sm:text-2xl mb-2">{serializedBundle.name}</CardTitle>
                     <CardDescription className="text-sm sm:text-base">
-                      {bundle.shortDescription || bundle.description}
+                      {serializedBundle.shortDescription || serializedBundle.description}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4 flex-1 flex flex-col">
-                    {bundle.features && (
+                    {serializedBundle.features && (
                       <div className="space-y-2 flex-1">
-                        {bundle.features.split(/\n|,/).slice(0, 3).map((feature, idx) => (
+                        {serializedBundle.features.split(/\n|,/).slice(0, 3).map((feature: string, idx: number) => (
                           <div key={idx} className="flex items-center gap-2 text-xs sm:text-sm text-slate-600">
                             <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
                             <span className="line-clamp-1">{feature.trim()}</span>
@@ -210,13 +213,13 @@ export default async function HomePage() {
                     )}
                     <div className="pt-4 border-t border-slate-200 mt-auto">
                       <div className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3 sm:mb-4">
-                        ₹{(bundle.priceMonthly / 100).toLocaleString('en-IN')}/month
+                        {formatPrice(serializedBundle.priceMonthly)}/month
                       </div>
                       <Button 
                         asChild 
                         className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-sm sm:text-base"
                       >
-                        <Link href={`/checkout/bundle/${bundle.id}`} className="flex items-center justify-center gap-2">
+                        <Link href={`/checkout/bundle/${serializedBundle.id}`} className="flex items-center justify-center gap-2">
                           Buy Now
                           <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Link>
@@ -224,7 +227,8 @@ export default async function HomePage() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-12">

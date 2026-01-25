@@ -16,6 +16,16 @@ interface Tool {
   icon: string | null;
   toolUrl: string;
   priceMonthly: number;
+  // Duration-specific prices
+  sharedPlanPrice1Month?: number | null;
+  sharedPlanPrice3Months?: number | null;
+  sharedPlanPrice6Months?: number | null;
+  sharedPlanPrice1Year?: number | null;
+  privatePlanPrice1Month?: number | null;
+  privatePlanPrice3Months?: number | null;
+  privatePlanPrice6Months?: number | null;
+  privatePlanPrice1Year?: number | null;
+  // Legacy fields
   sharedPlanPrice: number | null;
   privatePlanPrice: number | null;
   sharedPlanFeatures: string | null;

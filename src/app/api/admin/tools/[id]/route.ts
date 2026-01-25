@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { serializeTool } from "@/lib/utils";
 
 export async function PUT(
   req: Request,
@@ -17,6 +18,23 @@ export async function PUT(
     const { id } = await params;
     const data = await req.json();
 
+    // Helper function to convert price to paise with validation
+    // Note: Form already sends prices in paise (multiplied by 100), so we just validate and convert to BigInt
+    const convertToPaise = (price: number | string | undefined): bigint | null | undefined => {
+      if (price === undefined) return undefined;
+      if (!price || price === 0) return null;
+      const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+      if (isNaN(numPrice) || numPrice < 0) return null;
+      // Validate: max price is ₹10,000,000 (1,000,000,000 paise)
+      // Since form already sends in paise, we check the paise value directly
+      if (numPrice > 1000000000) {
+        const rupees = numPrice / 100;
+        throw new Error(`Price cannot exceed ₹10,000,000. You entered ₹${rupees.toLocaleString('en-IN')}`);
+      }
+      // Form already sends in paise, so just convert to BigInt
+      return BigInt(Math.round(numPrice));
+    };
+
     // Build base update data (always available fields)
     const baseUpdateData: any = {
       name: data.name,
@@ -26,7 +44,7 @@ export async function PUT(
       category: data.category,
       icon: data.icon || null,
       toolUrl: data.toolUrl,
-      priceMonthly: data.priceMonthly,
+      priceMonthly: convertToPaise(data.priceMonthly) || BigInt(0),
       isActive: data.isActive ?? true,
       isFeatured: data.isFeatured ?? false,
       sortOrder: data.sortOrder || 0,
@@ -38,12 +56,26 @@ export async function PUT(
       // Attempt update with plan fields
       const updateDataWithPlans = {
         ...baseUpdateData,
-        sharedPlanPrice: data.sharedPlanPrice !== undefined ? (data.sharedPlanPrice || null) : undefined,
-        privatePlanPrice: data.privatePlanPrice !== undefined ? (data.privatePlanPrice || null) : undefined,
+        // Duration-specific prices
+        sharedPlanPrice1Month: convertToPaise(data.sharedPlanPrice1Month),
+        sharedPlanPrice3Months: convertToPaise(data.sharedPlanPrice3Months),
+        sharedPlanPrice6Months: convertToPaise(data.sharedPlanPrice6Months),
+        sharedPlanPrice1Year: convertToPaise(data.sharedPlanPrice1Year),
+        privatePlanPrice1Month: convertToPaise(data.privatePlanPrice1Month),
+        privatePlanPrice3Months: convertToPaise(data.privatePlanPrice3Months),
+        privatePlanPrice6Months: convertToPaise(data.privatePlanPrice6Months),
+        privatePlanPrice1Year: convertToPaise(data.privatePlanPrice1Year),
+        // Legacy fields
+        sharedPlanPrice: convertToPaise(data.sharedPlanPrice),
+        privatePlanPrice: convertToPaise(data.privatePlanPrice),
         sharedPlanFeatures: data.sharedPlanFeatures !== undefined ? (data.sharedPlanFeatures || null) : undefined,
         privatePlanFeatures: data.privatePlanFeatures !== undefined ? (data.privatePlanFeatures || null) : undefined,
-      sharedPlanEnabled: data.sharedPlanEnabled !== undefined ? (data.sharedPlanEnabled ?? false) : undefined,
-      privatePlanEnabled: data.privatePlanEnabled !== undefined ? (data.privatePlanEnabled ?? false) : undefined,
+        sharedPlanEnabled: data.sharedPlanEnabled !== undefined ? (data.sharedPlanEnabled ?? false) : undefined,
+        privatePlanEnabled: data.privatePlanEnabled !== undefined ? (data.privatePlanEnabled ?? false) : undefined,
+        sharedPlanName: data.sharedPlanName !== undefined ? (data.sharedPlanName || null) : undefined,
+        privatePlanName: data.privatePlanName !== undefined ? (data.privatePlanName || null) : undefined,
+        sharedPlanDescription: data.sharedPlanDescription !== undefined ? (data.sharedPlanDescription || null) : undefined,
+        privatePlanDescription: data.privatePlanDescription !== undefined ? (data.privatePlanDescription || null) : undefined,
       };
       
       // Remove undefined fields
@@ -72,7 +104,8 @@ export async function PUT(
       }
     }
 
-    return NextResponse.json(tool);
+    // Convert BigInt values to numbers for JSON serialization
+    return NextResponse.json(serializeTool(tool));
   } catch (error: any) {
     console.error("Error updating tool:", error);
     console.error("Error details:", {

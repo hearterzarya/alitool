@@ -3,7 +3,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatPrice, formatDate } from "@/lib/utils";
+import { formatPrice, formatDate, serializeTool } from "@/lib/utils";
+import { getMinimumStartingPrice } from "@/lib/price-utils";
 import { ToolIcon } from "@/components/tools/tool-icon";
 import { CreditCard, Calendar, DollarSign, AlertCircle } from "lucide-react";
 import Link from "next/link";
@@ -66,7 +67,11 @@ export default async function SubscriptionsPage() {
 
   const activeSubscriptions = subscriptions.filter(s => s.status === 'ACTIVE');
   const canceledSubscriptions = subscriptions.filter(s => s.status === 'CANCELED');
-  const totalMonthlyCost = activeSubscriptions.reduce((sum, sub) => sum + sub.tool.priceMonthly, 0);
+  const totalMonthlyCost = activeSubscriptions.reduce((sum, sub) => {
+    const serializedTool = serializeTool(sub.tool);
+    const minPrice = getMinimumStartingPrice(serializedTool);
+    return sum + minPrice;
+  }, 0);
 
   return (
     <div className="space-y-6">
@@ -162,9 +167,11 @@ export default async function SubscriptionsPage() {
                       <span className="font-bold text-lg">
                         {isTestUser ? (
                           <span className="text-green-600">FREE (Test Mode)</span>
-                        ) : (
-                          formatPrice(subscription.tool.priceMonthly)
-                        )}
+                        ) : (() => {
+                          const serializedTool = serializeTool(subscription.tool);
+                          const minPrice = getMinimumStartingPrice(serializedTool);
+                          return formatPrice(minPrice);
+                        })()}
                       </span>
                     </div>
                     {!isTestUser && (

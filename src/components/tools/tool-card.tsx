@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
+import { getMinimumStartingPrice, getBasePrice, getOneMonthPrice, type PlanType } from "@/lib/price-utils";
 import { ArrowRight, Star, ShoppingCart, Eye } from "lucide-react";
 import { ToolIcon } from "./tool-icon";
 
@@ -19,6 +20,16 @@ interface ToolCardProps {
     category: string;
     icon?: string;
     priceMonthly: number;
+    // Duration-specific prices
+    sharedPlanPrice1Month?: number | null;
+    sharedPlanPrice3Months?: number | null;
+    sharedPlanPrice6Months?: number | null;
+    sharedPlanPrice1Year?: number | null;
+    privatePlanPrice1Month?: number | null;
+    privatePlanPrice3Months?: number | null;
+    privatePlanPrice6Months?: number | null;
+    privatePlanPrice1Year?: number | null;
+    // Legacy fields
     sharedPlanPrice?: number | null;
     privatePlanPrice?: number | null;
     sharedPlanEnabled?: boolean;
@@ -40,50 +51,27 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
     OTHER: "Other",
   };
 
-  // Determine the price to display
-  // Priority: sharedPlanPrice > privatePlanPrice > priceMonthly
-  // If both plans are enabled, show the lower price
-  const getDisplayPrice = () => {
-    const sharedPrice = tool.sharedPlanPrice;
-    const privatePrice = tool.privatePlanPrice;
-    const fallbackPrice = tool.priceMonthly;
-
-    // If both plans are enabled, show the lower price
-    if (tool.sharedPlanEnabled && tool.privatePlanEnabled) {
-      if (sharedPrice && privatePrice) {
-        return Math.min(sharedPrice, privatePrice);
-      }
-      if (sharedPrice) return sharedPrice;
-      if (privatePrice) return privatePrice;
-      return fallbackPrice;
-    }
-
-    // If only shared plan is enabled
-    if (tool.sharedPlanEnabled && sharedPrice) {
-      return sharedPrice;
-    }
-
-    // If only private plan is enabled
-    if (tool.privatePlanEnabled && privatePrice) {
-      return privatePrice;
-    }
-
-    // Fallback to priceMonthly
-    return fallbackPrice;
-  };
-
-  const displayPrice = getDisplayPrice();
+  // Get minimum starting price (validates and filters corrupted prices)
+  const displayPrice = getMinimumStartingPrice(tool);
   
-  // Calculate discount if we have both shared and private prices
+  // Calculate discount if we have both shared and private prices (only if both are valid)
   let originalPrice: number | null = null;
   let discountPercent: number | null = null;
   
   if (tool.sharedPlanEnabled && tool.privatePlanEnabled && tool.sharedPlanPrice && tool.privatePlanPrice) {
-    const higherPrice = Math.max(tool.sharedPlanPrice, tool.privatePlanPrice);
-    const lowerPrice = Math.min(tool.sharedPlanPrice, tool.privatePlanPrice);
-    if (higherPrice > lowerPrice) {
-      originalPrice = higherPrice;
-      discountPercent = Math.round(((higherPrice - lowerPrice) / higherPrice) * 100);
+    const sharedPriceNum = typeof tool.sharedPlanPrice === 'bigint' ? Number(tool.sharedPlanPrice) : (tool.sharedPlanPrice || 0);
+    const privatePriceNum = typeof tool.privatePlanPrice === 'bigint' ? Number(tool.privatePlanPrice) : (tool.privatePlanPrice || 0);
+    
+    // Only show discount if both prices are valid (not corrupted)
+    const MAX_VALID_PRICE = 1000000000; // ₹10M in paise
+    if (sharedPriceNum > 0 && sharedPriceNum <= MAX_VALID_PRICE && 
+        privatePriceNum > 0 && privatePriceNum <= MAX_VALID_PRICE) {
+      const higherPrice = Math.max(sharedPriceNum, privatePriceNum);
+      const lowerPrice = Math.min(sharedPriceNum, privatePriceNum);
+      if (higherPrice > lowerPrice && lowerPrice === displayPrice) {
+        originalPrice = higherPrice;
+        discountPercent = Math.round(((higherPrice - lowerPrice) / higherPrice) * 100);
+      }
     }
   }
 
@@ -97,7 +85,7 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
   const features = getFeatures();
 
   const handleCardClick = () => {
-    router.push(`/checkout/${tool.id}`);
+    router.push(`/tools/${tool.slug}`);
   };
 
   return (
@@ -159,9 +147,15 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
         {/* Pricing */}
         <div className="space-y-2">
           <div className="flex items-baseline space-x-2 flex-wrap">
-            <div className="text-2xl font-bold gradient-text">
-              {formatPrice(displayPrice)}
-            </div>
+            {displayPrice > 0 ? (
+              <div className="text-2xl font-bold gradient-text">
+                {formatPrice(displayPrice)}
+              </div>
+            ) : (
+              <div className="text-lg font-medium text-gray-400 italic">
+                Price not set
+              </div>
+            )}
             {originalPrice && discountPercent && (
               <>
                 <div className="text-sm text-slate-500 line-through">
@@ -182,20 +176,32 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
                   ? 'Private plan' 
                   : ''} per month
           </div>
-          {tool.sharedPlanEnabled && tool.privatePlanEnabled && (
-            <div className="flex gap-2 text-xs">
-              {tool.sharedPlanPrice && (
-                <Badge variant="outline" className="text-xs">
-                  Shared: {formatPrice(tool.sharedPlanPrice)}
-                </Badge>
-              )}
-              {tool.privatePlanPrice && (
-                <Badge variant="outline" className="text-xs">
-                  Private: {formatPrice(tool.privatePlanPrice)}
-                </Badge>
-              )}
-            </div>
-          )}
+          {tool.sharedPlanEnabled && tool.privatePlanEnabled && (() => {
+            // Use proper price calculation functions to get validated 1-month prices
+            const sharedBasePrice = getBasePrice(tool, 'shared');
+            const sharedOneMonthPrice = getOneMonthPrice(tool, 'shared', sharedBasePrice);
+            const privateBasePrice = getBasePrice(tool, 'private');
+            const privateOneMonthPrice = getOneMonthPrice(tool, 'private', privateBasePrice);
+            
+            // Only show if we have valid prices
+            if (sharedOneMonthPrice > 0 || privateOneMonthPrice > 0) {
+              return (
+                <div className="flex gap-2 text-xs">
+                  {sharedOneMonthPrice > 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      Shared: {formatPrice(sharedOneMonthPrice)}
+                    </Badge>
+                  )}
+                  {privateOneMonthPrice > 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      Private: {formatPrice(privateOneMonthPrice)}
+                    </Badge>
+                  )}
+                </div>
+              );
+            }
+            return null;
+          })()}
         </div>
 
         {/* Action Buttons */}
@@ -206,7 +212,7 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  router.push(`/checkout/${tool.id}`);
+                  router.push(`/tools/${tool.slug}`);
                 }}
                 className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white border-0 shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105 text-xs"
               >
@@ -218,7 +224,7 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
                 variant="outline"
                 onClick={(e) => {
                   e.stopPropagation();
-                  router.push(`/checkout/${tool.id}`);
+                  router.push(`/tools/${tool.slug}`);
                 }}
                 className="glass border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all text-xs"
               >

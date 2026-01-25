@@ -2,12 +2,13 @@
 
 import { usePathname } from 'next/navigation';
 import Link from "next/link";
-import { LayoutDashboard, Wrench, Users, CreditCard, BarChart3, Receipt, Download, Star, Package, Settings, Shield } from "lucide-react";
+import { LayoutDashboard, Wrench, Users, CreditCard, BarChart3, Receipt, Download, Star, Package, Settings, Shield, Ticket } from "lucide-react";
 
 const menuItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/tools", label: "Tools", icon: Wrench },
   { href: "/admin/bundles", label: "Bundles", icon: Package },
+  { href: "/admin/coupons", label: "Coupons", icon: Ticket },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
   { href: "/admin/payments", label: "Payments", icon: Receipt },

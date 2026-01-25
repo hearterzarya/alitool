@@ -208,6 +208,8 @@ export async function POST(req: NextRequest) {
         txnStatus: updatedPayment.txnStatus,
         amount: updatedPayment.amount,
         successDate: updatedPayment.successDate,
+        toolId: updatedPayment.toolId,
+        bundleId: updatedPayment.bundleId,
       },
     });
   } catch (error: any) {

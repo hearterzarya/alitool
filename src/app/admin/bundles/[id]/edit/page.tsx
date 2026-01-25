@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { BundleForm } from "@/components/admin/bundle-form";
 import { Button } from "@/components/ui/button";
+import { serializeBundle } from "@/lib/utils";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +39,7 @@ export default async function EditBundlePage({ params }: { params: Promise<{ id:
 
       <BundleForm
         mode="edit"
-        bundle={bundle}
+        bundle={serializeBundle(bundle)}
         tools={tools}
         initialToolIds={initialToolIds}
       />

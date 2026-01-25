@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ToolForm } from "@/components/admin/tool-form";
 import { CookieManager } from "@/components/admin/cookie-manager";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { serializeTool } from "@/lib/utils";
 
 export default async function EditToolPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -32,7 +33,7 @@ export default async function EditToolPage({ params }: { params: Promise<{ id: s
         </p>
       </div>
 
-      <ToolForm mode="edit" tool={tool} />
+      <ToolForm mode="edit" tool={serializeTool(tool)} />
 
       <Card>
         <CardHeader>

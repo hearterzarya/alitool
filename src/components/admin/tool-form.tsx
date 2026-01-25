@@ -21,12 +21,26 @@ interface ToolFormProps {
     icon?: string | null;
     toolUrl: string;
     priceMonthly: number;
+    // Duration-specific prices
+    sharedPlanPrice1Month?: number | null;
+    sharedPlanPrice3Months?: number | null;
+    sharedPlanPrice6Months?: number | null;
+    sharedPlanPrice1Year?: number | null;
+    privatePlanPrice1Month?: number | null;
+    privatePlanPrice3Months?: number | null;
+    privatePlanPrice6Months?: number | null;
+    privatePlanPrice1Year?: number | null;
+    // Legacy fields
     sharedPlanPrice?: number | null;
     privatePlanPrice?: number | null;
     sharedPlanFeatures?: string | null;
     privatePlanFeatures?: string | null;
     sharedPlanEnabled?: boolean;
     privatePlanEnabled?: boolean;
+    sharedPlanName?: string | null;
+    privatePlanName?: string | null;
+    sharedPlanDescription?: string | null;
+    privatePlanDescription?: string | null;
     isActive: boolean;
     isFeatured?: boolean;
     sortOrder: number;
@@ -49,6 +63,12 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
     isExistingImage ? (tool.icon || null) : null
   );
 
+  // Helper to convert BigInt or number to number (for form display)
+  const convertToNumber = (value: number | bigint | null | undefined): number => {
+    if (!value) return 0;
+    return typeof value === 'bigint' ? Number(value) : value;
+  };
+
   const [formData, setFormData] = useState({
     name: tool?.name || "",
     slug: tool?.slug || "",
@@ -57,13 +77,28 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
     category: tool?.category || "AI_WRITING",
     icon: tool?.icon || "",
     toolUrl: tool?.toolUrl || "",
-    priceMonthly: tool ? tool.priceMonthly / 100 : 0,
-    sharedPlanPrice: tool?.sharedPlanPrice ? tool.sharedPlanPrice / 100 : 0,
-    privatePlanPrice: tool?.privatePlanPrice ? tool.privatePlanPrice / 100 : 0,
+    priceMonthly: tool ? convertToNumber(tool.priceMonthly) / 100 : 0,
+    // Shared Plan Prices
+    sharedPlanPrice1Month: (tool as any)?.sharedPlanPrice1Month ? convertToNumber((tool as any).sharedPlanPrice1Month) / 100 : 0,
+    sharedPlanPrice3Months: (tool as any)?.sharedPlanPrice3Months ? convertToNumber((tool as any).sharedPlanPrice3Months) / 100 : 0,
+    sharedPlanPrice6Months: (tool as any)?.sharedPlanPrice6Months ? convertToNumber((tool as any).sharedPlanPrice6Months) / 100 : 0,
+    sharedPlanPrice1Year: (tool as any)?.sharedPlanPrice1Year ? convertToNumber((tool as any).sharedPlanPrice1Year) / 100 : 0,
+    // Private Plan Prices
+    privatePlanPrice1Month: (tool as any)?.privatePlanPrice1Month ? convertToNumber((tool as any).privatePlanPrice1Month) / 100 : 0,
+    privatePlanPrice3Months: (tool as any)?.privatePlanPrice3Months ? convertToNumber((tool as any).privatePlanPrice3Months) / 100 : 0,
+    privatePlanPrice6Months: (tool as any)?.privatePlanPrice6Months ? convertToNumber((tool as any).privatePlanPrice6Months) / 100 : 0,
+    privatePlanPrice1Year: (tool as any)?.privatePlanPrice1Year ? convertToNumber((tool as any).privatePlanPrice1Year) / 100 : 0,
+    // Legacy fields (for backward compatibility)
+    sharedPlanPrice: tool?.sharedPlanPrice ? convertToNumber(tool.sharedPlanPrice) / 100 : 0,
+    privatePlanPrice: tool?.privatePlanPrice ? convertToNumber(tool.privatePlanPrice) / 100 : 0,
     sharedPlanFeatures: tool?.sharedPlanFeatures || "",
     privatePlanFeatures: tool?.privatePlanFeatures || "",
     sharedPlanEnabled: tool?.sharedPlanEnabled ?? false,
     privatePlanEnabled: tool?.privatePlanEnabled ?? false,
+    sharedPlanName: tool?.sharedPlanName || "Shared Plan",
+    privatePlanName: tool?.privatePlanName || "Private Plan",
+    sharedPlanDescription: tool?.sharedPlanDescription || "",
+    privatePlanDescription: tool?.privatePlanDescription || "",
     isActive: tool?.isActive ?? true,
     isFeatured: tool?.isFeatured ?? false,
     sortOrder: tool?.sortOrder || 0,
@@ -182,7 +217,16 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
         body: JSON.stringify({
           ...formData,
           priceMonthly: Math.round(formData.priceMonthly * 100),
-          // Only send plan prices if they're greater than 0
+          // Duration-specific prices (convert to paise)
+          sharedPlanPrice1Month: formData.sharedPlanPrice1Month > 0 ? Math.round(formData.sharedPlanPrice1Month * 100) : null,
+          sharedPlanPrice3Months: formData.sharedPlanPrice3Months > 0 ? Math.round(formData.sharedPlanPrice3Months * 100) : null,
+          sharedPlanPrice6Months: formData.sharedPlanPrice6Months > 0 ? Math.round(formData.sharedPlanPrice6Months * 100) : null,
+          sharedPlanPrice1Year: formData.sharedPlanPrice1Year > 0 ? Math.round(formData.sharedPlanPrice1Year * 100) : null,
+          privatePlanPrice1Month: formData.privatePlanPrice1Month > 0 ? Math.round(formData.privatePlanPrice1Month * 100) : null,
+          privatePlanPrice3Months: formData.privatePlanPrice3Months > 0 ? Math.round(formData.privatePlanPrice3Months * 100) : null,
+          privatePlanPrice6Months: formData.privatePlanPrice6Months > 0 ? Math.round(formData.privatePlanPrice6Months * 100) : null,
+          privatePlanPrice1Year: formData.privatePlanPrice1Year > 0 ? Math.round(formData.privatePlanPrice1Year * 100) : null,
+          // Legacy fields (for backward compatibility)
           sharedPlanPrice: formData.sharedPlanPrice > 0 ? Math.round(formData.sharedPlanPrice * 100) : null,
           privatePlanPrice: formData.privatePlanPrice > 0 ? Math.round(formData.privatePlanPrice * 100) : null,
           sharedPlanEnabled: formData.sharedPlanEnabled ?? false,
@@ -403,6 +447,29 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
               <CardDescription>Set prices and features for Shared and Private plans</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Base Monthly Price - Fallback price if no plan-specific prices are set */}
+              <div className="p-4 border-2 border-blue-200 bg-blue-50/50 rounded-lg">
+                <div className="space-y-2">
+                  <Label htmlFor="priceMonthly" className="text-base font-semibold">
+                    Base Monthly Price (₹) *
+                  </Label>
+                  <Input
+                    id="priceMonthly"
+                    name="priceMonthly"
+                    type="number"
+                    step="0.01"
+                    value={formData.priceMonthly}
+                    onChange={handleChange}
+                    placeholder="199"
+                    className="h-10 text-lg font-medium"
+                    required
+                  />
+                  <p className="text-xs text-gray-600">
+                    This is the fallback price used when plan-specific prices are not set. 
+                    The minimum price shown in the tools list will be the lowest of: 1-month plan prices, base plan prices, or this base monthly price.
+                  </p>
+                </div>
+              </div>
               {/* Shared Plan */}
               <div className={`space-y-4 p-4 border rounded-lg ${formData.sharedPlanEnabled ? 'border-blue-300 bg-blue-50/30' : 'border-gray-200 bg-gray-50/30'}`}>
                 <div className="flex items-center justify-between">
@@ -424,18 +491,93 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                     />
                   </div>
                 </div>
-                <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${!formData.sharedPlanEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
-            <div className="space-y-2">
-                    <Label htmlFor="sharedPlanPrice">Shared Plan Price (₹)</Label>
-              <Input
-                      id="sharedPlanPrice"
-                      name="sharedPlanPrice"
-                type="number"
-                step="0.01"
-                      value={formData.sharedPlanPrice}
+                <div className={`space-y-4 ${!formData.sharedPlanEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="sharedPlanName">Plan Name</Label>
+                      <Input
+                        id="sharedPlanName"
+                        name="sharedPlanName"
+                        type="text"
+                        value={formData.sharedPlanName || "Shared Plan"}
+                        onChange={handleChange}
+                        placeholder="Shared Plan"
+                      />
+                      <p className="text-xs text-gray-500">Custom name for this plan</p>
+                    </div>
+                  </div>
+                  
+                  {/* Duration-Specific Prices */}
+                  <div className="space-y-3 pt-2 border-t border-gray-200">
+                    <Label className="text-sm font-semibold">Pricing by Duration</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="sharedPlanPrice1Month" className="text-xs">1 Month (₹)</Label>
+                        <Input
+                          id="sharedPlanPrice1Month"
+                          name="sharedPlanPrice1Month"
+                          type="number"
+                          step="0.01"
+                          value={formData.sharedPlanPrice1Month}
+                          onChange={handleChange}
+                          placeholder="199"
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="sharedPlanPrice3Months" className="text-xs">3 Months (₹)</Label>
+                        <Input
+                          id="sharedPlanPrice3Months"
+                          name="sharedPlanPrice3Months"
+                          type="number"
+                          step="0.01"
+                          value={formData.sharedPlanPrice3Months}
+                          onChange={handleChange}
+                          placeholder="568"
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="sharedPlanPrice6Months" className="text-xs">6 Months (₹)</Label>
+                        <Input
+                          id="sharedPlanPrice6Months"
+                          name="sharedPlanPrice6Months"
+                          type="number"
+                          step="0.01"
+                          value={formData.sharedPlanPrice6Months}
+                          onChange={handleChange}
+                          placeholder="1074"
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="sharedPlanPrice1Year" className="text-xs">1 Year (₹)</Label>
+                        <Input
+                          id="sharedPlanPrice1Year"
+                          name="sharedPlanPrice1Year"
+                          type="number"
+                          step="0.01"
+                          value={formData.sharedPlanPrice1Year}
+                          onChange={handleChange}
+                          placeholder="1910"
+                          className="h-9"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500">Set prices for each duration. Leave 0 to use calculated discount.</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sharedPlanDescription">Plan Description</Label>
+                    <textarea
+                      id="sharedPlanDescription"
+                      name="sharedPlanDescription"
+                      value={formData.sharedPlanDescription || ""}
                       onChange={handleChange}
-                      placeholder="199"
+                      rows={2}
+                      className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Multiple users share the account. Instant activation after payment."
                     />
+                    <p className="text-xs text-gray-500">Brief description shown to customers</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="sharedPlanFeatures">Features (one per line)</Label>
@@ -474,18 +616,93 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
               />
             </div>
           </div>
-                <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${!formData.privatePlanEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                <div className={`space-y-4 ${!formData.privatePlanEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="privatePlanName">Plan Name</Label>
+                      <Input
+                        id="privatePlanName"
+                        name="privatePlanName"
+                        type="text"
+                        value={formData.privatePlanName || "Private Plan"}
+                        onChange={handleChange}
+                        placeholder="Private Plan"
+                      />
+                      <p className="text-xs text-gray-500">Custom name for this plan</p>
+                    </div>
+                  </div>
+                  
+                  {/* Duration-Specific Prices */}
+                  <div className="space-y-3 pt-2 border-t border-gray-200">
+                    <Label className="text-sm font-semibold">Pricing by Duration</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="privatePlanPrice1Month" className="text-xs">1 Month (₹)</Label>
+                        <Input
+                          id="privatePlanPrice1Month"
+                          name="privatePlanPrice1Month"
+                          type="number"
+                          step="0.01"
+                          value={formData.privatePlanPrice1Month}
+                          onChange={handleChange}
+                          placeholder="499"
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="privatePlanPrice3Months" className="text-xs">3 Months (₹)</Label>
+                        <Input
+                          id="privatePlanPrice3Months"
+                          name="privatePlanPrice3Months"
+                          type="number"
+                          step="0.01"
+                          value={formData.privatePlanPrice3Months}
+                          onChange={handleChange}
+                          placeholder="1422"
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="privatePlanPrice6Months" className="text-xs">6 Months (₹)</Label>
+                        <Input
+                          id="privatePlanPrice6Months"
+                          name="privatePlanPrice6Months"
+                          type="number"
+                          step="0.01"
+                          value={formData.privatePlanPrice6Months}
+                          onChange={handleChange}
+                          placeholder="2694"
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="privatePlanPrice1Year" className="text-xs">1 Year (₹)</Label>
+                        <Input
+                          id="privatePlanPrice1Year"
+                          name="privatePlanPrice1Year"
+                          type="number"
+                          step="0.01"
+                          value={formData.privatePlanPrice1Year}
+                          onChange={handleChange}
+                          placeholder="4790"
+                          className="h-9"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500">Set prices for each duration. Leave 0 to use calculated discount.</p>
+                  </div>
                   <div className="space-y-2">
-                    <Label htmlFor="privatePlanPrice">Private Plan Price (₹)</Label>
-                    <Input
-                      id="privatePlanPrice"
-                      name="privatePlanPrice"
-                      type="number"
-                      step="0.01"
-                      value={formData.privatePlanPrice}
+                    <Label htmlFor="privatePlanDescription">Plan Description</Label>
+                    <textarea
+                      id="privatePlanDescription"
+                      name="privatePlanDescription"
+                      value={formData.privatePlanDescription || ""}
                       onChange={handleChange}
-                      placeholder="499"
+                      rows={2}
+                      className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Dedicated account for single user. Manual activation via Email/WhatsApp after payment."
                     />
+                    <p className="text-xs text-gray-500">Brief description shown to customers</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="privatePlanFeatures">Features (one per line)</Label>

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { ToolIcon } from './tool-icon';
 import { Sparkles, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
+import { getBasePrice, getOneMonthPrice, type PlanType } from '@/lib/price-utils';
 
 interface FeaturedTool {
   id: string;
@@ -17,6 +18,16 @@ interface FeaturedTool {
   category: string;
   icon?: string | null;
   priceMonthly: number;
+  // Duration-specific prices
+  sharedPlanPrice1Month?: number | null;
+  sharedPlanPrice3Months?: number | null;
+  sharedPlanPrice6Months?: number | null;
+  sharedPlanPrice1Year?: number | null;
+  privatePlanPrice1Month?: number | null;
+  privatePlanPrice3Months?: number | null;
+  privatePlanPrice6Months?: number | null;
+  privatePlanPrice1Year?: number | null;
+  // Legacy fields
   sharedPlanPrice?: number | null;
   privatePlanPrice?: number | null;
   sharedPlanFeatures?: string | null;
@@ -124,13 +135,14 @@ export function FeaturedSlider({ tools, categories }: FeaturedSliderProps) {
     }
   };
 
+
   // Get price based on selected plan
+  // Use proper price calculation functions to get validated prices
   const getPrice = () => {
-    if (selectedPlan === 'shared') {
-      return currentTool.sharedPlanPrice || currentTool.priceMonthly;
-    } else {
-      return currentTool.privatePlanPrice || currentTool.priceMonthly;
-    }
+    const plan: PlanType = selectedPlan;
+    const basePrice = getBasePrice(currentTool, plan);
+    const oneMonthPrice = getOneMonthPrice(currentTool, plan, basePrice);
+    return oneMonthPrice;
   };
 
   const features = getFeatures();
@@ -218,14 +230,22 @@ export function FeaturedSlider({ tools, categories }: FeaturedSliderProps) {
               ))}
             </div>
 
-            {/* Dynamic Price based on selected plan */}
+            {/* Dynamic Price based on selected plan - Professional Pricing */}
             <div className="mb-8">
-              <div className="text-4xl font-bold text-white">
-                {formatPrice(displayPrice)}/month
-              </div>
-              {currentTool.sharedPlanPrice && currentTool.privatePlanPrice && (
-                <div className="text-sm text-white/70 mt-1">
-                  {selectedPlan === 'shared' ? 'Shared' : 'Private'} plan pricing
+              {displayPrice > 0 ? (
+                <>
+                  <div className="text-4xl font-bold text-white">
+                    {formatPrice(displayPrice)}/month
+                  </div>
+                  {(currentTool.sharedPlanEnabled || currentTool.privatePlanEnabled) && (
+                    <div className="text-sm text-white/70 mt-1">
+                      {selectedPlan === 'shared' ? 'Shared' : 'Private'} plan pricing
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-2xl font-medium text-white/70">
+                  Price not available
                 </div>
               )}
             </div>
@@ -233,13 +253,13 @@ export function FeaturedSlider({ tools, categories }: FeaturedSliderProps) {
             {/* Action Buttons */}
             <div className="flex gap-4">
               <Link
-                href={`/checkout/${currentTool.id}`}
+                href={`/tools/${currentTool.slug}`}
                 className="px-6 py-3 rounded-lg bg-white border-2 border-black text-black font-medium transition-all duration-300 hover:bg-gray-100 hover:scale-105 flex items-center"
               >
                 <span>View Details</span>
               </Link>
               <Link
-                href={`/checkout/${currentTool.id}`}
+                href={`/checkout/${currentTool.id}?plan=${selectedPlan}&duration=1month`}
                 className={`px-6 py-3 rounded-lg ${colors.button} text-white font-medium transition-all duration-300 hover:scale-105 shadow-lg flex items-center`}
               >
                 <span className="mr-2">Add to Cart</span>

@@ -2,7 +2,7 @@
 
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { LogOut, Shield, User } from "lucide-react";
+import { LogOut, Shield, User, MessageCircle } from "lucide-react";
 import Link from "next/link";
 
 interface AdminHeaderProps {
@@ -45,6 +45,24 @@ export function AdminHeader({ user }: AdminHeaderProps) {
                 </p>
               </div>
             </div>
+
+            {/* WhatsApp Button */}
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="bg-[#25D366] hover:bg-[#20BA5A] text-white border-[#25D366]"
+            >
+              <a
+                href={`https://wa.me/919155313223?text=${encodeURIComponent('Hello! I need admin support.')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2"
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">WhatsApp</span>
+              </a>
+            </Button>
             
             <Button
               variant="outline"

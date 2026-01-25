@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, serializeTool } from "@/lib/utils";
+import { getMinimumStartingPrice } from "@/lib/price-utils";
 import { TrendingUp, Users, Wrench, DollarSign } from "lucide-react";
 import { ToolIcon } from "@/components/tools/tool-icon";
 
@@ -110,7 +111,7 @@ export default async function AnalyticsPage() {
                   <div>
                     <p className="font-medium">{tool.name}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {formatPrice(tool.priceMonthly)}/month
+                      {tool.minimumPrice > 0 ? `${formatPrice(tool.minimumPrice)}/month` : 'Price not set'}
                     </p>
                   </div>
                 </div>

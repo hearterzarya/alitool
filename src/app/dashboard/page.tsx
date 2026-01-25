@@ -7,7 +7,8 @@ import { AccessToolButton } from "@/components/dashboard/access-tool-button";
 import { TutorialSection } from "@/components/dashboard/tutorial-section";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { formatPrice, formatDate } from "@/lib/utils";
+import { formatPrice, formatDate, serializeTool } from "@/lib/utils";
+import { getMinimumStartingPrice } from "@/lib/price-utils";
 import { ShoppingCart, AlertCircle, RefreshCw } from "lucide-react";
 import { ToolIcon } from "@/components/tools/tool-icon";
 import { SubscriptionStatusBadge } from "@/components/dashboard/subscription-status-badge";
@@ -127,6 +128,8 @@ export default async function DashboardPage() {
           icon: true,
           toolUrl: true,
           priceMonthly: true,
+          sharedPlanPrice1Month: true,
+          privatePlanPrice1Month: true,
           sharedPlanPrice: true,
           privatePlanPrice: true,
           sharedPlanFeatures: true,
@@ -174,14 +177,16 @@ export default async function DashboardPage() {
               category: true,
               icon: true,
               toolUrl: true,
-              priceMonthly: true,
-              sharedPlanPrice: true,
-              privatePlanPrice: true,
-              sharedPlanFeatures: true,
-              privatePlanFeatures: true,
-              sharedPlanEnabled: true,
-              privatePlanEnabled: true,
-              cookiesEncrypted: true,
+          priceMonthly: true,
+          sharedPlanPrice1Month: true,
+          privatePlanPrice1Month: true,
+          sharedPlanPrice: true,
+          privatePlanPrice: true,
+          sharedPlanFeatures: true,
+          privatePlanFeatures: true,
+          sharedPlanEnabled: true,
+          privatePlanEnabled: true,
+          cookiesEncrypted: true,
               isActive: true,
               isFeatured: true,
               sortOrder: true,
@@ -283,7 +288,7 @@ export default async function DashboardPage() {
             <CardDescription>Monthly Cost</CardDescription>
             <CardTitle className="text-3xl">
               {formatPrice(
-                subscriptions.reduce((sum, sub) => sum + sub.tool.priceMonthly, 0)
+                subscriptions.reduce((sum, sub) => sum + Number(sub.tool.priceMonthly || 0), 0)
               )}
             </CardTitle>
           </CardHeader>
@@ -338,7 +343,11 @@ export default async function DashboardPage() {
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-600 dark:text-gray-400">Monthly cost</span>
                           <span className="font-bold text-lg">
-                            {formatPrice(subscription.tool.priceMonthly)}
+                            {(() => {
+                              const serializedTool = serializeTool(subscription.tool);
+                              const minPrice = getMinimumStartingPrice(serializedTool);
+                              return formatPrice(minPrice);
+                            })()}
                           </span>
                         </div>
                       </>

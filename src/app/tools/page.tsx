@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { ToolCategory } from "@prisma/client";
+import { serializeTool } from "@/lib/utils";
 
 export const dynamic = 'force-dynamic';
 
@@ -67,6 +68,16 @@ export default async function ToolsPage({ searchParams }: PageProps) {
         icon: true,
         toolUrl: true,
         priceMonthly: true,
+        // Duration-specific prices
+        sharedPlanPrice1Month: true,
+        sharedPlanPrice3Months: true,
+        sharedPlanPrice6Months: true,
+        sharedPlanPrice1Year: true,
+        privatePlanPrice1Month: true,
+        privatePlanPrice3Months: true,
+        privatePlanPrice6Months: true,
+        privatePlanPrice1Year: true,
+        // Legacy fields
         sharedPlanPrice: true,
         privatePlanPrice: true,
         sharedPlanFeatures: true,
@@ -174,7 +185,7 @@ export default async function ToolsPage({ searchParams }: PageProps) {
             <>
               {featuredTools.length > 0 ? (
                 <FeaturedSlider 
-                  tools={featuredTools} 
+                  tools={featuredTools.map(t => serializeTool(t))} 
                   categories={categories.map(c => ({ value: c.value, label: c.label }))}
                 />
               ) : (
@@ -219,7 +230,7 @@ export default async function ToolsPage({ searchParams }: PageProps) {
 
                     {/* Search Bar for Individual Tools Section */}
                     <CategoryToolsSearch 
-                      tools={categoryTools.slice(0, validCategory === category.value ? undefined : 4)} 
+                      tools={categoryTools.slice(0, validCategory === category.value ? undefined : 4).map(t => serializeTool(t))} 
                       categoryLabel={category.label}
                     />
                   </div>
@@ -260,7 +271,7 @@ export default async function ToolsPage({ searchParams }: PageProps) {
                     className="animate-fade-in-up"
                     style={{ animationDelay: `${idx * 0.05}s` }}
                   >
-                    <ToolCard tool={tool} />
+                    <ToolCard tool={serializeTool(tool)} />
                   </div>
                 ))}
               </div>
