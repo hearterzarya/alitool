@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 async function createAdmin() {
   try {
-    const adminEmail = 'admin@growtools.com';
+    const adminEmail = 'hearterzarya@gmail.com';
     const adminPassword = 'admin123';
     
     console.log('Creating admin user...');

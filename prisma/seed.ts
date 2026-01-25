@@ -120,7 +120,7 @@ const tools = [
 async function main() {
 
   // Create admin user
-  const adminEmail = 'admin@growtools.com';
+  const adminEmail = 'hearterzarya@gmail.com';
   const adminPassword = 'admin123';
   const adminPasswordHash = await bcrypt.hash(adminPassword, 10);
   
