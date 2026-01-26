@@ -280,12 +280,13 @@ async function sendViaSMTP({
   const cleanPass = pass.replace(/\s/g, '');
 
   // Create transporter with optimized settings for fast, reliable delivery
+  // NO automatic verification - send immediately without verify() call
   const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
+    host: host,
+    port: port,
+    secure: port === 465, // true for 465, false for other ports
     auth: {
-      user,
+      user: user,
       pass: cleanPass,
     },
     // Optimize for speed - no pooling, direct connection
@@ -294,6 +295,10 @@ async function sendViaSMTP({
     socketTimeout: 10000, // 10 seconds socket timeout
     // Disable pooling for faster first connection
     pool: false,
+    // TLS settings
+    tls: {
+      rejectUnauthorized: false, // Accept self-signed certificates if needed
+    },
   });
 
   // Send email immediately - wait for success
