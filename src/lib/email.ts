@@ -31,7 +31,11 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
   const fromName = process.env.EMAIL_FROM_NAME || 'AliDigitalSolution';
   const isDevelopment = process.env.NODE_ENV === 'development';
 
-  console.log(`[EMAIL] Provider: ${provider}, To: ${to}, From: ${fromEmail}`);
+  console.log(`\n[EMAIL] Starting email send...`);
+  console.log(`[EMAIL] Provider: ${provider}`);
+  console.log(`[EMAIL] To: ${to}`);
+  console.log(`[EMAIL] From: ${fromEmail}`);
+  console.log(`[EMAIL] Subject: ${subject}\n`);
 
   try {
     if (provider === 'resend') {
