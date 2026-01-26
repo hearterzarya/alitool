@@ -144,53 +144,34 @@ export async function POST(req: Request) {
       },
     });
 
-    // Send OTP email - ensure it's sent successfully before returning
-    let emailSent = false;
-    const maxRetries = 2;
-    let lastError = null;
-    
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        if (attempt > 1) {
-          console.log(`🔄 Retry attempt ${attempt} of ${maxRetries}...`);
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
-        } else {
-          console.log(`📧 Attempting to send OTP email to ${email} (attempt ${attempt}/${maxRetries})...`);
-        }
-        
-        await sendEmail({
-          to: email,
-          subject: 'Your AliDigitalSolution verification code',
-          html: generateOtpEmailHtml(otpCode, 'verification'),
-        });
-        
-        emailSent = true;
-        console.log(`✅ OTP email sent successfully to ${email} on attempt ${attempt}`);
-        break; // Success, exit retry loop
-      } catch (emailError: any) {
-        lastError = emailError;
-        console.error(`❌ Email send attempt ${attempt} failed:`, emailError.message || emailError);
-        
-        // If this is the last attempt, log final failure
-        if (attempt === maxRetries) {
-          console.error(`❌ All ${maxRetries} email send attempts failed. Last error:`, emailError.message);
-          // In development, continue anyway (OTP is logged to console)
-          // In production, log but don't fail registration (user can resend)
-          if (process.env.NODE_ENV === 'production') {
-            console.error('OTP email failed during registration. User can request resend.');
-          }
-        }
-      }
-    }
-    
-    // Log final status
-    if (emailSent) {
+    // Send OTP email immediately - optimized for fast first-time delivery
+    try {
+      console.log(`📧 Sending OTP email to ${email} immediately...`);
+      
+      await sendEmail({
+        to: email,
+        subject: 'Your AliDigitalSolution verification code',
+        html: generateOtpEmailHtml(otpCode, 'verification'),
+      });
+      
+      console.log(`✅ OTP email sent successfully to ${email} on first attempt!`);
       console.log(`✅ Registration complete. OTP email delivered to ${email}`);
-    } else {
-      console.warn(`⚠️  Registration complete, but OTP email was not sent. User can request resend.`);
-      if (process.env.NODE_ENV === 'development' && lastError) {
-        console.warn(`⚠️  Last error: ${lastError.message}`);
+    } catch (emailError: any) {
+      console.error(`❌ OTP email send failed:`, emailError.message || emailError);
+      
+      // In development, log OTP to console as fallback
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`⚠️  OTP CODE (for testing): ${otpCode}`);
+        console.warn(`⚠️  Email failed but registration continues. User can resend OTP.`);
       }
+      
+      // In production, log error but don't fail registration (user can resend)
+      if (process.env.NODE_ENV === 'production') {
+        console.error('OTP email failed during registration. User can request resend.');
+      }
+      
+      // Continue with registration even if email fails (user can resend OTP)
+      // This ensures the user account is created and they can request a new OTP
     }
 
     // Return success (don't include OTP in response)

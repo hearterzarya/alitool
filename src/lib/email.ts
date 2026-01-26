@@ -279,6 +279,7 @@ async function sendViaSMTP({
   // Remove spaces from password if present (Gmail app passwords sometimes have spaces)
   const cleanPass = pass.replace(/\s/g, '');
 
+  // Create transporter with optimized settings for fast delivery
   const transporter = nodemailer.createTransport({
     host,
     port,
@@ -287,48 +288,49 @@ async function sendViaSMTP({
       user,
       pass: cleanPass,
     },
+    // Optimize for speed - skip verification, use connection pooling
+    pool: true,
+    maxConnections: 1,
+    maxMessages: 3,
+    rateDelta: 1000,
+    rateLimit: 5,
   });
 
-  // Verify connection before sending
+  // Send email immediately (skip verify step for speed)
   try {
-    console.log('🔍 Verifying SMTP connection...');
-    await transporter.verify();
-    console.log('✅ SMTP connection verified successfully');
-  } catch (verifyError: any) {
-    const errorMsg = verifyError.message || 'Unknown error';
-    console.error('❌ SMTP connection verification failed:', errorMsg);
-    
-    // Provide helpful error messages
-    if (errorMsg.includes('Invalid login') || errorMsg.includes('authentication')) {
-      throw new Error(`SMTP authentication failed. Please check your SMTP_USER and SMTP_PASS in .env.local. Make sure you're using a Gmail App Password, not your regular password.`);
-    } else if (errorMsg.includes('ECONNREFUSED') || errorMsg.includes('timeout')) {
-      throw new Error(`SMTP connection failed. Please check your internet connection and SMTP_HOST (${host}:${port})`);
-    } else {
-      throw new Error(`SMTP connection failed: ${errorMsg}. Please check your SMTP credentials in .env.local`);
-    }
-  }
-
-  // Send email
-  try {
-    console.log(`📤 Sending email via SMTP to ${to}...`);
+    console.log(`📤 Sending OTP email via SMTP to ${to}...`);
     const info = await transporter.sendMail({
       from,
       to,
       subject,
       html,
       text: text || html.replace(/<[^>]*>/g, ''),
+      // Priority settings for faster delivery
+      priority: 'high',
     });
 
     // Log success
     console.log(`✅ SMTP email sent successfully! Message ID: ${info.messageId}`);
-    console.log(`📧 Email delivered to: ${to}`);
+    console.log(`📧 OTP email delivered to: ${to}`);
+    
+    // Close connection immediately after sending
+    transporter.close();
   } catch (sendError: any) {
     const errorMsg = sendError.message || 'Unknown error';
     console.error('❌ SMTP send failed:', errorMsg);
     
+    // Close connection on error
+    try {
+      transporter.close();
+    } catch (closeError) {
+      // Ignore close errors
+    }
+    
     // Provide helpful error messages
     if (errorMsg.includes('Invalid login') || errorMsg.includes('authentication')) {
       throw new Error(`SMTP authentication failed. Please check your Gmail App Password in SMTP_PASS.`);
+    } else if (errorMsg.includes('ECONNREFUSED') || errorMsg.includes('timeout')) {
+      throw new Error(`SMTP connection failed. Please check your internet connection and SMTP_HOST (${host}:${port})`);
     } else if (errorMsg.includes('rate limit') || errorMsg.includes('quota')) {
       throw new Error(`Gmail sending quota exceeded. Please wait a few minutes and try again.`);
     } else {
