@@ -214,24 +214,35 @@ async function sendViaResend({
   });
 
   if (error) {
-    console.error('❌ Resend API error:', error);
+    console.error('❌ Resend API error details:');
+    console.error('   Status Code:', error.statusCode);
+    console.error('   Error Name:', error.name);
+    console.error('   Error Message:', error.message);
+    console.error('   Full Error:', JSON.stringify(error, null, 2));
     
     // Create error object with statusCode for fallback detection
     const resendError: any = new Error(error.message || 'Failed to send email via Resend');
     resendError.statusCode = error.statusCode;
     resendError.name = error.name;
     resendError.message = error.message;
+    resendError.originalError = error;
     
     // Provide more helpful error messages
-    if (error.statusCode === 403 && error.message?.includes('testing emails')) {
-      const allowedEmail = error.message.match(/\(([^)]+)\)/)?.[1] || 'your verified email';
-      resendError.message = `Resend is in testing mode. You can only send emails to ${allowedEmail}. To send to other recipients:\n1. Go to resend.com/domains and verify your domain (alidigitalsolution.in)\n2. Update EMAIL_FROM in .env.local to use your verified domain (e.g., noreply@alidigitalsolution.in)\n3. Restart your development server`;
-    } else if (error.message?.includes('domain') || error.message?.includes('verify')) {
-      resendError.message = 'Email domain not verified. Please verify your domain in Resend dashboard at resend.com/domains.';
+    if (error.statusCode === 403) {
+      if (error.message?.includes('testing emails')) {
+        const allowedEmail = error.message.match(/\(([^)]+)\)/)?.[1] || 'your verified email';
+        resendError.message = `❌ Resend is in TESTING MODE. You can only send emails to verified addresses (${allowedEmail}).\n\n🔧 Solutions:\n1. Verify your domain at resend.com/domains\n2. Or send to a verified email address\n3. Or upgrade your Resend account\n\n📧 Current FROM: ${from}`;
+      } else if (error.message?.includes('domain') || error.message?.includes('verify')) {
+        resendError.message = `❌ Domain not verified. The FROM address "${from}" is not verified.\n\n🔧 Solution: Go to resend.com/domains and verify your domain, then update EMAIL_FROM in .env.local`;
+      } else {
+        resendError.message = `❌ Resend API returned 403 Forbidden. This usually means:\n- Testing mode restriction (can only send to verified emails)\n- Domain not verified\n- Invalid FROM address\n\n📧 Current FROM: ${from}\n🔧 Check: resend.com/dashboard`;
+      }
+    } else if (error.statusCode === 401 || error.statusCode === 422) {
+      resendError.message = `❌ Invalid Resend API key or configuration.\n\n🔧 Solutions:\n1. Check RESEND_API_KEY in .env.local\n2. Verify API key at resend.com/api-keys\n3. Make sure API key starts with "re_"`;
     } else if (error.message?.includes('rate limit') || error.message?.includes('quota')) {
-      resendError.message = 'Email sending quota exceeded. Please check your Resend account limits.';
+      resendError.message = '❌ Email sending quota exceeded. Please check your Resend account limits at resend.com/dashboard';
     } else if (error.message?.includes('Invalid API key') || error.message?.includes('Unauthorized')) {
-      resendError.message = 'Invalid Resend API key. Please check your RESEND_API_KEY in .env.local.';
+      resendError.message = '❌ Invalid Resend API key. Please check your RESEND_API_KEY in .env.local and verify it at resend.com/api-keys';
     }
     
     throw resendError; // Throw error with statusCode for fallback detection
