@@ -37,6 +37,15 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
       
       // Check if Resend is properly configured
       if (!isResendConfigured()) {
+        // Try SMTP fallback if configured
+        if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+          console.warn('⚠️  Resend not configured. Falling back to SMTP...');
+          await sendViaSMTP({ to, subject, html, text, from: `${fromName} <${fromEmail}>` });
+          if (isDevelopment) {
+            console.log(`✓ Email sent via SMTP to ${to}: ${subject}`);
+          }
+          return;
+        }
         // In development, log to console as fallback
         if (isDevelopment) {
           console.warn('⚠️  RESEND_API_KEY not configured. Logging email to console instead.');
@@ -73,6 +82,23 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
     }
   } catch (error: any) {
     console.error('Email sending error:', error.message);
+    
+    // Auto-fallback to SMTP if Resend fails due to testing mode or domain issues
+    if (provider === 'resend' && (error.message?.includes('testing emails') || error.message?.includes('domain'))) {
+      if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+        console.warn('⚠️  Resend failed. Automatically falling back to SMTP...');
+        try {
+          await sendViaSMTP({ to, subject, html, text, from: `${fromName} <${fromEmail}>` });
+          if (isDevelopment) {
+            console.log(`✓ Email sent via SMTP fallback to ${to}: ${subject}`);
+          }
+          return; // Success with SMTP fallback
+        } catch (smtpError: any) {
+          console.error('SMTP fallback also failed:', smtpError.message);
+          // Continue to console logging fallback
+        }
+      }
+    }
     
     // In development, if email fails, try to extract and log OTP for testing
     if (isDevelopment) {
