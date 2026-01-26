@@ -84,19 +84,23 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
     console.error('Email sending error:', error.message);
     
     // Auto-fallback to SMTP if Resend fails due to testing mode or domain issues
-    if (provider === 'resend' && (error.message?.includes('testing emails') || error.message?.includes('domain'))) {
+    if (provider === 'resend' && (error.message?.includes('testing emails') || error.message?.includes('domain') || error.statusCode === 403)) {
       if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
         console.warn('⚠️  Resend failed. Automatically falling back to SMTP...');
         try {
           await sendViaSMTP({ to, subject, html, text, from: `${fromName} <${fromEmail}>` });
           if (isDevelopment) {
             console.log(`✓ Email sent via SMTP fallback to ${to}: ${subject}`);
+          } else {
+            console.log(`✓ Email sent via SMTP fallback`);
           }
-          return; // Success with SMTP fallback
+          return; // Success with SMTP fallback - don't throw error
         } catch (smtpError: any) {
           console.error('SMTP fallback also failed:', smtpError.message);
           // Continue to console logging fallback
         }
+      } else {
+        console.warn('⚠️  SMTP not configured. Cannot fallback from Resend.');
       }
     }
     
@@ -185,19 +189,23 @@ async function sendViaResend({
   if (error) {
     console.error('Resend API error:', error);
     
+    // Create error object with statusCode for fallback detection
+    const resendError: any = new Error(error.message || 'Failed to send email');
+    resendError.statusCode = error.statusCode;
+    resendError.name = error.name;
+    resendError.message = error.message;
+    
     // Provide more helpful error messages
     if (error.statusCode === 403 && error.message?.includes('testing emails')) {
       const allowedEmail = error.message.match(/\(([^)]+)\)/)?.[1] || 'your verified email';
-      const errorMsg = `Resend is in testing mode. You can only send emails to ${allowedEmail}. To send to other recipients:\n1. Go to resend.com/domains and verify your domain (alidigitalsolution.in)\n2. Update EMAIL_FROM in .env.local to use your verified domain (e.g., noreply@alidigitalsolution.in)\n3. Restart your development server`;
-      throw new Error(errorMsg);
+      resendError.message = `Resend is in testing mode. You can only send emails to ${allowedEmail}. To send to other recipients:\n1. Go to resend.com/domains and verify your domain (alidigitalsolution.in)\n2. Update EMAIL_FROM in .env.local to use your verified domain (e.g., noreply@alidigitalsolution.in)\n3. Restart your development server`;
+    } else if (error.message?.includes('domain') || error.message?.includes('verify')) {
+      resendError.message = 'Email domain not verified. Please verify your domain in Resend dashboard at resend.com/domains.';
+    } else if (error.message?.includes('rate limit') || error.message?.includes('quota')) {
+      resendError.message = 'Email sending quota exceeded. Please check your Resend account limits.';
     }
-    if (error.message?.includes('domain') || error.message?.includes('verify')) {
-      throw new Error('Email domain not verified. Please verify your domain in Resend dashboard at resend.com/domains.');
-    }
-    if (error.message?.includes('rate limit') || error.message?.includes('quota')) {
-      throw new Error('Email sending quota exceeded. Please check your Resend account limits.');
-    }
-    throw new Error(`Resend error: ${error.message || 'Failed to send email'}`);
+    
+    throw resendError; // Throw error with statusCode for fallback detection
   }
 
   // Log email ID for debugging (both dev and prod, but only ID, no secrets)
@@ -225,8 +233,11 @@ async function sendViaSMTP({
   const pass = process.env.SMTP_PASS;
 
   if (!host || !user || !pass) {
-    throw new Error('SMTP configuration is incomplete');
+    throw new Error('SMTP configuration is incomplete. Please check SMTP_HOST, SMTP_USER, and SMTP_PASS in .env.local');
   }
+
+  // Remove spaces from password if present (Gmail app passwords sometimes have spaces)
+  const cleanPass = pass.replace(/\s/g, '');
 
   const transporter = nodemailer.createTransport({
     host,
@@ -234,17 +245,30 @@ async function sendViaSMTP({
     secure: port === 465,
     auth: {
       user,
-      pass,
+      pass: cleanPass,
     },
   });
 
-  await transporter.sendMail({
+  // Verify connection before sending
+  try {
+    await transporter.verify();
+  } catch (verifyError: any) {
+    console.error('SMTP connection verification failed:', verifyError.message);
+    throw new Error(`SMTP connection failed: ${verifyError.message}`);
+  }
+
+  const info = await transporter.sendMail({
     from,
     to,
     subject,
     html,
     text: text || html.replace(/<[^>]*>/g, ''),
   });
+
+  // Log success
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`✓ SMTP email sent successfully. Message ID: ${info.messageId}`);
+  }
 }
 
 /**
