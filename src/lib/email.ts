@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
+import type { Transporter } from 'nodemailer';
 import { formatPrice } from '@/lib/utils';
 
 interface SendEmailOptions {
@@ -31,12 +32,6 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
   const fromName = process.env.EMAIL_FROM_NAME || 'AliDigitalSolution';
   const isDevelopment = process.env.NODE_ENV === 'development';
 
-  console.log(`\n[EMAIL] Starting email send...`);
-  console.log(`[EMAIL] Provider: ${provider}`);
-  console.log(`[EMAIL] To: ${to}`);
-  console.log(`[EMAIL] From: ${fromEmail}`);
-  console.log(`[EMAIL] Subject: ${subject}\n`);
-
   try {
     if (provider === 'resend') {
       const apiKey = process.env.RESEND_API_KEY;
@@ -65,36 +60,29 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
       // Use the 'from' email with optional name format
       // Resend supports: "Name <email@domain.com>" or just "email@domain.com"
       const fromAddress = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
-      console.log(`📤 Sending email via Resend to ${to}...`);
       await sendViaResend({ to, subject, html, text, from: fromAddress });
-      console.log(`✅ Resend email sent successfully to ${to}`);
     } else if (provider === 'smtp') {
       const host = process.env.SMTP_HOST;
       const user = process.env.SMTP_USER;
-      const pass = process.env.SMTP_PASS;
       
-      // Check if SMTP is properly configured
-      if (!host || !user || !pass) {
-        const missing = [];
-        if (!host) missing.push('SMTP_HOST');
-        if (!user) missing.push('SMTP_USER');
-        if (!pass) missing.push('SMTP_PASS');
-        const errorMsg = `SMTP not fully configured. Missing: ${missing.join(', ')}. Please check .env.local`;
-        console.error(`❌ ${errorMsg}`);
-        throw new Error(errorMsg); // Always throw - don't fallback to console
+      // Development fallback: if SMTP is not configured, log to console
+      if (isDevelopment && (!host || !user)) {
+        console.warn('⚠️  SMTP not configured. Logging email to console instead.');
+        logEmailToConsole({ to, subject, html });
+        return;
       }
       
-      // Send via SMTP - this will throw if it fails
-      console.log(`📤 Sending email via SMTP to ${to}...`);
       await sendViaSMTP({ to, subject, html, text, from: `${fromName} <${fromEmail}>` });
-      // If we reach here, email was sent successfully
-      console.log(`✅ SMTP email sent successfully to ${to}`);
-      return; // Success - exit function (don't continue to catch block)
     } else {
       throw new Error(`Unknown email provider: ${provider}`);
     }
+
+    // Log success (server-side only, no secrets)
+    if (isDevelopment) {
+      console.log(`✓ Email sent to ${to}: ${subject}`);
+    }
   } catch (error: any) {
-    console.error('❌ Email sending error:', error.message);
+    console.error('Email sending error:', error.message);
     
     // Auto-fallback to SMTP if Resend fails due to testing mode or domain issues
     if (provider === 'resend' && (error.message?.includes('testing emails') || error.message?.includes('domain') || error.statusCode === 403)) {
@@ -102,42 +90,28 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
         console.warn('⚠️  Resend failed. Automatically falling back to SMTP...');
         try {
           await sendViaSMTP({ to, subject, html, text, from: `${fromName} <${fromEmail}>` });
-          console.log(`✅ Email sent via SMTP fallback to ${to}: ${subject}`);
+          if (isDevelopment) {
+            console.log(`✓ Email sent via SMTP fallback to ${to}: ${subject}`);
+          } else {
+            console.log(`✓ Email sent via SMTP fallback`);
+          }
           return; // Success with SMTP fallback - don't throw error
         } catch (smtpError: any) {
-          console.error('❌ SMTP fallback also failed:', smtpError.message);
-          // Re-throw to continue to error handling
-          throw smtpError;
+          console.error('SMTP fallback also failed:', smtpError.message);
+          // Continue to console logging fallback
         }
       } else {
         console.warn('⚠️  SMTP not configured. Cannot fallback from Resend.');
       }
     }
     
-    // If SMTP provider failed, always throw error so retry can happen
-    if (provider === 'smtp') {
-      console.error('❌ SMTP email sending failed. Error:', error.message);
-      // Log OTP to console for development debugging (but email still needs to be sent)
-      if (isDevelopment) {
-        console.warn('⚠️  Logging OTP to console for debugging...');
-        try {
-          logEmailToConsole({ to, subject, html });
-          console.log('⚠️  IMPORTANT: OTP logged above, but email was NOT sent. Fix SMTP error above.');
-        } catch (logError) {
-          // Ignore logging errors
-        }
-      }
-      // Always throw error for SMTP failures so registration can retry
-      throw error;
-    }
-    
-    // In development, if email fails (and not SMTP), try to extract and log OTP for testing
-    if (isDevelopment && provider !== 'smtp') {
+    // In development, if email fails, try to extract and log OTP for testing
+    if (isDevelopment) {
       console.warn('⚠️  Email sending failed. Attempting to log OTP to console for testing...');
       try {
         logEmailToConsole({ to, subject, html });
         console.log('✓ OTP logged to console above. Registration will continue.');
-        return; // Don't throw error in dev mode if we logged to console (only for non-SMTP)
+        return; // Don't throw error in dev mode if we logged to console
       } catch (logError) {
         // If logging fails, continue with error
       }
@@ -155,7 +129,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
     }
     
     // Generic error for production
-    throw new Error(`Failed to send email: ${error.message || 'Unknown error'}`);
+    throw new Error('Failed to send email. Please try again later.');
   }
 }
 
@@ -214,35 +188,22 @@ async function sendViaResend({
   });
 
   if (error) {
-    console.error('❌ Resend API error details:');
-    console.error('   Status Code:', error.statusCode);
-    console.error('   Error Name:', error.name);
-    console.error('   Error Message:', error.message);
-    console.error('   Full Error:', JSON.stringify(error, null, 2));
+    console.error('Resend API error:', error);
     
     // Create error object with statusCode for fallback detection
-    const resendError: any = new Error(error.message || 'Failed to send email via Resend');
+    const resendError: any = new Error(error.message || 'Failed to send email');
     resendError.statusCode = error.statusCode;
     resendError.name = error.name;
     resendError.message = error.message;
-    resendError.originalError = error;
     
     // Provide more helpful error messages
-    if (error.statusCode === 403) {
-      if (error.message?.includes('testing emails')) {
-        const allowedEmail = error.message.match(/\(([^)]+)\)/)?.[1] || 'your verified email';
-        resendError.message = `❌ Resend is in TESTING MODE. You can only send emails to verified addresses (${allowedEmail}).\n\n🔧 Solutions:\n1. Verify your domain at resend.com/domains\n2. Or send to a verified email address\n3. Or upgrade your Resend account\n\n📧 Current FROM: ${from}`;
-      } else if (error.message?.includes('domain') || error.message?.includes('verify')) {
-        resendError.message = `❌ Domain not verified. The FROM address "${from}" is not verified.\n\n🔧 Solution: Go to resend.com/domains and verify your domain, then update EMAIL_FROM in .env.local`;
-      } else {
-        resendError.message = `❌ Resend API returned 403 Forbidden. This usually means:\n- Testing mode restriction (can only send to verified emails)\n- Domain not verified\n- Invalid FROM address\n\n📧 Current FROM: ${from}\n🔧 Check: resend.com/dashboard`;
-      }
-    } else if (error.statusCode === 401 || error.statusCode === 422) {
-      resendError.message = `❌ Invalid Resend API key or configuration.\n\n🔧 Solutions:\n1. Check RESEND_API_KEY in .env.local\n2. Verify API key at resend.com/api-keys\n3. Make sure API key starts with "re_"`;
+    if (error.statusCode === 403 && error.message?.includes('testing emails')) {
+      const allowedEmail = error.message.match(/\(([^)]+)\)/)?.[1] || 'your verified email';
+      resendError.message = `Resend is in testing mode. You can only send emails to ${allowedEmail}. To send to other recipients:\n1. Go to resend.com/domains and verify your domain (alidigitalsolution.in)\n2. Update EMAIL_FROM in .env.local to use your verified domain (e.g., noreply@alidigitalsolution.in)\n3. Restart your development server`;
+    } else if (error.message?.includes('domain') || error.message?.includes('verify')) {
+      resendError.message = 'Email domain not verified. Please verify your domain in Resend dashboard at resend.com/domains.';
     } else if (error.message?.includes('rate limit') || error.message?.includes('quota')) {
-      resendError.message = '❌ Email sending quota exceeded. Please check your Resend account limits at resend.com/dashboard';
-    } else if (error.message?.includes('Invalid API key') || error.message?.includes('Unauthorized')) {
-      resendError.message = '❌ Invalid Resend API key. Please check your RESEND_API_KEY in .env.local and verify it at resend.com/api-keys';
+      resendError.message = 'Email sending quota exceeded. Please check your Resend account limits.';
     }
     
     throw resendError; // Throw error with statusCode for fallback detection
@@ -279,71 +240,35 @@ async function sendViaSMTP({
   // Remove spaces from password if present (Gmail app passwords sometimes have spaces)
   const cleanPass = pass.replace(/\s/g, '');
 
-  // Create transporter with optimized settings for fast, reliable delivery
-  // NO automatic verification - send immediately without verify() call
   const transporter = nodemailer.createTransport({
     host: host,
     port: port,
-    secure: port === 465, // true for 465, false for other ports
+    secure: port === 465,
     auth: {
       user: user,
       pass: cleanPass,
     },
-    // Optimize for speed - no pooling, direct connection
-    connectionTimeout: 10000, // 10 seconds timeout
-    greetingTimeout: 5000, // 5 seconds greeting timeout
-    socketTimeout: 10000, // 10 seconds socket timeout
-    // Disable pooling for faster first connection
-    pool: false,
-    // TLS settings
-    tls: {
-      rejectUnauthorized: false, // Accept self-signed certificates if needed
-    },
   });
 
-  // Send email immediately - wait for success
+  // Verify connection before sending
   try {
-    console.log(`📤 Sending OTP email via SMTP to ${to}...`);
-    const startTime = Date.now();
-    
-    const info = await transporter.sendMail({
-      from,
-      to,
-      subject,
-      html,
-      text: text || html.replace(/<[^>]*>/g, ''),
-    });
+    await transporter.verify();
+  } catch (verifyError: any) {
+    console.error('SMTP connection verification failed:', verifyError.message);
+    throw new Error(`SMTP connection failed: ${verifyError.message}`);
+  }
 
-    const sendTime = Date.now() - startTime;
-    
-    // Log success with timing
-    console.log(`✅ SMTP email sent successfully! Message ID: ${info.messageId}`);
-    console.log(`📧 OTP email delivered to: ${to} (took ${sendTime}ms)`);
-    
-    // Close connection immediately after sending
-    transporter.close();
-  } catch (sendError: any) {
-    const errorMsg = sendError.message || 'Unknown error';
-    console.error('❌ SMTP send failed:', errorMsg);
-    console.error('Full error:', sendError);
-    
-    // Close connection on error
-    try {
-      transporter.close();
-    } catch (closeError) {
-      // Ignore close errors
-    }
-    
-    // Provide helpful error messages and ALWAYS throw
-    if (errorMsg.includes('Invalid login') || errorMsg.includes('authentication') || errorMsg.includes('535')) {
-      throw new Error(`SMTP authentication failed. Please check your Gmail App Password in SMTP_PASS. Error: ${errorMsg}`);
-    } else if (errorMsg.includes('ECONNREFUSED') || errorMsg.includes('ETIMEDOUT') || errorMsg.includes('timeout')) {
-      throw new Error(`SMTP connection failed. Please check your internet connection and SMTP_HOST (${host}:${port}). Error: ${errorMsg}`);
-    } else if (errorMsg.includes('rate limit') || errorMsg.includes('quota') || errorMsg.includes('550')) {
-      throw new Error(`Gmail sending quota exceeded. Please wait a few minutes and try again. Error: ${errorMsg}`);
-    } else {
-      throw new Error(`Failed to send email via SMTP: ${errorMsg}`);
-    }
+  const info = await transporter.sendMail({
+    from,
+    to,
+    subject,
+    html,
+    text: text || html.replace(/<[^>]*>/g, ''),
+  });
+
+  // Log success
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`✓ SMTP email sent successfully. Message ID: ${info.messageId}`);
   }
 }
 
