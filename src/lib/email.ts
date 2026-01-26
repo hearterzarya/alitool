@@ -1,6 +1,5 @@
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
-import type { Transporter } from 'nodemailer';
 import { formatPrice } from '@/lib/utils';
 
 interface SendEmailOptions {
