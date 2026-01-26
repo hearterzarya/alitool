@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
@@ -17,9 +17,37 @@ export function GoogleSignInButton({
   callbackUrl 
 }: GoogleSignInButtonProps) {
   const [loading, setLoading] = useState(false);
+  const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Check if Google OAuth is configured
+  useEffect(() => {
+    const checkGoogleAvailability = async () => {
+      try {
+        const response = await fetch('/api/auth/check-google');
+        const data = await response.json();
+        setIsAvailable(data.available);
+        if (!data.available) {
+          setError(data.message);
+        }
+      } catch (err) {
+        console.error('Failed to check Google OAuth availability:', err);
+        setIsAvailable(false);
+        setError('Unable to verify Google Sign-in availability');
+      }
+    };
+
+    checkGoogleAvailability();
+  }, []);
 
   const handleGoogleSignIn = async () => {
+    if (!isAvailable) {
+      setError('Google Sign-in is not configured. Please contact support.');
+      return;
+    }
+
     setLoading(true);
+    setError(null);
     
     try {
       // Use redirect: true for OAuth flows - NextAuth will handle the redirect properly
@@ -37,18 +65,39 @@ export function GoogleSignInButton({
       // This code won't execute if redirect works
     } catch (error: any) {
       console.error('Google sign-in error:', error);
-      // If we catch an error here, it means redirect didn't happen
-      // This shouldn't happen with redirect: true, but handle it just in case
+      setError(error.message || 'Failed to sign in with Google. Please try again.');
       setLoading(false);
     }
   };
+
+  // Don't render button if Google OAuth is not available
+  if (isAvailable === false) {
+    return null; // Or return a disabled button with error message
+  }
+
+  // Show loading state while checking availability
+  if (isAvailable === null) {
+    return (
+      <div className="space-y-2">
+        <Button
+          type="button"
+          disabled
+          className={`w-full bg-white text-gray-700 border border-gray-300 shadow-sm ${className}`}
+          variant="outline"
+        >
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          <span>Loading...</span>
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2">
       <Button
         type="button"
         onClick={handleGoogleSignIn}
-        disabled={loading}
+        disabled={loading || !isAvailable}
         className={`w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 shadow-sm ${className}`}
         variant="outline"
       >
@@ -76,6 +125,9 @@ export function GoogleSignInButton({
         )}
         <span>{text}</span>
       </Button>
+      {error && (
+        <p className="text-sm text-red-600 text-center mt-2">{error}</p>
+      )}
     </div>
   );
 }

@@ -13,6 +13,18 @@ interface SendEmailOptions {
  * Send email using configured provider (Resend or SMTP)
  * In development, if email provider is not configured, logs OTP to console
  */
+// Helper to check if Resend API is properly configured
+function isResendConfigured(): boolean {
+  const apiKey = process.env.RESEND_API_KEY;
+  return !!(
+    apiKey && 
+    apiKey.trim() !== '' && 
+    apiKey.startsWith('re_') &&
+    !apiKey.includes('your_api_key') &&
+    !apiKey.includes('placeholder')
+  );
+}
+
 export async function sendEmail({ to, subject, html, text }: SendEmailOptions): Promise<void> {
   const provider = process.env.EMAIL_PROVIDER || 'resend';
   const fromEmail = process.env.EMAIL_FROM || 'noreply@alidigitalsolution.in';
@@ -23,11 +35,16 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
     if (provider === 'resend') {
       const apiKey = process.env.RESEND_API_KEY;
       
-      // Development fallback: if API key is not configured or is placeholder, log to console
-      if (isDevelopment && (!apiKey || apiKey.includes('your_api_key') || apiKey.includes('placeholder'))) {
-        console.warn('⚠️  RESEND_API_KEY not configured. Logging email to console instead.');
-        logEmailToConsole({ to, subject, html });
-        return;
+      // Check if Resend is properly configured
+      if (!isResendConfigured()) {
+        // In development, log to console as fallback
+        if (isDevelopment) {
+          console.warn('⚠️  RESEND_API_KEY not configured. Logging email to console instead.');
+          logEmailToConsole({ to, subject, html });
+          return;
+        }
+        // In production, throw error to ensure proper configuration
+        throw new Error('RESEND_API_KEY is not configured. Please set RESEND_API_KEY environment variable.');
       }
       
       // Use the 'from' email with optional name format
@@ -69,7 +86,18 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
       }
     }
     
-    // In production, don't expose internal errors
+    // In production, provide helpful error messages
+    if (error.message?.includes('RESEND_API_KEY')) {
+      throw new Error('Email service is not configured. Please contact support.');
+    }
+    if (error.message?.includes('domain')) {
+      throw new Error('Email domain not verified. Please contact support.');
+    }
+    if (error.message?.includes('quota') || error.message?.includes('rate limit')) {
+      throw new Error('Email service temporarily unavailable. Please try again later.');
+    }
+    
+    // Generic error for production
     throw new Error('Failed to send email. Please try again later.');
   }
 }
@@ -113,11 +141,12 @@ async function sendViaResend({
 }: SendEmailOptions & { from: string }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   
-  if (!apiKey || apiKey.includes('your_api_key') || apiKey.includes('placeholder')) {
-    throw new Error('RESEND_API_KEY is not configured');
+  // Validate API key format
+  if (!apiKey || !apiKey.trim() || !apiKey.startsWith('re_')) {
+    throw new Error('RESEND_API_KEY is invalid. It must start with "re_"');
   }
 
-  const resend = new Resend(apiKey);
+  const resend = new Resend(apiKey.trim());
 
   const { error, data } = await resend.emails.send({
     from,
@@ -129,12 +158,22 @@ async function sendViaResend({
 
   if (error) {
     console.error('Resend API error:', error);
-    throw new Error(`Resend error: ${error.message}`);
+    // Provide more helpful error messages
+    if (error.message?.includes('domain')) {
+      throw new Error('Email domain not verified. Please verify your domain in Resend dashboard.');
+    }
+    if (error.message?.includes('rate limit') || error.message?.includes('quota')) {
+      throw new Error('Email sending quota exceeded. Please check your Resend account limits.');
+    }
+    throw new Error(`Resend error: ${error.message || 'Failed to send email'}`);
   }
 
-  // Log email ID in development for debugging
-  if (process.env.NODE_ENV === 'development' && data?.id) {
-    console.log(`✓ Email sent successfully. Resend ID: ${data.id}`);
+  // Log email ID for debugging (both dev and prod, but only ID, no secrets)
+  if (data?.id) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`✓ Email sent successfully. Resend ID: ${data.id}`);
+    }
+    // In production, you might want to log to a monitoring service
   }
 }
 

@@ -126,6 +126,16 @@ export async function sendOrderConfirmationEmail(paymentId: string): Promise<voi
     }
   } catch (error: any) {
     // Don't fail payment processing if email fails
-    console.error('Failed to send order confirmation email:', error);
+    // Log error with context for debugging
+    console.error('Failed to send order confirmation email:', {
+      paymentId,
+      error: error.message,
+      emailProvider: process.env.EMAIL_PROVIDER || 'resend',
+      hasResendKey: !!process.env.RESEND_API_KEY,
+      // Don't log the actual API key
+    });
+    
+    // In production, you might want to send this to an error tracking service
+    // For now, we just log and continue
   }
 }

@@ -20,10 +20,14 @@ export default async function AdminLayout({
     redirect("/dashboard");
   }
 
+  // Ensure user data is available
+  const userName = session.user?.name || null;
+  const userEmail = session.user?.email || null;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800">
       {/* Admin Header */}
-      <AdminHeader user={{ name: session.user?.name || null, email: session.user?.email || null }} />
+      <AdminHeader user={{ name: userName, email: userEmail }} />
       
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">

@@ -5,22 +5,42 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
+// Helper to check if Google OAuth is configured
+function isGoogleOAuthConfigured(): boolean {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  
+  return !!(
+    clientId && 
+    clientSecret && 
+    clientId.trim() !== '' && 
+    clientSecret.trim() !== '' &&
+    !clientId.includes('your-client-id') &&
+    !clientSecret.includes('your-client-secret') &&
+    !clientId.includes('placeholder') &&
+    !clientSecret.includes('placeholder')
+  );
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
   debug: process.env.NODE_ENV === 'development', // Enable debug logging in development
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-      allowDangerousEmailAccountLinking: true, // Allow linking Google account to existing email
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code"
+    // Only add Google Provider if credentials are configured
+    ...(isGoogleOAuthConfigured() ? [
+      GoogleProvider({
+        clientId: process.env.GOOGLE_CLIENT_ID!,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        allowDangerousEmailAccountLinking: true, // Allow linking Google account to existing email
+        authorization: {
+          params: {
+            prompt: "consent",
+            access_type: "offline",
+            response_type: "code"
+          }
         }
-      }
-    }),
+      })
+    ] : []),
     CredentialsProvider({
       name: "credentials",
       credentials: {
