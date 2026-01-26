@@ -146,39 +146,50 @@ export async function POST(req: Request) {
 
     // Send OTP email - ensure it's sent successfully before returning
     let emailSent = false;
-    try {
-      console.log(`📧 Attempting to send OTP email to ${email}...`);
-      await sendEmail({
-        to: email,
-        subject: 'Your AliDigitalSolution verification code',
-        html: generateOtpEmailHtml(otpCode, 'verification'),
-      });
-      emailSent = true;
-      console.log(`✅ OTP email sent successfully to ${email}`);
-    } catch (emailError: any) {
-      // Log the error for debugging
-      console.error('❌ Failed to send OTP email during registration:', emailError.message || emailError);
-      
-      // If email failed, try to resend automatically (one retry)
-      if (!emailSent) {
-        console.log('🔄 Retrying email send...');
-        try {
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
-          await sendEmail({
-            to: email,
-            subject: 'Your AliDigitalSolution verification code',
-            html: generateOtpEmailHtml(otpCode, 'verification'),
-          });
-          emailSent = true;
-          console.log(`✅ OTP email sent successfully on retry to ${email}`);
-        } catch (retryError: any) {
-          console.error('❌ Email retry also failed:', retryError.message || retryError);
-          // In development, sendEmail already logs to console, so continue
+    const maxRetries = 2;
+    let lastError = null;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        if (attempt > 1) {
+          console.log(`🔄 Retry attempt ${attempt} of ${maxRetries}...`);
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
+        } else {
+          console.log(`📧 Attempting to send OTP email to ${email} (attempt ${attempt}/${maxRetries})...`);
+        }
+        
+        await sendEmail({
+          to: email,
+          subject: 'Your AliDigitalSolution verification code',
+          html: generateOtpEmailHtml(otpCode, 'verification'),
+        });
+        
+        emailSent = true;
+        console.log(`✅ OTP email sent successfully to ${email} on attempt ${attempt}`);
+        break; // Success, exit retry loop
+      } catch (emailError: any) {
+        lastError = emailError;
+        console.error(`❌ Email send attempt ${attempt} failed:`, emailError.message || emailError);
+        
+        // If this is the last attempt, log final failure
+        if (attempt === maxRetries) {
+          console.error(`❌ All ${maxRetries} email send attempts failed. Last error:`, emailError.message);
+          // In development, continue anyway (OTP is logged to console)
           // In production, log but don't fail registration (user can resend)
           if (process.env.NODE_ENV === 'production') {
             console.error('OTP email failed during registration. User can request resend.');
           }
         }
+      }
+    }
+    
+    // Log final status
+    if (emailSent) {
+      console.log(`✅ Registration complete. OTP email delivered to ${email}`);
+    } else {
+      console.warn(`⚠️  Registration complete, but OTP email was not sent. User can request resend.`);
+      if (process.env.NODE_ENV === 'development' && lastError) {
+        console.warn(`⚠️  Last error: ${lastError.message}`);
       }
     }
 

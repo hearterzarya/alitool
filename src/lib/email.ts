@@ -97,7 +97,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
       console.log(`✓ Email sent to ${to}: ${subject}`);
     }
   } catch (error: any) {
-    console.error('Email sending error:', error.message);
+    console.error('❌ Email sending error:', error.message);
     
     // Auto-fallback to SMTP if Resend fails due to testing mode or domain issues
     if (provider === 'resend' && (error.message?.includes('testing emails') || error.message?.includes('domain') || error.statusCode === 403)) {
@@ -105,28 +105,42 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
         console.warn('⚠️  Resend failed. Automatically falling back to SMTP...');
         try {
           await sendViaSMTP({ to, subject, html, text, from: `${fromName} <${fromEmail}>` });
-          if (isDevelopment) {
-            console.log(`✓ Email sent via SMTP fallback to ${to}: ${subject}`);
-          } else {
-            console.log(`✓ Email sent via SMTP fallback`);
-          }
+          console.log(`✅ Email sent via SMTP fallback to ${to}: ${subject}`);
           return; // Success with SMTP fallback - don't throw error
         } catch (smtpError: any) {
-          console.error('SMTP fallback also failed:', smtpError.message);
-          // Continue to console logging fallback
+          console.error('❌ SMTP fallback also failed:', smtpError.message);
+          // Re-throw to continue to error handling
+          throw smtpError;
         }
       } else {
         console.warn('⚠️  SMTP not configured. Cannot fallback from Resend.');
       }
     }
     
-    // In development, if email fails, try to extract and log OTP for testing
-    if (isDevelopment) {
+    // If SMTP provider failed, don't fallback to console - throw error so retry can happen
+    if (provider === 'smtp') {
+      console.error('❌ SMTP email sending failed. Error:', error.message);
+      // Log OTP to console for development debugging, but still throw error
+      if (isDevelopment) {
+        console.warn('⚠️  Logging OTP to console for debugging (email still needs to be sent)...');
+        try {
+          logEmailToConsole({ to, subject, html });
+          console.log('⚠️  Note: OTP logged above, but email was NOT actually sent. Check SMTP configuration.');
+        } catch (logError) {
+          // Ignore logging errors
+        }
+      }
+      // Always throw error for SMTP failures so registration can retry
+      throw error;
+    }
+    
+    // In development, if email fails (and not SMTP), try to extract and log OTP for testing
+    if (isDevelopment && provider !== 'smtp') {
       console.warn('⚠️  Email sending failed. Attempting to log OTP to console for testing...');
       try {
         logEmailToConsole({ to, subject, html });
         console.log('✓ OTP logged to console above. Registration will continue.');
-        return; // Don't throw error in dev mode if we logged to console
+        return; // Don't throw error in dev mode if we logged to console (only for non-SMTP)
       } catch (logError) {
         // If logging fails, continue with error
       }
@@ -144,7 +158,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
     }
     
     // Generic error for production
-    throw new Error('Failed to send email. Please try again later.');
+    throw new Error(`Failed to send email: ${error.message || 'Unknown error'}`);
   }
 }
 
@@ -271,8 +285,17 @@ async function sendViaSMTP({
     await transporter.verify();
     console.log('✅ SMTP connection verified successfully');
   } catch (verifyError: any) {
-    console.error('❌ SMTP connection verification failed:', verifyError.message);
-    throw new Error(`SMTP connection failed: ${verifyError.message}. Please check your SMTP credentials in .env.local`);
+    const errorMsg = verifyError.message || 'Unknown error';
+    console.error('❌ SMTP connection verification failed:', errorMsg);
+    
+    // Provide helpful error messages
+    if (errorMsg.includes('Invalid login') || errorMsg.includes('authentication')) {
+      throw new Error(`SMTP authentication failed. Please check your SMTP_USER and SMTP_PASS in .env.local. Make sure you're using a Gmail App Password, not your regular password.`);
+    } else if (errorMsg.includes('ECONNREFUSED') || errorMsg.includes('timeout')) {
+      throw new Error(`SMTP connection failed. Please check your internet connection and SMTP_HOST (${host}:${port})`);
+    } else {
+      throw new Error(`SMTP connection failed: ${errorMsg}. Please check your SMTP credentials in .env.local`);
+    }
   }
 
   // Send email
@@ -288,9 +311,19 @@ async function sendViaSMTP({
 
     // Log success
     console.log(`✅ SMTP email sent successfully! Message ID: ${info.messageId}`);
+    console.log(`📧 Email delivered to: ${to}`);
   } catch (sendError: any) {
-    console.error('❌ SMTP send failed:', sendError.message);
-    throw new Error(`Failed to send email via SMTP: ${sendError.message}`);
+    const errorMsg = sendError.message || 'Unknown error';
+    console.error('❌ SMTP send failed:', errorMsg);
+    
+    // Provide helpful error messages
+    if (errorMsg.includes('Invalid login') || errorMsg.includes('authentication')) {
+      throw new Error(`SMTP authentication failed. Please check your Gmail App Password in SMTP_PASS.`);
+    } else if (errorMsg.includes('rate limit') || errorMsg.includes('quota')) {
+      throw new Error(`Gmail sending quota exceeded. Please wait a few minutes and try again.`);
+    } else {
+      throw new Error(`Failed to send email via SMTP: ${errorMsg}`);
+    }
   }
 }
 
