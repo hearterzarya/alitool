@@ -31,6 +31,8 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
   const fromName = process.env.EMAIL_FROM_NAME || 'AliDigitalSolution';
   const isDevelopment = process.env.NODE_ENV === 'development';
 
+  console.log(`[EMAIL] Provider: ${provider}, To: ${to}, From: ${fromEmail}`);
+
   try {
     if (provider === 'resend') {
       const apiKey = process.env.RESEND_API_KEY;
@@ -73,28 +75,17 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
         if (!pass) missing.push('SMTP_PASS');
         const errorMsg = `SMTP not fully configured. Missing: ${missing.join(', ')}. Please check .env.local`;
         console.error(`❌ ${errorMsg}`);
-        
-        // In development, log to console as fallback
-        if (isDevelopment) {
-          console.warn('⚠️  Logging email to console instead.');
-          logEmailToConsole({ to, subject, html });
-          return;
-        }
-        // In production, throw error
-        throw new Error(errorMsg);
+        throw new Error(errorMsg); // Always throw - don't fallback to console
       }
       
-      // Send via SMTP
+      // Send via SMTP - this will throw if it fails
       console.log(`📤 Sending email via SMTP to ${to}...`);
       await sendViaSMTP({ to, subject, html, text, from: `${fromName} <${fromEmail}>` });
+      // If we reach here, email was sent successfully
       console.log(`✅ SMTP email sent successfully to ${to}`);
+      return; // Success - exit function (don't continue to catch block)
     } else {
       throw new Error(`Unknown email provider: ${provider}`);
-    }
-
-    // Log success (server-side only, no secrets)
-    if (isDevelopment) {
-      console.log(`✓ Email sent to ${to}: ${subject}`);
     }
   } catch (error: any) {
     console.error('❌ Email sending error:', error.message);
@@ -117,15 +108,15 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
       }
     }
     
-    // If SMTP provider failed, don't fallback to console - throw error so retry can happen
+    // If SMTP provider failed, always throw error so retry can happen
     if (provider === 'smtp') {
       console.error('❌ SMTP email sending failed. Error:', error.message);
-      // Log OTP to console for development debugging, but still throw error
+      // Log OTP to console for development debugging (but email still needs to be sent)
       if (isDevelopment) {
-        console.warn('⚠️  Logging OTP to console for debugging (email still needs to be sent)...');
+        console.warn('⚠️  Logging OTP to console for debugging...');
         try {
           logEmailToConsole({ to, subject, html });
-          console.log('⚠️  Note: OTP logged above, but email was NOT actually sent. Check SMTP configuration.');
+          console.log('⚠️  IMPORTANT: OTP logged above, but email was NOT sent. Fix SMTP error above.');
         } catch (logError) {
           // Ignore logging errors
         }
