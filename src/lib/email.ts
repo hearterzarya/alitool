@@ -63,15 +63,31 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
     } else if (provider === 'smtp') {
       const host = process.env.SMTP_HOST;
       const user = process.env.SMTP_USER;
+      const pass = process.env.SMTP_PASS;
       
-      // Development fallback: if SMTP is not configured, log to console
-      if (isDevelopment && (!host || !user)) {
-        console.warn('⚠️  SMTP not configured. Logging email to console instead.');
-        logEmailToConsole({ to, subject, html });
-        return;
+      // Check if SMTP is properly configured
+      if (!host || !user || !pass) {
+        const missing = [];
+        if (!host) missing.push('SMTP_HOST');
+        if (!user) missing.push('SMTP_USER');
+        if (!pass) missing.push('SMTP_PASS');
+        const errorMsg = `SMTP not fully configured. Missing: ${missing.join(', ')}. Please check .env.local`;
+        console.error(`❌ ${errorMsg}`);
+        
+        // In development, log to console as fallback
+        if (isDevelopment) {
+          console.warn('⚠️  Logging email to console instead.');
+          logEmailToConsole({ to, subject, html });
+          return;
+        }
+        // In production, throw error
+        throw new Error(errorMsg);
       }
       
+      // Send via SMTP
+      console.log(`📤 Sending email via SMTP to ${to}...`);
       await sendViaSMTP({ to, subject, html, text, from: `${fromName} <${fromEmail}>` });
+      console.log(`✅ SMTP email sent successfully to ${to}`);
     } else {
       throw new Error(`Unknown email provider: ${provider}`);
     }
@@ -251,23 +267,30 @@ async function sendViaSMTP({
 
   // Verify connection before sending
   try {
+    console.log('🔍 Verifying SMTP connection...');
     await transporter.verify();
+    console.log('✅ SMTP connection verified successfully');
   } catch (verifyError: any) {
-    console.error('SMTP connection verification failed:', verifyError.message);
-    throw new Error(`SMTP connection failed: ${verifyError.message}`);
+    console.error('❌ SMTP connection verification failed:', verifyError.message);
+    throw new Error(`SMTP connection failed: ${verifyError.message}. Please check your SMTP credentials in .env.local`);
   }
 
-  const info = await transporter.sendMail({
-    from,
-    to,
-    subject,
-    html,
-    text: text || html.replace(/<[^>]*>/g, ''),
-  });
+  // Send email
+  try {
+    console.log(`📤 Sending email via SMTP to ${to}...`);
+    const info = await transporter.sendMail({
+      from,
+      to,
+      subject,
+      html,
+      text: text || html.replace(/<[^>]*>/g, ''),
+    });
 
-  // Log success
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`✓ SMTP email sent successfully. Message ID: ${info.messageId}`);
+    // Log success
+    console.log(`✅ SMTP email sent successfully! Message ID: ${info.messageId}`);
+  } catch (sendError: any) {
+    console.error('❌ SMTP send failed:', sendError.message);
+    throw new Error(`Failed to send email via SMTP: ${sendError.message}`);
   }
 }
 

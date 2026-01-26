@@ -144,28 +144,42 @@ export async function POST(req: Request) {
       },
     });
 
-    // Send OTP email - ensure it's sent successfully
+    // Send OTP email - ensure it's sent successfully before returning
+    let emailSent = false;
     try {
+      console.log(`📧 Attempting to send OTP email to ${email}...`);
       await sendEmail({
         to: email,
         subject: 'Your AliDigitalSolution verification code',
         html: generateOtpEmailHtml(otpCode, 'verification'),
       });
-      // Log success
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`✓ OTP email sent successfully to ${email}`);
-      }
+      emailSent = true;
+      console.log(`✅ OTP email sent successfully to ${email}`);
     } catch (emailError: any) {
       // Log the error for debugging
-      console.error('Failed to send OTP email during registration:', emailError);
+      console.error('❌ Failed to send OTP email during registration:', emailError.message || emailError);
       
-      // In development, sendEmail already logs to console, so continue
-      // In production, log but don't fail registration (user can resend)
-      if (process.env.NODE_ENV === 'production') {
-        console.error('OTP email failed during registration. User can request resend.');
+      // If email failed, try to resend automatically (one retry)
+      if (!emailSent) {
+        console.log('🔄 Retrying email send...');
+        try {
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+          await sendEmail({
+            to: email,
+            subject: 'Your AliDigitalSolution verification code',
+            html: generateOtpEmailHtml(otpCode, 'verification'),
+          });
+          emailSent = true;
+          console.log(`✅ OTP email sent successfully on retry to ${email}`);
+        } catch (retryError: any) {
+          console.error('❌ Email retry also failed:', retryError.message || retryError);
+          // In development, sendEmail already logs to console, so continue
+          // In production, log but don't fail registration (user can resend)
+          if (process.env.NODE_ENV === 'production') {
+            console.error('OTP email failed during registration. User can request resend.');
+          }
+        }
       }
-      // Note: sendEmail function handles SMTP fallback automatically
-      // If both Resend and SMTP fail, it logs to console in development
     }
 
     // Return success (don't include OTP in response)
