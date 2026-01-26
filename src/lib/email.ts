@@ -158,9 +158,15 @@ async function sendViaResend({
 
   if (error) {
     console.error('Resend API error:', error);
+    
     // Provide more helpful error messages
-    if (error.message?.includes('domain')) {
-      throw new Error('Email domain not verified. Please verify your domain in Resend dashboard.');
+    if (error.statusCode === 403 && error.message?.includes('testing emails')) {
+      const allowedEmail = error.message.match(/\(([^)]+)\)/)?.[1] || 'your verified email';
+      const errorMsg = `Resend is in testing mode. You can only send emails to ${allowedEmail}. To send to other recipients:\n1. Go to resend.com/domains and verify your domain (alidigitalsolution.in)\n2. Update EMAIL_FROM in .env.local to use your verified domain (e.g., noreply@alidigitalsolution.in)\n3. Restart your development server`;
+      throw new Error(errorMsg);
+    }
+    if (error.message?.includes('domain') || error.message?.includes('verify')) {
+      throw new Error('Email domain not verified. Please verify your domain in Resend dashboard at resend.com/domains.');
     }
     if (error.message?.includes('rate limit') || error.message?.includes('quota')) {
       throw new Error('Email sending quota exceeded. Please check your Resend account limits.');
