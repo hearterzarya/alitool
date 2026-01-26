@@ -279,7 +279,7 @@ async function sendViaSMTP({
   // Remove spaces from password if present (Gmail app passwords sometimes have spaces)
   const cleanPass = pass.replace(/\s/g, '');
 
-  // Create transporter with optimized settings for fast delivery
+  // Create transporter with optimized settings for fast, reliable delivery
   const transporter = nodemailer.createTransport({
     host,
     port,
@@ -288,36 +288,39 @@ async function sendViaSMTP({
       user,
       pass: cleanPass,
     },
-    // Optimize for speed - skip verification, use connection pooling
-    pool: true,
-    maxConnections: 1,
-    maxMessages: 3,
-    rateDelta: 1000,
-    rateLimit: 5,
+    // Optimize for speed - no pooling, direct connection
+    connectionTimeout: 10000, // 10 seconds timeout
+    greetingTimeout: 5000, // 5 seconds greeting timeout
+    socketTimeout: 10000, // 10 seconds socket timeout
+    // Disable pooling for faster first connection
+    pool: false,
   });
 
-  // Send email immediately (skip verify step for speed)
+  // Send email immediately - wait for success
   try {
     console.log(`📤 Sending OTP email via SMTP to ${to}...`);
+    const startTime = Date.now();
+    
     const info = await transporter.sendMail({
       from,
       to,
       subject,
       html,
       text: text || html.replace(/<[^>]*>/g, ''),
-      // Priority settings for faster delivery
-      priority: 'high',
     });
 
-    // Log success
+    const sendTime = Date.now() - startTime;
+    
+    // Log success with timing
     console.log(`✅ SMTP email sent successfully! Message ID: ${info.messageId}`);
-    console.log(`📧 OTP email delivered to: ${to}`);
+    console.log(`📧 OTP email delivered to: ${to} (took ${sendTime}ms)`);
     
     // Close connection immediately after sending
     transporter.close();
   } catch (sendError: any) {
     const errorMsg = sendError.message || 'Unknown error';
     console.error('❌ SMTP send failed:', errorMsg);
+    console.error('Full error:', sendError);
     
     // Close connection on error
     try {
@@ -326,13 +329,13 @@ async function sendViaSMTP({
       // Ignore close errors
     }
     
-    // Provide helpful error messages
-    if (errorMsg.includes('Invalid login') || errorMsg.includes('authentication')) {
-      throw new Error(`SMTP authentication failed. Please check your Gmail App Password in SMTP_PASS.`);
-    } else if (errorMsg.includes('ECONNREFUSED') || errorMsg.includes('timeout')) {
-      throw new Error(`SMTP connection failed. Please check your internet connection and SMTP_HOST (${host}:${port})`);
-    } else if (errorMsg.includes('rate limit') || errorMsg.includes('quota')) {
-      throw new Error(`Gmail sending quota exceeded. Please wait a few minutes and try again.`);
+    // Provide helpful error messages and ALWAYS throw
+    if (errorMsg.includes('Invalid login') || errorMsg.includes('authentication') || errorMsg.includes('535')) {
+      throw new Error(`SMTP authentication failed. Please check your Gmail App Password in SMTP_PASS. Error: ${errorMsg}`);
+    } else if (errorMsg.includes('ECONNREFUSED') || errorMsg.includes('ETIMEDOUT') || errorMsg.includes('timeout')) {
+      throw new Error(`SMTP connection failed. Please check your internet connection and SMTP_HOST (${host}:${port}). Error: ${errorMsg}`);
+    } else if (errorMsg.includes('rate limit') || errorMsg.includes('quota') || errorMsg.includes('550')) {
+      throw new Error(`Gmail sending quota exceeded. Please wait a few minutes and try again. Error: ${errorMsg}`);
     } else {
       throw new Error(`Failed to send email via SMTP: ${errorMsg}`);
     }

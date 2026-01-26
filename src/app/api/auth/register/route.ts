@@ -144,35 +144,18 @@ export async function POST(req: Request) {
       },
     });
 
-    // Send OTP email immediately - optimized for fast first-time delivery
-    try {
-      console.log(`📧 Sending OTP email to ${email} immediately...`);
-      
-      await sendEmail({
-        to: email,
-        subject: 'Your AliDigitalSolution verification code',
-        html: generateOtpEmailHtml(otpCode, 'verification'),
-      });
-      
-      console.log(`✅ OTP email sent successfully to ${email} on first attempt!`);
-      console.log(`✅ Registration complete. OTP email delivered to ${email}`);
-    } catch (emailError: any) {
-      console.error(`❌ OTP email send failed:`, emailError.message || emailError);
-      
-      // In development, log OTP to console as fallback
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(`⚠️  OTP CODE (for testing): ${otpCode}`);
-        console.warn(`⚠️  Email failed but registration continues. User can resend OTP.`);
-      }
-      
-      // In production, log error but don't fail registration (user can resend)
-      if (process.env.NODE_ENV === 'production') {
-        console.error('OTP email failed during registration. User can request resend.');
-      }
-      
-      // Continue with registration even if email fails (user can resend OTP)
-      // This ensures the user account is created and they can request a new OTP
-    }
+    // Send OTP email - MUST succeed before returning success
+    // This ensures OTP is delivered immediately on first sign up
+    console.log(`📧 Sending OTP email to ${email}...`);
+    
+    await sendEmail({
+      to: email,
+      subject: 'Your AliDigitalSolution verification code',
+      html: generateOtpEmailHtml(otpCode, 'verification'),
+    });
+    
+    console.log(`✅ OTP email sent successfully to ${email}!`);
+    console.log(`✅ Registration complete. OTP email delivered to ${email}`);
 
     // Return success (don't include OTP in response)
     return NextResponse.json(
