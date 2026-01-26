@@ -282,18 +282,18 @@ export function ToolCheckoutClient({
           const status = data.payment.status || data.payment.txnStatus;
           
           if (status === 'SUCCESS') {
-            setPaymentStatus('success');
+          setPaymentStatus('success');
             setCheckingStatus(false);
-            clearInterval(interval);
+          clearInterval(interval);
             
             // Show success message and redirect after 3 seconds
-            setTimeout(() => {
-              router.push(`/payment/success?ref=${merchantReferenceId}`);
+          setTimeout(() => {
+            router.push(`/payment/success?ref=${merchantReferenceId}`);
             }, 3000);
           } else if (status === 'FAILED' || status === 'EXPIRED') {
-            setPaymentStatus('failed');
+          setPaymentStatus('failed');
             setCheckingStatus(false);
-            clearInterval(interval);
+          clearInterval(interval);
           }
           // If still PENDING, continue polling
         } else {
@@ -580,13 +580,13 @@ export function ToolCheckoutClient({
                 Click here to enter your code
               </button>
             </div>
-            <Link
+          <Link 
               href="/admin/coupons"
               className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
-            >
+          >
               <Tag className="h-4 w-4" />
               <span>View Available Coupons</span>
-            </Link>
+          </Link>
           </div>
         )}
 
@@ -710,8 +710,8 @@ export function ToolCheckoutClient({
                 <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm">
                   <p className="text-green-700 font-medium">
                     ✓ Coupon applied: {appliedCoupon.coupon.code}
-                  </p>
-                </div>
+          </p>
+        </div>
               )}
             </CardContent>
           </Card>
@@ -729,8 +729,8 @@ export function ToolCheckoutClient({
                     <QrCode className="h-5 w-5 text-purple-600" />
                     <CardTitle className="text-slate-900 text-lg font-bold">
                       Pay with UPI QR Code
-                    </CardTitle>
-                  </div>
+                      </CardTitle>
+                        </div>
                 </CardHeader>
                 <CardContent className="p-6">
                   <p className="text-sm text-slate-600 mb-6">
@@ -747,7 +747,7 @@ export function ToolCheckoutClient({
                         includeMargin={true}
                         className="rounded-lg"
                       />
-                    </div>
+                      </div>
                   )}
 
                   {/* Payment Status - Show in QR section */}
@@ -763,7 +763,7 @@ export function ToolCheckoutClient({
                       <CheckCircle2 className="h-6 w-6 text-green-600 mx-auto mb-2" />
                       <p className="text-green-800 font-bold">Payment Successful! 🎉</p>
                       <p className="text-green-700 text-sm mt-1">Redirecting...</p>
-                    </div>
+                  </div>
                   )}
 
                   {paymentStatus === 'failed' && (
@@ -781,7 +781,7 @@ export function ToolCheckoutClient({
                       >
                         Try Again
                       </Button>
-                    </div>
+                </div>
                   )}
 
                   {paymentStatus === 'pending' && !checkingStatus && paymentCreated && (
@@ -798,7 +798,7 @@ export function ToolCheckoutClient({
                     </div>
                   )}
                 </CardContent>
-                </Card>
+            </Card>
 
                 {/* Payment Options - Below QR Code */}
                 <Card className="border-slate-200 shadow-sm">
@@ -806,7 +806,7 @@ export function ToolCheckoutClient({
                     <CardTitle className="text-slate-900 text-lg font-bold">
                       Payment Options
                     </CardTitle>
-                  </CardHeader>
+                </CardHeader>
                   <CardContent className="p-6">
                     {paymentLinks && (
                       <div className="space-y-4">
@@ -831,7 +831,7 @@ export function ToolCheckoutClient({
                               <div className="flex items-center justify-center gap-2">
                                 <span>PhonePe</span>
                                 <ExternalLink className="h-4 w-4" />
-                              </div>
+                          </div>
                             </Button>
                           )}
                           {paymentLinks.paytm && (
@@ -843,7 +843,7 @@ export function ToolCheckoutClient({
                               <div className="flex items-center justify-center gap-2">
                                 <span>Paytm</span>
                                 <ExternalLink className="h-4 w-4" />
-                              </div>
+                        </div>
                             </Button>
                           )}
                           {paymentLinks.gpay && (
@@ -855,7 +855,7 @@ export function ToolCheckoutClient({
                               <div className="flex items-center justify-center gap-2">
                                 <span>Google Pay</span>
                                 <ExternalLink className="h-4 w-4" />
-                              </div>
+                        </div>
                             </Button>
                           )}
                         </div>
@@ -868,7 +868,7 @@ export function ToolCheckoutClient({
                             <p className="text-xs text-amber-700 text-center mt-1">
                               Please complete the payment before it expires
                             </p>
-                          </div>
+                              </div>
                         </div>
                       </div>
                     )}
@@ -919,21 +919,21 @@ export function ToolCheckoutClient({
                           <div className="text-xs text-slate-600">Instant Access</div>
                         </button>
                       )}
-                      {tool.privatePlanEnabled && (
+                    {tool.privatePlanEnabled && (
                         <button
                           type="button"
-                          onClick={() => setSelectedPlan('private')}
+                        onClick={() => setSelectedPlan('private')}
                           className={`p-4 border-2 rounded-lg text-left transition-all ${
-                            selectedPlan === 'private'
-                              ? 'border-purple-500 bg-purple-50'
+                          selectedPlan === 'private'
+                            ? 'border-purple-500 bg-purple-50'
                               : 'border-slate-200 hover:border-purple-300'
                           }`}
                         >
                           <div className="font-semibold text-slate-900 mb-1">Private Plan</div>
                           <div className="text-xs text-slate-600">Manual Activation</div>
                         </button>
-                      )}
-                    </div>
+                            )}
+                          </div>
                   )}
                 </CardContent>
               </Card>
@@ -1024,17 +1024,17 @@ export function ToolCheckoutClient({
 
                     {/* First Name / Last Name */}
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
+                    <div className="space-y-2">
                         <Label htmlFor="firstName" className="text-slate-700 font-medium text-sm">
                           First name <span className="text-red-500">*</span>
                         </Label>
-                        <Input
+                      <Input
                           id="firstName"
                           type="text"
                           value={customerFirstName}
                           onChange={(e) => setCustomerFirstName(e.target.value)}
                           placeholder="John"
-                          required
+                        required
                           className="bg-white border-slate-300 h-11"
                         />
                       </div>
@@ -1114,11 +1114,11 @@ export function ToolCheckoutClient({
                       rows={4}
                       className="bg-white border-slate-300 resize-none"
                     />
-                  </div>
+                      </div>
                 </CardContent>
               </Card>
             )}
-          </div>
+                      </div>
 
           {/* Right Column - Your Order and Payment Options */}
           <div className="space-y-6">
@@ -1134,7 +1134,7 @@ export function ToolCheckoutClient({
                 <div className="grid grid-cols-2 gap-4 mb-4 pb-3 border-b border-slate-200">
                   <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Product</div>
                   <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide text-right">Subtotal</div>
-                </div>
+                      </div>
 
                 {/* Product Item */}
                 <div className="mb-6">
@@ -1146,7 +1146,7 @@ export function ToolCheckoutClient({
                     <div className="flex-shrink-0">
                       <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center border border-slate-200">
                         <ToolIcon icon={tool.icon} name={tool.name} size="sm" />
-                      </div>
+                        </div>
                     </div>
 
                     {/* Product Details */}
@@ -1183,23 +1183,23 @@ export function ToolCheckoutClient({
                             >
                               <Plus className="h-4 w-4 text-slate-600" />
                             </button>
-                          </div>
-                        </div>
+                    </div>
+                    </div>
 
                         {/* Product Subtotal */}
                         <div className="text-right">
                           {planPrice > 0 ? (
                             <div className="font-semibold text-slate-900">
                               {formatPrice(planPrice * quantity)}
-                            </div>
+                  </div>
                           ) : (
                             <div className="text-sm text-red-600 italic">
                               Price not available
                             </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+            )}
+          </div>
+                  </div>
+                  </div>
                   </div>
                 </div>
 
@@ -1216,7 +1216,7 @@ export function ToolCheckoutClient({
                         Price not available
                       </span>
                     )}
-                  </div>
+                    </div>
                   
                   {selectedDuration !== '1month' && (() => {
                     const originalPrice = oneMonthPrice * (selectedDuration === '3months' ? 3 : selectedDuration === '6months' ? 6 : 12);
@@ -1233,7 +1233,7 @@ export function ToolCheckoutClient({
                           <span className="text-sm font-medium">
                             -{formatPrice(discount)}
                           </span>
-                        </div>
+                  </div>
                       );
                     }
                     return null;
@@ -1245,9 +1245,9 @@ export function ToolCheckoutClient({
                       <span className="text-sm font-medium">
                         -{formatPrice(appliedCoupon.discountAmount * quantity)}
                       </span>
-                    </div>
+                  </div>
                   )}
-                </div>
+                  </div>
 
                 {/* Total */}
                 <div className="pt-4 mt-4 border-t-2 border-slate-300">
