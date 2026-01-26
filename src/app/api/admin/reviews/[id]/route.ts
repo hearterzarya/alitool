@@ -78,11 +78,49 @@ export async function DELETE(
 
     const { id } = await params;
 
+    let screenshot;
     try {
-      if ('reviewScreenshot' in prisma && typeof (prisma as any).reviewScreenshot?.delete === 'function') {
-        await (prisma as any).reviewScreenshot.delete({
+      if ('reviewScreenshot' in prisma && typeof (prisma as any).reviewScreenshot?.findUnique === 'function') {
+        // First, get the screenshot to get the image URL for file deletion
+        screenshot = await (prisma as any).reviewScreenshot.findUnique({
           where: { id },
         });
+
+        if (!screenshot) {
+          return NextResponse.json(
+            { error: 'Screenshot not found' },
+            { status: 404 }
+          );
+        }
+
+        // Delete the database record
+        if (typeof (prisma as any).reviewScreenshot?.delete === 'function') {
+          await (prisma as any).reviewScreenshot.delete({
+            where: { id },
+          });
+        } else {
+          return NextResponse.json(
+            { error: 'Database schema not updated. Please run migrations.' },
+            { status: 500 }
+          );
+        }
+
+        // Optionally delete the file from filesystem (if it's a local file)
+        if (screenshot.imageUrl && screenshot.imageUrl.startsWith('/uploads/')) {
+          try {
+            const { unlink } = await import('fs/promises');
+            const { join } = await import('path');
+            const filePath = join(process.cwd(), 'public', screenshot.imageUrl);
+            const { existsSync } = await import('fs');
+            
+            if (existsSync(filePath)) {
+              await unlink(filePath);
+            }
+          } catch (fileError) {
+            // Log but don't fail if file deletion fails
+            console.warn('Failed to delete file:', screenshot.imageUrl, fileError);
+          }
+        }
       } else {
         return NextResponse.json(
           { error: 'Database schema not updated. Please run migrations.' },

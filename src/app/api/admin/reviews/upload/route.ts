@@ -44,10 +44,21 @@ export async function POST(req: NextRequest) {
       await mkdir(uploadsDir, { recursive: true });
     }
 
-    // Generate unique filename
+    // Generate unique filename (sanitize filename to prevent path traversal)
     const timestamp = Date.now();
-    const filename = `${timestamp}-${file.name}`;
+    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_').substring(0, 100); // Limit length
+    const filename = `${timestamp}-${sanitizedName}`;
     const filepath = join(uploadsDir, filename);
+
+    // Validate filepath is within uploads directory (prevent path traversal)
+    const normalizedUploadsDir = join(process.cwd(), 'public', 'uploads', 'reviews');
+    const normalizedFilePath = join(process.cwd(), 'public', 'uploads', 'reviews', filename);
+    if (!normalizedFilePath.startsWith(normalizedUploadsDir)) {
+      return NextResponse.json(
+        { error: 'Invalid file path' },
+        { status: 400 }
+      );
+    }
 
     // Save file
     await writeFile(filepath, buffer);
@@ -55,7 +66,11 @@ export async function POST(req: NextRequest) {
     // Return URL
     const url = `/uploads/reviews/${filename}`;
 
-    return NextResponse.json({ success: true, url });
+    return NextResponse.json({ 
+      success: true, 
+      url,
+      filename: filename,
+    });
   } catch (error: any) {
     console.error('Error uploading file:', error);
     return NextResponse.json(

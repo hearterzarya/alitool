@@ -49,15 +49,24 @@ export function ReviewsManagementClient({ screenshots: initialScreenshots }: Rev
       });
     } else {
       setEditingScreenshot(null);
-      setFormData({ imageUrl: '', caption: '', sortOrder: screenshots.length });
+      setFormData({ 
+        imageUrl: '', 
+        caption: '', 
+        sortOrder: screenshots.length > 0 ? Math.max(...screenshots.map(s => s.sortOrder)) + 1 : 0 
+      });
     }
     setDialogOpen(true);
+    setUploading(false);
   };
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditingScreenshot(null);
-    setFormData({ imageUrl: '', caption: '', sortOrder: 0 });
+    const nextSortOrder = screenshots.length > 0 
+      ? Math.max(...screenshots.map(s => s.sortOrder)) + 1 
+      : 0;
+    setFormData({ imageUrl: '', caption: '', sortOrder: nextSortOrder });
+    setUploading(false);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,29 +95,35 @@ export function ReviewsManagementClient({ screenshots: initialScreenshots }: Rev
 
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
 
       const response = await fetch('/api/admin/reviews/upload', {
         method: 'POST',
-        body: formData,
+        body: uploadFormData,
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Upload failed' }));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
 
       const data = await response.json();
 
-      if (data.success) {
+      if (data.success && data.url) {
         setFormData(prev => ({ ...prev, imageUrl: data.url }));
         toast({
           title: 'Success',
           description: 'Image uploaded successfully',
         });
       } else {
-        throw new Error(data.error || 'Upload failed');
+        throw new Error(data.error || 'Upload failed - no URL returned');
       }
     } catch (error: any) {
+      console.error('Error uploading file:', error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to upload image',
+        title: 'Upload Failed',
+        description: error.message || 'Failed to upload image. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -140,10 +155,14 @@ export function ReviewsManagementClient({ screenshots: initialScreenshots }: Rev
 
       const data = await response.json();
 
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+      }
+
       if (data.success) {
         toast({
           title: 'Success',
-          description: editingScreenshot ? 'Screenshot updated' : 'Screenshot added',
+          description: editingScreenshot ? 'Screenshot updated successfully' : 'Screenshot added successfully',
         });
 
         if (editingScreenshot) {
@@ -154,9 +173,10 @@ export function ReviewsManagementClient({ screenshots: initialScreenshots }: Rev
           setScreenshots(prev => [...prev, data.screenshot]);
         }
 
+        // Reset form and close dialog
         handleCloseDialog();
       } else {
-        throw new Error(data.error || 'Failed to save');
+        throw new Error(data.error || 'Failed to save screenshot');
       }
     } catch (error: any) {
       toast({
@@ -203,15 +223,30 @@ export function ReviewsManagementClient({ screenshots: initialScreenshots }: Rev
         body: JSON.stringify({ isActive: !isActive }),
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
 
       if (data.success) {
+        toast({
+          title: 'Success',
+          description: !isActive ? 'Screenshot is now visible' : 'Screenshot is now hidden',
+        });
         setScreenshots(prev =>
           prev.map(s => (s.id === id ? { ...s, isActive: !isActive } : s))
         );
+      } else {
+        throw new Error(data.error || 'Failed to update status');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling active status:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update screenshot status',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -249,38 +284,60 @@ export function ReviewsManagementClient({ screenshots: initialScreenshots }: Rev
                   key={screenshot.id}
                   className={`relative overflow-hidden ${!screenshot.isActive ? 'opacity-50' : ''}`}
                 >
-                  <div className="relative aspect-[9/16] w-full">
+                  <div className="relative aspect-[9/16] w-full bg-slate-100">
                     <Image
                       src={screenshot.imageUrl}
                       alt={screenshot.caption || 'Screenshot'}
                       fill
                       className="object-cover"
+                      unoptimized={screenshot.imageUrl.startsWith('/uploads')}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
+                    {!screenshot.isActive && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <span className="text-white font-semibold text-sm">Hidden</span>
+                      </div>
+                    )}
                   </div>
                   <CardContent className="p-4">
-                    <p className="text-sm text-slate-600 mb-2 truncate">
-                      {screenshot.caption || 'No caption'}
-                    </p>
-                    <div className="flex items-center gap-2">
+                    <div className="mb-2">
+                      <p className="text-sm font-medium text-slate-900 mb-1">
+                        {screenshot.caption || 'No caption'}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <span>Order: {screenshot.sortOrder}</span>
+                        <span>•</span>
+                        <span className={screenshot.isActive ? 'text-green-600' : 'text-orange-600'}>
+                          {screenshot.isActive ? 'Active' : 'Hidden'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Button
+                        type="button"
                         variant="outline"
                         size="sm"
                         onClick={() => handleOpenDialog(screenshot)}
+                        className="flex-1 min-w-[80px]"
                       >
                         <Edit className="h-3 w-3 mr-1" />
                         Edit
                       </Button>
                       <Button
+                        type="button"
                         variant="outline"
                         size="sm"
                         onClick={() => handleToggleActive(screenshot.id, screenshot.isActive)}
+                        className={screenshot.isActive ? 'border-orange-300 text-orange-700 hover:bg-orange-50' : 'border-green-300 text-green-700 hover:bg-green-50'}
                       >
                         {screenshot.isActive ? 'Hide' : 'Show'}
                       </Button>
                       <Button
+                        type="button"
                         variant="destructive"
                         size="sm"
                         onClick={() => handleDelete(screenshot.id)}
+                        className="flex-shrink-0"
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -294,8 +351,14 @@ export function ReviewsManagementClient({ screenshots: initialScreenshots }: Rev
       </Card>
 
       {/* Add/Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          handleCloseDialog();
+        } else {
+          setDialogOpen(true);
+        }
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingScreenshot ? 'Edit Screenshot' : 'Add Screenshot'}
@@ -354,17 +417,41 @@ export function ReviewsManagementClient({ screenshots: initialScreenshots }: Rev
               <Input
                 id="sortOrder"
                 type="number"
+                min="0"
                 value={formData.sortOrder}
-                onChange={(e) => setFormData(prev => ({ ...prev, sortOrder: parseInt(e.target.value) || 0 }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, sortOrder: Math.max(0, parseInt(e.target.value) || 0) }))}
+                placeholder="0"
               />
+              <p className="text-xs text-slate-500 mt-1">
+                Lower numbers appear first. Default: {screenshots.length}
+              </p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={handleCloseDialog}>
+            <Button 
+              type="button"
+              variant="outline" 
+              onClick={handleCloseDialog}
+              disabled={uploading}
+            >
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={!formData.imageUrl || uploading}>
-              {editingScreenshot ? 'Update' : 'Add'} Screenshot
+            <Button 
+              type="button"
+              onClick={handleSave} 
+              disabled={!formData.imageUrl || uploading}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              {uploading ? (
+                <>
+                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  {editingScreenshot ? 'Updating...' : 'Adding...'}
+                </>
+              ) : (
+                <>
+                  {editingScreenshot ? 'Update' : 'Add'} Screenshot
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

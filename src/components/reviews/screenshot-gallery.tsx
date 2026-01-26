@@ -73,6 +73,8 @@ export function ScreenshotGallery({ screenshots }: ScreenshotGalleryProps) {
                 alt={screenshot.caption || `Screenshot ${index + 1}`}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
+                unoptimized={screenshot.imageUrl.startsWith('/uploads')}
+                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
                 <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -128,6 +130,7 @@ export function ScreenshotGallery({ screenshots }: ScreenshotGalleryProps) {
                 className={`object-contain transition-transform duration-300 ${
                   isZoomed ? 'scale-150' : 'scale-100'
                 }`}
+                unoptimized={screenshots[selectedIndex].imageUrl.startsWith('/uploads')}
                 priority
               />
             </div>
