@@ -65,7 +65,9 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions): 
       // Use the 'from' email with optional name format
       // Resend supports: "Name <email@domain.com>" or just "email@domain.com"
       const fromAddress = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
+      console.log(`📤 Sending email via Resend to ${to}...`);
       await sendViaResend({ to, subject, html, text, from: fromAddress });
+      console.log(`✅ Resend email sent successfully to ${to}`);
     } else if (provider === 'smtp') {
       const host = process.env.SMTP_HOST;
       const user = process.env.SMTP_USER;
@@ -212,10 +214,10 @@ async function sendViaResend({
   });
 
   if (error) {
-    console.error('Resend API error:', error);
+    console.error('❌ Resend API error:', error);
     
     // Create error object with statusCode for fallback detection
-    const resendError: any = new Error(error.message || 'Failed to send email');
+    const resendError: any = new Error(error.message || 'Failed to send email via Resend');
     resendError.statusCode = error.statusCode;
     resendError.name = error.name;
     resendError.message = error.message;
@@ -228,6 +230,8 @@ async function sendViaResend({
       resendError.message = 'Email domain not verified. Please verify your domain in Resend dashboard at resend.com/domains.';
     } else if (error.message?.includes('rate limit') || error.message?.includes('quota')) {
       resendError.message = 'Email sending quota exceeded. Please check your Resend account limits.';
+    } else if (error.message?.includes('Invalid API key') || error.message?.includes('Unauthorized')) {
+      resendError.message = 'Invalid Resend API key. Please check your RESEND_API_KEY in .env.local.';
     }
     
     throw resendError; // Throw error with statusCode for fallback detection
