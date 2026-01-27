@@ -108,6 +108,16 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
     cookiesExpiryDate: tool?.cookiesExpiryDate 
       ? new Date(tool.cookiesExpiryDate).toISOString().split('T')[0]
       : '',
+    // Duration toggles for Shared Plan
+    sharedPlanDuration1MonthEnabled: (tool as any)?.sharedPlanPrice1Month ? true : false,
+    sharedPlanDuration3MonthsEnabled: (tool as any)?.sharedPlanPrice3Months ? true : false,
+    sharedPlanDuration6MonthsEnabled: (tool as any)?.sharedPlanPrice6Months ? true : false,
+    sharedPlanDuration1YearEnabled: (tool as any)?.sharedPlanPrice1Year ? true : false,
+    // Duration toggles for Private Plan
+    privatePlanDuration1MonthEnabled: (tool as any)?.privatePlanPrice1Month ? true : false,
+    privatePlanDuration3MonthsEnabled: (tool as any)?.privatePlanPrice3Months ? true : false,
+    privatePlanDuration6MonthsEnabled: (tool as any)?.privatePlanPrice6Months ? true : false,
+    privatePlanDuration1YearEnabled: (tool as any)?.privatePlanPrice1Year ? true : false,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -223,15 +233,15 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
         body: JSON.stringify({
           ...formData,
           priceMonthly: Math.round(formData.priceMonthly * 100),
-          // Duration-specific prices (convert to paise)
-          sharedPlanPrice1Month: formData.sharedPlanPrice1Month > 0 ? Math.round(formData.sharedPlanPrice1Month * 100) : null,
-          sharedPlanPrice3Months: formData.sharedPlanPrice3Months > 0 ? Math.round(formData.sharedPlanPrice3Months * 100) : null,
-          sharedPlanPrice6Months: formData.sharedPlanPrice6Months > 0 ? Math.round(formData.sharedPlanPrice6Months * 100) : null,
-          sharedPlanPrice1Year: formData.sharedPlanPrice1Year > 0 ? Math.round(formData.sharedPlanPrice1Year * 100) : null,
-          privatePlanPrice1Month: formData.privatePlanPrice1Month > 0 ? Math.round(formData.privatePlanPrice1Month * 100) : null,
-          privatePlanPrice3Months: formData.privatePlanPrice3Months > 0 ? Math.round(formData.privatePlanPrice3Months * 100) : null,
-          privatePlanPrice6Months: formData.privatePlanPrice6Months > 0 ? Math.round(formData.privatePlanPrice6Months * 100) : null,
-          privatePlanPrice1Year: formData.privatePlanPrice1Year > 0 ? Math.round(formData.privatePlanPrice1Year * 100) : null,
+          // Duration-specific prices (convert to paise, only if enabled)
+          sharedPlanPrice1Month: formData.sharedPlanDuration1MonthEnabled && formData.sharedPlanPrice1Month > 0 ? Math.round(formData.sharedPlanPrice1Month * 100) : null,
+          sharedPlanPrice3Months: formData.sharedPlanDuration3MonthsEnabled && formData.sharedPlanPrice3Months > 0 ? Math.round(formData.sharedPlanPrice3Months * 100) : null,
+          sharedPlanPrice6Months: formData.sharedPlanDuration6MonthsEnabled && formData.sharedPlanPrice6Months > 0 ? Math.round(formData.sharedPlanPrice6Months * 100) : null,
+          sharedPlanPrice1Year: formData.sharedPlanDuration1YearEnabled && formData.sharedPlanPrice1Year > 0 ? Math.round(formData.sharedPlanPrice1Year * 100) : null,
+          privatePlanPrice1Month: formData.privatePlanDuration1MonthEnabled && formData.privatePlanPrice1Month > 0 ? Math.round(formData.privatePlanPrice1Month * 100) : null,
+          privatePlanPrice3Months: formData.privatePlanDuration3MonthsEnabled && formData.privatePlanPrice3Months > 0 ? Math.round(formData.privatePlanPrice3Months * 100) : null,
+          privatePlanPrice6Months: formData.privatePlanDuration6MonthsEnabled && formData.privatePlanPrice6Months > 0 ? Math.round(formData.privatePlanPrice6Months * 100) : null,
+          privatePlanPrice1Year: formData.privatePlanDuration1YearEnabled && formData.privatePlanPrice1Year > 0 ? Math.round(formData.privatePlanPrice1Year * 100) : null,
           // Legacy fields (for backward compatibility)
           sharedPlanPrice: formData.sharedPlanPrice > 0 ? Math.round(formData.sharedPlanPrice * 100) : null,
           privatePlanPrice: formData.privatePlanPrice > 0 ? Math.round(formData.privatePlanPrice * 100) : null,
@@ -522,7 +532,22 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                     <Label className="text-sm font-semibold">Pricing by Duration</Label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div className="space-y-2">
-                        <Label htmlFor="sharedPlanPrice1Month" className="text-xs">1 Month (₹)</Label>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="sharedPlanPrice1Month" className="text-xs">1 Month (₹)</Label>
+                          <input
+                            type="checkbox"
+                            id="sharedPlanDuration1MonthEnabled"
+                            checked={formData.sharedPlanDuration1MonthEnabled}
+                            onChange={(e) => {
+                              setFormData(prev => ({
+                                ...prev,
+                                sharedPlanDuration1MonthEnabled: e.target.checked,
+                                sharedPlanPrice1Month: e.target.checked ? prev.sharedPlanPrice1Month : 0
+                              }));
+                            }}
+                            className="h-4 w-4 rounded border-gray-300"
+                          />
+                        </div>
                         <Input
                           id="sharedPlanPrice1Month"
                           name="sharedPlanPrice1Month"
@@ -532,10 +557,26 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                           onChange={handleChange}
                           placeholder="199"
                           className="h-9"
+                          disabled={!formData.sharedPlanDuration1MonthEnabled}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="sharedPlanPrice3Months" className="text-xs">3 Months (₹)</Label>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="sharedPlanPrice3Months" className="text-xs">3 Months (₹)</Label>
+                          <input
+                            type="checkbox"
+                            id="sharedPlanDuration3MonthsEnabled"
+                            checked={formData.sharedPlanDuration3MonthsEnabled}
+                            onChange={(e) => {
+                              setFormData(prev => ({
+                                ...prev,
+                                sharedPlanDuration3MonthsEnabled: e.target.checked,
+                                sharedPlanPrice3Months: e.target.checked ? prev.sharedPlanPrice3Months : 0
+                              }));
+                            }}
+                            className="h-4 w-4 rounded border-gray-300"
+                          />
+                        </div>
                         <Input
                           id="sharedPlanPrice3Months"
                           name="sharedPlanPrice3Months"
@@ -545,10 +586,26 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                           onChange={handleChange}
                           placeholder="568"
                           className="h-9"
+                          disabled={!formData.sharedPlanDuration3MonthsEnabled}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="sharedPlanPrice6Months" className="text-xs">6 Months (₹)</Label>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="sharedPlanPrice6Months" className="text-xs">6 Months (₹)</Label>
+                          <input
+                            type="checkbox"
+                            id="sharedPlanDuration6MonthsEnabled"
+                            checked={formData.sharedPlanDuration6MonthsEnabled}
+                            onChange={(e) => {
+                              setFormData(prev => ({
+                                ...prev,
+                                sharedPlanDuration6MonthsEnabled: e.target.checked,
+                                sharedPlanPrice6Months: e.target.checked ? prev.sharedPlanPrice6Months : 0
+                              }));
+                            }}
+                            className="h-4 w-4 rounded border-gray-300"
+                          />
+                        </div>
                         <Input
                           id="sharedPlanPrice6Months"
                           name="sharedPlanPrice6Months"
@@ -558,10 +615,26 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                           onChange={handleChange}
                           placeholder="1074"
                           className="h-9"
+                          disabled={!formData.sharedPlanDuration6MonthsEnabled}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="sharedPlanPrice1Year" className="text-xs">1 Year (₹)</Label>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="sharedPlanPrice1Year" className="text-xs">1 Year (₹)</Label>
+                          <input
+                            type="checkbox"
+                            id="sharedPlanDuration1YearEnabled"
+                            checked={formData.sharedPlanDuration1YearEnabled}
+                            onChange={(e) => {
+                              setFormData(prev => ({
+                                ...prev,
+                                sharedPlanDuration1YearEnabled: e.target.checked,
+                                sharedPlanPrice1Year: e.target.checked ? prev.sharedPlanPrice1Year : 0
+                              }));
+                            }}
+                            className="h-4 w-4 rounded border-gray-300"
+                          />
+                        </div>
                         <Input
                           id="sharedPlanPrice1Year"
                           name="sharedPlanPrice1Year"
@@ -571,10 +644,11 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                           onChange={handleChange}
                           placeholder="1910"
                           className="h-9"
+                          disabled={!formData.sharedPlanDuration1YearEnabled}
                         />
                       </div>
                     </div>
-                    <p className="text-xs text-gray-500">Set prices for each duration. Leave 0 to use calculated discount.</p>
+                    <p className="text-xs text-gray-500">Enable/disable each duration and set prices. Disabled durations won't be available for purchase.</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="sharedPlanDescription">Plan Description</Label>
@@ -647,7 +721,22 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                     <Label className="text-sm font-semibold">Pricing by Duration</Label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div className="space-y-2">
-                        <Label htmlFor="privatePlanPrice1Month" className="text-xs">1 Month (₹)</Label>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="privatePlanPrice1Month" className="text-xs">1 Month (₹)</Label>
+                          <input
+                            type="checkbox"
+                            id="privatePlanDuration1MonthEnabled"
+                            checked={formData.privatePlanDuration1MonthEnabled}
+                            onChange={(e) => {
+                              setFormData(prev => ({
+                                ...prev,
+                                privatePlanDuration1MonthEnabled: e.target.checked,
+                                privatePlanPrice1Month: e.target.checked ? prev.privatePlanPrice1Month : 0
+                              }));
+                            }}
+                            className="h-4 w-4 rounded border-gray-300"
+                          />
+                        </div>
                         <Input
                           id="privatePlanPrice1Month"
                           name="privatePlanPrice1Month"
@@ -657,10 +746,26 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                           onChange={handleChange}
                           placeholder="499"
                           className="h-9"
+                          disabled={!formData.privatePlanDuration1MonthEnabled}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="privatePlanPrice3Months" className="text-xs">3 Months (₹)</Label>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="privatePlanPrice3Months" className="text-xs">3 Months (₹)</Label>
+                          <input
+                            type="checkbox"
+                            id="privatePlanDuration3MonthsEnabled"
+                            checked={formData.privatePlanDuration3MonthsEnabled}
+                            onChange={(e) => {
+                              setFormData(prev => ({
+                                ...prev,
+                                privatePlanDuration3MonthsEnabled: e.target.checked,
+                                privatePlanPrice3Months: e.target.checked ? prev.privatePlanPrice3Months : 0
+                              }));
+                            }}
+                            className="h-4 w-4 rounded border-gray-300"
+                          />
+                        </div>
                         <Input
                           id="privatePlanPrice3Months"
                           name="privatePlanPrice3Months"
@@ -670,10 +775,26 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                           onChange={handleChange}
                           placeholder="1422"
                           className="h-9"
+                          disabled={!formData.privatePlanDuration3MonthsEnabled}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="privatePlanPrice6Months" className="text-xs">6 Months (₹)</Label>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="privatePlanPrice6Months" className="text-xs">6 Months (₹)</Label>
+                          <input
+                            type="checkbox"
+                            id="privatePlanDuration6MonthsEnabled"
+                            checked={formData.privatePlanDuration6MonthsEnabled}
+                            onChange={(e) => {
+                              setFormData(prev => ({
+                                ...prev,
+                                privatePlanDuration6MonthsEnabled: e.target.checked,
+                                privatePlanPrice6Months: e.target.checked ? prev.privatePlanPrice6Months : 0
+                              }));
+                            }}
+                            className="h-4 w-4 rounded border-gray-300"
+                          />
+                        </div>
                         <Input
                           id="privatePlanPrice6Months"
                           name="privatePlanPrice6Months"
@@ -683,10 +804,26 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                           onChange={handleChange}
                           placeholder="2694"
                           className="h-9"
+                          disabled={!formData.privatePlanDuration6MonthsEnabled}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="privatePlanPrice1Year" className="text-xs">1 Year (₹)</Label>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="privatePlanPrice1Year" className="text-xs">1 Year (₹)</Label>
+                          <input
+                            type="checkbox"
+                            id="privatePlanDuration1YearEnabled"
+                            checked={formData.privatePlanDuration1YearEnabled}
+                            onChange={(e) => {
+                              setFormData(prev => ({
+                                ...prev,
+                                privatePlanDuration1YearEnabled: e.target.checked,
+                                privatePlanPrice1Year: e.target.checked ? prev.privatePlanPrice1Year : 0
+                              }));
+                            }}
+                            className="h-4 w-4 rounded border-gray-300"
+                          />
+                        </div>
                         <Input
                           id="privatePlanPrice1Year"
                           name="privatePlanPrice1Year"
@@ -696,10 +833,11 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                           onChange={handleChange}
                           placeholder="4790"
                           className="h-9"
+                          disabled={!formData.privatePlanDuration1YearEnabled}
                         />
                       </div>
                     </div>
-                    <p className="text-xs text-gray-500">Set prices for each duration. Leave 0 to use calculated discount.</p>
+                    <p className="text-xs text-gray-500">Enable/disable each duration and set prices. Disabled durations won't be available for purchase.</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="privatePlanDescription">Plan Description</Label>
@@ -732,47 +870,71 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
             </CardContent>
           </Card>
 
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="isActive"
-                name="isActive"
-                checked={formData.isActive}
-                onChange={handleChange}
-                className="h-4 w-4 rounded border-gray-300"
-              />
-              <Label htmlFor="isActive" className="cursor-pointer">
-                Tool is active and available for subscription
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="isFeatured"
-                name="isFeatured"
-                checked={formData.isFeatured}
-                onChange={handleChange}
-                className="h-4 w-4 rounded border-gray-300"
-              />
-              <Label htmlFor="isFeatured" className="cursor-pointer">
-                Feature this tool in the slider (best/offer tools)
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="isOutOfStock"
-                name="isOutOfStock"
-                checked={formData.isOutOfStock}
-                onChange={handleChange}
-                className="h-4 w-4 rounded border-gray-300"
-              />
-              <Label htmlFor="isOutOfStock" className="cursor-pointer">
-                Mark as out of stock (temporarily unavailable)
-              </Label>
-            </div>
-          </div>
+          {/* Tool Status Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Tool Status & Availability</CardTitle>
+              <CardDescription>Control tool visibility and availability</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
+                <div className="space-y-1">
+                  <Label htmlFor="isActive" className="text-base font-semibold cursor-pointer">
+                    Tool Status
+                  </Label>
+                  <p className="text-sm text-gray-600">
+                    {formData.isActive 
+                      ? "Tool is active and available for subscription" 
+                      : "Tool is inactive and hidden from users"}
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  id="isActive"
+                  name="isActive"
+                  checked={formData.isActive}
+                  onChange={handleChange}
+                  className="h-6 w-6 rounded border-gray-300 cursor-pointer"
+                />
+              </div>
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <Label htmlFor="isFeatured" className="text-base font-semibold cursor-pointer">
+                    Featured Tool
+                  </Label>
+                  <p className="text-sm text-gray-600">
+                    Feature this tool in the slider (best/offer tools)
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  id="isFeatured"
+                  name="isFeatured"
+                  checked={formData.isFeatured}
+                  onChange={handleChange}
+                  className="h-6 w-6 rounded border-gray-300 cursor-pointer"
+                />
+              </div>
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <Label htmlFor="isOutOfStock" className="text-base font-semibold cursor-pointer">
+                    Out of Stock
+                  </Label>
+                  <p className="text-sm text-gray-600">
+                    Mark as out of stock (temporarily unavailable)
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  id="isOutOfStock"
+                  name="isOutOfStock"
+                  checked={formData.isOutOfStock}
+                  onChange={handleChange}
+                  className="h-6 w-6 rounded border-gray-300 cursor-pointer"
+                />
+              </div>
+            </CardContent>
+          </Card>
         </CardContent>
       </Card>
 
