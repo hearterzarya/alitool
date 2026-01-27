@@ -43,6 +43,7 @@ interface ToolFormProps {
     privatePlanDescription?: string | null;
     isActive: boolean;
     isFeatured?: boolean;
+    isOutOfStock?: boolean;
     sortOrder: number;
     cookiesEncrypted?: string | null;
     cookiesExpiryDate?: Date | null;
@@ -732,18 +733,18 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
           </Card>
 
           <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="isActive"
-              name="isActive"
-              checked={formData.isActive}
-              onChange={handleChange}
-              className="h-4 w-4 rounded border-gray-300"
-            />
-            <Label htmlFor="isActive" className="cursor-pointer">
-              Tool is active and available for subscription
-            </Label>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isActive"
+                name="isActive"
+                checked={formData.isActive}
+                onChange={handleChange}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="isActive" className="cursor-pointer">
+                Tool is active and available for subscription
+              </Label>
             </div>
             <div className="flex items-center space-x-2">
               <input
@@ -772,51 +773,51 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
               </Label>
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Cookie Expiry Date Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Cookie Expiration Settings</CardTitle>
-              <CardDescription>Set when the cookies for this tool will expire</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="cookiesExpiryDateEnabled"
-                  name="cookiesExpiryDateEnabled"
-                  checked={formData.cookiesExpiryDateEnabled}
-                  onChange={(e) => {
-                    setFormData(prev => ({ 
-                      ...prev, 
-                      cookiesExpiryDateEnabled: e.target.checked,
-                      cookiesExpiryDate: e.target.checked ? prev.cookiesExpiryDate : ''
-                    }));
-                  }}
-                  className="h-4 w-4 rounded border-gray-300"
-                />
-                <Label htmlFor="cookiesExpiryDateEnabled" className="cursor-pointer">
-                  Enable cookie expiration date
-                </Label>
-              </div>
-              {formData.cookiesExpiryDateEnabled && (
-                <div className="space-y-2">
-                  <Label htmlFor="cookiesExpiryDate">Cookie Expiry Date</Label>
-                  <Input
-                    id="cookiesExpiryDate"
-                    name="cookiesExpiryDate"
-                    type="date"
-                    value={formData.cookiesExpiryDate}
-                    onChange={handleChange}
-                    className="w-full"
-                  />
-                  <p className="text-xs text-gray-500">
-                    When the cookies for this tool will expire. Leave empty to disable expiration tracking.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+      {/* Cookie Expiry Date Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cookie Expiration Settings</CardTitle>
+          <CardDescription>Set when the cookies for this tool will expire</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="cookiesExpiryDateEnabled"
+              name="cookiesExpiryDateEnabled"
+              checked={formData.cookiesExpiryDateEnabled}
+              onChange={(e) => {
+                setFormData(prev => ({ 
+                  ...prev, 
+                  cookiesExpiryDateEnabled: e.target.checked,
+                  cookiesExpiryDate: e.target.checked ? prev.cookiesExpiryDate : ''
+                }));
+              }}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <Label htmlFor="cookiesExpiryDateEnabled" className="cursor-pointer">
+              Enable cookie expiration date
+            </Label>
+          </div>
+          {formData.cookiesExpiryDateEnabled && (
+            <div className="space-y-2">
+              <Label htmlFor="cookiesExpiryDate">Cookie Expiry Date</Label>
+              <Input
+                id="cookiesExpiryDate"
+                name="cookiesExpiryDate"
+                type="date"
+                value={formData.cookiesExpiryDate}
+                onChange={handleChange}
+                className="w-full"
+              />
+              <p className="text-xs text-gray-500">
+                When the cookies for this tool will expire. Leave empty to disable expiration tracking.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
