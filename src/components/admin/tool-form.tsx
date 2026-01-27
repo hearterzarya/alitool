@@ -459,9 +459,11 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                 placeholder="https://chat.openai.com"
               />
             </div>
+        </CardContent>
+      </Card>
 
-          {/* Plan Pricing Section */}
-          <Card>
+      {/* Plan Pricing Section */}
+      <Card>
             <CardHeader>
               <CardTitle>Plan Pricing & Features</CardTitle>
               <CardDescription>Set prices and features for Shared and Private plans</CardDescription>
