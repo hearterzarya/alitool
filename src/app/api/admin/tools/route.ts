@@ -43,7 +43,9 @@ export async function POST(req: Request) {
       priceMonthly: convertToPaise(data.priceMonthly) || BigInt(0),
       isActive: data.isActive ?? true,
       isFeatured: data.isFeatured ?? false,
+      isOutOfStock: data.isOutOfStock ?? false,
       sortOrder: data.sortOrder || 0,
+      cookiesExpiryDate: data.cookiesExpiryDate ? new Date(data.cookiesExpiryDate) : null,
     };
 
     // Try to create with plan fields first, fallback to base fields if schema not updated

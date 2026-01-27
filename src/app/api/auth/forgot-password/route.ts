@@ -108,13 +108,16 @@ export async function POST(req: Request) {
           subject: 'Reset Your Password - AliDigitalSolution',
           html: generatePasswordResetEmailHtml(resetLink),
         });
-      } catch (emailError: any) {
-        // In development, email might be logged to console instead
-        // In production, log error but don't reveal to user
-        if (process.env.NODE_ENV === 'production') {
-          console.error('Failed to send password reset email:', emailError);
+        // Log success in development
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`✓ Password reset email sent to ${email}`);
         }
-        // Don't reveal email sending failure to user (security)
+      } catch (emailError: any) {
+        // Log error for debugging
+        console.error('Failed to send password reset email:', emailError);
+        // In development, email might be logged to console instead
+        // In production, log error but don't reveal to user (security)
+        // The sendEmail function handles SMTP fallback automatically
       }
     }
 

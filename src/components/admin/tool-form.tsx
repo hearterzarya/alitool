@@ -101,7 +101,12 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
     privatePlanDescription: tool?.privatePlanDescription || "",
     isActive: tool?.isActive ?? true,
     isFeatured: tool?.isFeatured ?? false,
+    isOutOfStock: tool?.isOutOfStock ?? false,
     sortOrder: tool?.sortOrder || 0,
+    cookiesExpiryDateEnabled: !!tool?.cookiesExpiryDate,
+    cookiesExpiryDate: tool?.cookiesExpiryDate 
+      ? new Date(tool.cookiesExpiryDate).toISOString().split('T')[0]
+      : '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -231,6 +236,10 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
           privatePlanPrice: formData.privatePlanPrice > 0 ? Math.round(formData.privatePlanPrice * 100) : null,
           sharedPlanEnabled: formData.sharedPlanEnabled ?? false,
           privatePlanEnabled: formData.privatePlanEnabled ?? false,
+          isOutOfStock: formData.isOutOfStock ?? false,
+          cookiesExpiryDate: formData.cookiesExpiryDateEnabled && formData.cookiesExpiryDate 
+            ? new Date(formData.cookiesExpiryDate).toISOString()
+            : null,
         }),
       });
 
@@ -749,7 +758,65 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                 Feature this tool in the slider (best/offer tools)
               </Label>
             </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isOutOfStock"
+                name="isOutOfStock"
+                checked={formData.isOutOfStock}
+                onChange={handleChange}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="isOutOfStock" className="cursor-pointer">
+                Mark as out of stock (temporarily unavailable)
+              </Label>
+            </div>
           </div>
+
+          {/* Cookie Expiry Date Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Cookie Expiration Settings</CardTitle>
+              <CardDescription>Set when the cookies for this tool will expire</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="cookiesExpiryDateEnabled"
+                  name="cookiesExpiryDateEnabled"
+                  checked={formData.cookiesExpiryDateEnabled}
+                  onChange={(e) => {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      cookiesExpiryDateEnabled: e.target.checked,
+                      cookiesExpiryDate: e.target.checked ? prev.cookiesExpiryDate : ''
+                    }));
+                  }}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="cookiesExpiryDateEnabled" className="cursor-pointer">
+                  Enable cookie expiration date
+                </Label>
+              </div>
+              {formData.cookiesExpiryDateEnabled && (
+                <div className="space-y-2">
+                  <Label htmlFor="cookiesExpiryDate">Cookie Expiry Date</Label>
+                  <Input
+                    id="cookiesExpiryDate"
+                    name="cookiesExpiryDate"
+                    type="date"
+                    value={formData.cookiesExpiryDate}
+                    onChange={handleChange}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500">
+                    When the cookies for this tool will expire. Leave empty to disable expiration tracking.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </CardContent>
       </Card>
 

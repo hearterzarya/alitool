@@ -55,17 +55,19 @@ export function GoogleSignInButton({
       const finalCallbackUrl = callbackUrl || '/dashboard';
       
       // signIn with redirect: true will redirect immediately to Google OAuth
-      // If credentials are missing, NextAuth will show an error page
-      // If successful, user will be redirected back to callbackUrl
+      // This is required for OAuth flows - NextAuth handles the redirect
       await signIn('google', {
         callbackUrl: finalCallbackUrl,
-        redirect: true, // Let NextAuth handle the redirect
+        redirect: true, // Required for OAuth - NextAuth handles redirect
       });
       
-      // This code won't execute if redirect works
+      // This code won't execute if redirect works (which is expected)
     } catch (error: any) {
       console.error('Google sign-in error:', error);
-      setError(error.message || 'Failed to sign in with Google. Please try again.');
+      // Only show error if it's not a redirect (redirect throws an error but it's expected)
+      if (error?.message && !error.message.includes('NEXT_REDIRECT')) {
+        setError(error.message || 'Failed to sign in with Google. Please try again.');
+      }
       setLoading(false);
     }
   };
