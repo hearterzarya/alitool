@@ -935,8 +935,6 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
               </div>
             </CardContent>
           </Card>
-        </CardContent>
-      </Card>
 
       {/* Cookie Expiry Date Section */}
       <Card>
