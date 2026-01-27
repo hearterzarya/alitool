@@ -218,6 +218,57 @@ export function calculateDiscountPercent(
 }
 
 /**
+ * Check if a duration is enabled for a plan
+ * A duration is enabled if it has a price set and the price is greater than 0
+ */
+export function isDurationEnabled(
+  tool: ToolPriceFields,
+  plan: PlanType,
+  duration: Duration
+): boolean {
+  if (plan === 'shared') {
+    switch (duration) {
+      case '1month':
+        // 1 month is always enabled if the plan itself is enabled
+        return true;
+      case '3months':
+        return tool.sharedPlanPrice3Months ? toNumber(tool.sharedPlanPrice3Months) > 0 : false;
+      case '6months':
+        return tool.sharedPlanPrice6Months ? toNumber(tool.sharedPlanPrice6Months) > 0 : false;
+      case '1year':
+        return tool.sharedPlanPrice1Year ? toNumber(tool.sharedPlanPrice1Year) > 0 : false;
+      default:
+        return false;
+    }
+  } else {
+    switch (duration) {
+      case '1month':
+        // 1 month is always enabled if the plan itself is enabled
+        return true;
+      case '3months':
+        return tool.privatePlanPrice3Months ? toNumber(tool.privatePlanPrice3Months) > 0 : false;
+      case '6months':
+        return tool.privatePlanPrice6Months ? toNumber(tool.privatePlanPrice6Months) > 0 : false;
+      case '1year':
+        return tool.privatePlanPrice1Year ? toNumber(tool.privatePlanPrice1Year) > 0 : false;
+      default:
+        return false;
+    }
+  }
+}
+
+/**
+ * Get list of enabled durations for a plan
+ */
+export function getEnabledDurations(
+  tool: ToolPriceFields,
+  plan: PlanType
+): Duration[] {
+  const durations: Duration[] = ['1month', '3months', '6months', '1year'];
+  return durations.filter(duration => isDurationEnabled(tool, plan, duration));
+}
+
+/**
  * Get minimum/starting price for a tool
  * Professional price calculation algorithm that:
  * 1. Validates all prices against reasonable limits

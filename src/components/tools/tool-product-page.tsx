@@ -15,6 +15,7 @@ import {
   getBasePrice, 
   getOneMonthPrice, 
   getPriceForDuration,
+  getEnabledDurations,
   calculateDiscountPercent,
   getMinimumStartingPrice,
   type PlanType,
@@ -98,7 +99,19 @@ export function ToolProductPageClient({ tool, relatedTools }: ToolProductPagePro
   const [selectedPlan, setSelectedPlan] = useState<'shared' | 'private'>(
     tool.sharedPlanEnabled ? 'shared' : 'private'
   );
-  const [selectedDuration, setSelectedDuration] = useState<Duration>('1month');
+  
+  // Get enabled durations for the selected plan (recalculate when plan changes)
+  const enabledDurations = getEnabledDurations(tool, selectedPlan);
+  const defaultDuration = enabledDurations.length > 0 ? enabledDurations[0] : '1month';
+  const [selectedDuration, setSelectedDuration] = useState<Duration>(defaultDuration);
+  
+  // Update selected duration when plan changes to ensure it's enabled
+  useEffect(() => {
+    const newEnabledDurations = getEnabledDurations(tool, selectedPlan);
+    if (newEnabledDurations.length > 0 && !newEnabledDurations.includes(selectedDuration)) {
+      setSelectedDuration(newEnabledDurations[0]);
+    }
+  }, [selectedPlan, tool, selectedDuration]);
 
   // Professional price calculation using validated utilities
   // Prices are stored in paise (e.g., 19900 = ₹199)
@@ -354,63 +367,71 @@ export function ToolProductPageClient({ tool, relatedTools }: ToolProductPagePro
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1month">
-                    <div className="flex items-center justify-between w-full">
-                      <span>1 Month</span>
-                      <span className="text-slate-600 ml-4">{formatPrice(getPriceForDurationLocal('1month'))}</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="3months">
-                    <div className="flex items-center justify-between w-full">
-                      <div>
-                        <span>3 Months</span>
-                        {(() => {
-                          const threeMonthPrice = getPriceForDurationLocal('3months');
-                          const originalPrice = oneMonthPrice * 3;
-                          const savingsPercent = calculateDiscountPercent(originalPrice, threeMonthPrice);
-                          if (savingsPercent > 0) {
-                            return <Badge variant="outline" className="ml-2 text-xs">Save {savingsPercent}%</Badge>;
-                          }
-                          return null;
-                        })()}
+                  {enabledDurations.includes('1month') && (
+                    <SelectItem value="1month">
+                      <div className="flex items-center justify-between w-full">
+                        <span>1 Month</span>
+                        <span className="text-slate-600 ml-4">{formatPrice(getPriceForDurationLocal('1month'))}</span>
                       </div>
-                      <span className="text-slate-600 ml-4">{formatPrice(getPriceForDurationLocal('3months'))}</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="6months">
-                    <div className="flex items-center justify-between w-full">
-                      <div>
-                        <span>6 Months</span>
-                        {(() => {
-                          const sixMonthPrice = getPriceForDurationLocal('6months');
-                          const originalPrice = oneMonthPrice * 6;
-                          const savingsPercent = calculateDiscountPercent(originalPrice, sixMonthPrice);
-                          if (savingsPercent > 0) {
-                            return <Badge variant="outline" className="ml-2 text-xs">Save {savingsPercent}%</Badge>;
-                          }
-                          return null;
-                        })()}
+                    </SelectItem>
+                  )}
+                  {enabledDurations.includes('3months') && (
+                    <SelectItem value="3months">
+                      <div className="flex items-center justify-between w-full">
+                        <div>
+                          <span>3 Months</span>
+                          {(() => {
+                            const threeMonthPrice = getPriceForDurationLocal('3months');
+                            const originalPrice = oneMonthPrice * 3;
+                            const savingsPercent = calculateDiscountPercent(originalPrice, threeMonthPrice);
+                            if (savingsPercent > 0) {
+                              return <Badge variant="outline" className="ml-2 text-xs">Save {savingsPercent}%</Badge>;
+                            }
+                            return null;
+                          })()}
+                        </div>
+                        <span className="text-slate-600 ml-4">{formatPrice(getPriceForDurationLocal('3months'))}</span>
                       </div>
-                      <span className="text-slate-600 ml-4">{formatPrice(getPriceForDurationLocal('6months'))}</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="1year">
-                    <div className="flex items-center justify-between w-full">
-                      <div>
-                        <span>1 Year</span>
-                        {(() => {
-                          const oneYearPrice = getPriceForDurationLocal('1year');
-                          const originalPrice = oneMonthPrice * 12;
-                          const savingsPercent = calculateDiscountPercent(originalPrice, oneYearPrice);
-                          if (savingsPercent > 0) {
-                            return <Badge variant="outline" className="ml-2 text-xs bg-green-50 text-green-700 border-green-300">Save {savingsPercent}%</Badge>;
-                          }
-                          return null;
-                        })()}
+                    </SelectItem>
+                  )}
+                  {enabledDurations.includes('6months') && (
+                    <SelectItem value="6months">
+                      <div className="flex items-center justify-between w-full">
+                        <div>
+                          <span>6 Months</span>
+                          {(() => {
+                            const sixMonthPrice = getPriceForDurationLocal('6months');
+                            const originalPrice = oneMonthPrice * 6;
+                            const savingsPercent = calculateDiscountPercent(originalPrice, sixMonthPrice);
+                            if (savingsPercent > 0) {
+                              return <Badge variant="outline" className="ml-2 text-xs">Save {savingsPercent}%</Badge>;
+                            }
+                            return null;
+                          })()}
+                        </div>
+                        <span className="text-slate-600 ml-4">{formatPrice(getPriceForDurationLocal('6months'))}</span>
                       </div>
-                      <span className="text-slate-600 ml-4">{formatPrice(getPriceForDurationLocal('1year'))}</span>
-                    </div>
-                  </SelectItem>
+                    </SelectItem>
+                  )}
+                  {enabledDurations.includes('1year') && (
+                    <SelectItem value="1year">
+                      <div className="flex items-center justify-between w-full">
+                        <div>
+                          <span>1 Year</span>
+                          {(() => {
+                            const oneYearPrice = getPriceForDurationLocal('1year');
+                            const originalPrice = oneMonthPrice * 12;
+                            const savingsPercent = calculateDiscountPercent(originalPrice, oneYearPrice);
+                            if (savingsPercent > 0) {
+                              return <Badge variant="outline" className="ml-2 text-xs bg-green-50 text-green-700 border-green-300">Save {savingsPercent}%</Badge>;
+                            }
+                            return null;
+                          })()}
+                        </div>
+                        <span className="text-slate-600 ml-4">{formatPrice(getPriceForDurationLocal('1year'))}</span>
+                      </div>
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>

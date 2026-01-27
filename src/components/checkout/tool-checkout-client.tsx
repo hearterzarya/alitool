@@ -16,6 +16,7 @@ import {
   getBasePrice, 
   getOneMonthPrice, 
   getPriceForDuration,
+  getEnabledDurations,
   calculateDiscountPercent,
   type PlanType,
   type Duration
@@ -130,10 +131,24 @@ export function ToolCheckoutClient({
   // Prevent plan change if plan is provided in URL
   const isPlanLocked = !!initialPlan;
   
+  // Get enabled durations for the selected plan
+  const enabledDurations = getEnabledDurations(tool, selectedPlan);
+  const defaultDuration = enabledDurations.length > 0 
+    ? (enabledDurations.includes(initialDuration as Duration) ? initialDuration as Duration : enabledDurations[0])
+    : '1month';
+  
   // Duration selection
   const [selectedDuration, setSelectedDuration] = useState<'1month' | '3months' | '6months' | '1year'>(
-    (initialDuration as '1month' | '3months' | '6months' | '1year') || '1month'
+    defaultDuration
   );
+  
+  // Update selected duration when plan changes to ensure it's enabled
+  useEffect(() => {
+    const newEnabledDurations = getEnabledDurations(tool, selectedPlan);
+    if (newEnabledDurations.length > 0 && !newEnabledDurations.includes(selectedDuration)) {
+      setSelectedDuration(newEnabledDurations[0]);
+    }
+  }, [selectedPlan, tool, selectedDuration]);
 
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
@@ -963,33 +978,41 @@ export function ToolCheckoutClient({
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1month">
-                        1 Month - {formatPrice(getPriceForDurationLocal('1month'))}
-                      </SelectItem>
-                      <SelectItem value="3months">
-                        3 Months - {formatPrice(getPriceForDurationLocal('3months'))} {(() => {
-                          const threeMonthPrice = getPriceForDurationLocal('3months');
-                          const originalPrice = oneMonthPrice * 3;
-                          const savingsPercent = calculateDiscountPercent(originalPrice, threeMonthPrice);
-                          return savingsPercent > 0 ? `(Save ${savingsPercent}%)` : '';
-                        })()}
-                      </SelectItem>
-                      <SelectItem value="6months">
-                        6 Months - {formatPrice(getPriceForDurationLocal('6months'))} {(() => {
-                          const sixMonthPrice = getPriceForDurationLocal('6months');
-                          const originalPrice = oneMonthPrice * 6;
-                          const savingsPercent = calculateDiscountPercent(originalPrice, sixMonthPrice);
-                          return savingsPercent > 0 ? `(Save ${savingsPercent}%)` : '';
-                        })()}
-                      </SelectItem>
-                      <SelectItem value="1year">
-                        1 Year - {formatPrice(getPriceForDurationLocal('1year'))} {(() => {
-                          const oneYearPrice = getPriceForDurationLocal('1year');
-                          const originalPrice = oneMonthPrice * 12;
-                          const savingsPercent = calculateDiscountPercent(originalPrice, oneYearPrice);
-                          return savingsPercent > 0 ? `(Save ${savingsPercent}%)` : '';
-                        })()}
-                      </SelectItem>
+                      {enabledDurations.includes('1month') && (
+                        <SelectItem value="1month">
+                          1 Month - {formatPrice(getPriceForDurationLocal('1month'))}
+                        </SelectItem>
+                      )}
+                      {enabledDurations.includes('3months') && (
+                        <SelectItem value="3months">
+                          3 Months - {formatPrice(getPriceForDurationLocal('3months'))} {(() => {
+                            const threeMonthPrice = getPriceForDurationLocal('3months');
+                            const originalPrice = oneMonthPrice * 3;
+                            const savingsPercent = calculateDiscountPercent(originalPrice, threeMonthPrice);
+                            return savingsPercent > 0 ? `(Save ${savingsPercent}%)` : '';
+                          })()}
+                        </SelectItem>
+                      )}
+                      {enabledDurations.includes('6months') && (
+                        <SelectItem value="6months">
+                          6 Months - {formatPrice(getPriceForDurationLocal('6months'))} {(() => {
+                            const sixMonthPrice = getPriceForDurationLocal('6months');
+                            const originalPrice = oneMonthPrice * 6;
+                            const savingsPercent = calculateDiscountPercent(originalPrice, sixMonthPrice);
+                            return savingsPercent > 0 ? `(Save ${savingsPercent}%)` : '';
+                          })()}
+                        </SelectItem>
+                      )}
+                      {enabledDurations.includes('1year') && (
+                        <SelectItem value="1year">
+                          1 Year - {formatPrice(getPriceForDurationLocal('1year'))} {(() => {
+                            const oneYearPrice = getPriceForDurationLocal('1year');
+                            const originalPrice = oneMonthPrice * 12;
+                            const savingsPercent = calculateDiscountPercent(originalPrice, oneYearPrice);
+                            return savingsPercent > 0 ? `(Save ${savingsPercent}%)` : '';
+                          })()}
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </CardContent>
