@@ -108,16 +108,16 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
     cookiesExpiryDate: tool?.cookiesExpiryDate 
       ? new Date(tool.cookiesExpiryDate).toISOString().split('T')[0]
       : '',
-    // Duration toggles for Shared Plan
-    sharedPlanDuration1MonthEnabled: (tool as any)?.sharedPlanPrice1Month ? true : false,
-    sharedPlanDuration3MonthsEnabled: (tool as any)?.sharedPlanPrice3Months ? true : false,
-    sharedPlanDuration6MonthsEnabled: (tool as any)?.sharedPlanPrice6Months ? true : false,
-    sharedPlanDuration1YearEnabled: (tool as any)?.sharedPlanPrice1Year ? true : false,
-    // Duration toggles for Private Plan
-    privatePlanDuration1MonthEnabled: (tool as any)?.privatePlanPrice1Month ? true : false,
-    privatePlanDuration3MonthsEnabled: (tool as any)?.privatePlanPrice3Months ? true : false,
-    privatePlanDuration6MonthsEnabled: (tool as any)?.privatePlanPrice6Months ? true : false,
-    privatePlanDuration1YearEnabled: (tool as any)?.privatePlanPrice1Year ? true : false,
+    // Duration toggles for Shared Plan - check if price exists and is greater than 0
+    sharedPlanDuration1MonthEnabled: (tool as any)?.sharedPlanPrice1Month ? convertToNumber((tool as any).sharedPlanPrice1Month) > 0 : false,
+    sharedPlanDuration3MonthsEnabled: (tool as any)?.sharedPlanPrice3Months ? convertToNumber((tool as any).sharedPlanPrice3Months) > 0 : false,
+    sharedPlanDuration6MonthsEnabled: (tool as any)?.sharedPlanPrice6Months ? convertToNumber((tool as any).sharedPlanPrice6Months) > 0 : false,
+    sharedPlanDuration1YearEnabled: (tool as any)?.sharedPlanPrice1Year ? convertToNumber((tool as any).sharedPlanPrice1Year) > 0 : false,
+    // Duration toggles for Private Plan - check if price exists and is greater than 0
+    privatePlanDuration1MonthEnabled: (tool as any)?.privatePlanPrice1Month ? convertToNumber((tool as any).privatePlanPrice1Month) > 0 : false,
+    privatePlanDuration3MonthsEnabled: (tool as any)?.privatePlanPrice3Months ? convertToNumber((tool as any).privatePlanPrice3Months) > 0 : false,
+    privatePlanDuration6MonthsEnabled: (tool as any)?.privatePlanPrice6Months ? convertToNumber((tool as any).privatePlanPrice6Months) > 0 : false,
+    privatePlanDuration1YearEnabled: (tool as any)?.privatePlanPrice1Year ? convertToNumber((tool as any).privatePlanPrice1Year) > 0 : false,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -539,10 +539,12 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                             id="sharedPlanDuration1MonthEnabled"
                             checked={formData.sharedPlanDuration1MonthEnabled}
                             onChange={(e) => {
+                              const isEnabled = e.target.checked;
                               setFormData(prev => ({
                                 ...prev,
-                                sharedPlanDuration1MonthEnabled: e.target.checked,
-                                sharedPlanPrice1Month: e.target.checked ? prev.sharedPlanPrice1Month : 0
+                                sharedPlanDuration1MonthEnabled: isEnabled,
+                                // If disabling, set to 0. If enabling and was 0, set a default or keep 0
+                                sharedPlanPrice1Month: isEnabled ? (prev.sharedPlanPrice1Month || 0) : 0
                               }));
                             }}
                             className="h-4 w-4 rounded border-gray-300"
@@ -568,10 +570,11 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                             id="sharedPlanDuration3MonthsEnabled"
                             checked={formData.sharedPlanDuration3MonthsEnabled}
                             onChange={(e) => {
+                              const isEnabled = e.target.checked;
                               setFormData(prev => ({
                                 ...prev,
-                                sharedPlanDuration3MonthsEnabled: e.target.checked,
-                                sharedPlanPrice3Months: e.target.checked ? prev.sharedPlanPrice3Months : 0
+                                sharedPlanDuration3MonthsEnabled: isEnabled,
+                                sharedPlanPrice3Months: isEnabled ? (prev.sharedPlanPrice3Months || 0) : 0
                               }));
                             }}
                             className="h-4 w-4 rounded border-gray-300"
@@ -597,10 +600,11 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                             id="sharedPlanDuration6MonthsEnabled"
                             checked={formData.sharedPlanDuration6MonthsEnabled}
                             onChange={(e) => {
+                              const isEnabled = e.target.checked;
                               setFormData(prev => ({
                                 ...prev,
-                                sharedPlanDuration6MonthsEnabled: e.target.checked,
-                                sharedPlanPrice6Months: e.target.checked ? prev.sharedPlanPrice6Months : 0
+                                sharedPlanDuration6MonthsEnabled: isEnabled,
+                                sharedPlanPrice6Months: isEnabled ? (prev.sharedPlanPrice6Months || 0) : 0
                               }));
                             }}
                             className="h-4 w-4 rounded border-gray-300"
@@ -626,10 +630,11 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                             id="sharedPlanDuration1YearEnabled"
                             checked={formData.sharedPlanDuration1YearEnabled}
                             onChange={(e) => {
+                              const isEnabled = e.target.checked;
                               setFormData(prev => ({
                                 ...prev,
-                                sharedPlanDuration1YearEnabled: e.target.checked,
-                                sharedPlanPrice1Year: e.target.checked ? prev.sharedPlanPrice1Year : 0
+                                sharedPlanDuration1YearEnabled: isEnabled,
+                                sharedPlanPrice1Year: isEnabled ? (prev.sharedPlanPrice1Year || 0) : 0
                               }));
                             }}
                             className="h-4 w-4 rounded border-gray-300"
@@ -728,10 +733,11 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                             id="privatePlanDuration1MonthEnabled"
                             checked={formData.privatePlanDuration1MonthEnabled}
                             onChange={(e) => {
+                              const isEnabled = e.target.checked;
                               setFormData(prev => ({
                                 ...prev,
-                                privatePlanDuration1MonthEnabled: e.target.checked,
-                                privatePlanPrice1Month: e.target.checked ? prev.privatePlanPrice1Month : 0
+                                privatePlanDuration1MonthEnabled: isEnabled,
+                                privatePlanPrice1Month: isEnabled ? (prev.privatePlanPrice1Month || 0) : 0
                               }));
                             }}
                             className="h-4 w-4 rounded border-gray-300"
@@ -757,10 +763,11 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                             id="privatePlanDuration3MonthsEnabled"
                             checked={formData.privatePlanDuration3MonthsEnabled}
                             onChange={(e) => {
+                              const isEnabled = e.target.checked;
                               setFormData(prev => ({
                                 ...prev,
-                                privatePlanDuration3MonthsEnabled: e.target.checked,
-                                privatePlanPrice3Months: e.target.checked ? prev.privatePlanPrice3Months : 0
+                                privatePlanDuration3MonthsEnabled: isEnabled,
+                                privatePlanPrice3Months: isEnabled ? (prev.privatePlanPrice3Months || 0) : 0
                               }));
                             }}
                             className="h-4 w-4 rounded border-gray-300"
@@ -786,10 +793,11 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                             id="privatePlanDuration6MonthsEnabled"
                             checked={formData.privatePlanDuration6MonthsEnabled}
                             onChange={(e) => {
+                              const isEnabled = e.target.checked;
                               setFormData(prev => ({
                                 ...prev,
-                                privatePlanDuration6MonthsEnabled: e.target.checked,
-                                privatePlanPrice6Months: e.target.checked ? prev.privatePlanPrice6Months : 0
+                                privatePlanDuration6MonthsEnabled: isEnabled,
+                                privatePlanPrice6Months: isEnabled ? (prev.privatePlanPrice6Months || 0) : 0
                               }));
                             }}
                             className="h-4 w-4 rounded border-gray-300"
@@ -815,10 +823,11 @@ export function ToolForm({ tool, mode }: ToolFormProps) {
                             id="privatePlanDuration1YearEnabled"
                             checked={formData.privatePlanDuration1YearEnabled}
                             onChange={(e) => {
+                              const isEnabled = e.target.checked;
                               setFormData(prev => ({
                                 ...prev,
-                                privatePlanDuration1YearEnabled: e.target.checked,
-                                privatePlanPrice1Year: e.target.checked ? prev.privatePlanPrice1Year : 0
+                                privatePlanDuration1YearEnabled: isEnabled,
+                                privatePlanPrice1Year: isEnabled ? (prev.privatePlanPrice1Year || 0) : 0
                               }));
                             }}
                             className="h-4 w-4 rounded border-gray-300"
