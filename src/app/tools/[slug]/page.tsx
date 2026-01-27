@@ -8,10 +8,23 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+// Helper function to normalize slug (decode URL encoding and convert to database format)
+function normalizeSlug(slug: string): string {
+  // Decode URL encoding (e.g., %20 -> space, %2B -> +)
+  const decoded = decodeURIComponent(slug);
+  // Normalize to database format: lowercase, replace spaces/special chars with hyphens
+  return decoded
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
+  const normalizedSlug = normalizeSlug(slug);
+  
   const tool = await prisma.tool.findUnique({
-    where: { slug },
+    where: { slug: normalizedSlug },
     select: {
       name: true,
       shortDescription: true,
@@ -33,9 +46,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ToolProductPageRoute({ params }: PageProps) {
   const { slug } = await params;
+  const normalizedSlug = normalizeSlug(slug);
 
   const tool = await prisma.tool.findUnique({
-    where: { slug },
+    where: { slug: normalizedSlug },
     include: {
       subscriptions: {
         where: { status: "ACTIVE" },
