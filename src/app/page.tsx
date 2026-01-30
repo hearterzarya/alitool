@@ -1,8 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, MessageCircle, Users, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { TrendingBundlesSlider } from "@/components/tools/trending-bundles-slider";
 import { ToolNamesSlider } from "@/components/tools/tool-names-slider";
 import { IndividualToolsSearch } from "@/components/tools/individual-tools-search";
@@ -327,7 +328,7 @@ export default async function HomePage() {
           <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md border border-emerald-100 text-center">
             <div className="flex justify-center mb-4">
               <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center border border-emerald-100">
-                <MessageCircle className="h-6 w-6 text-[#25D366]" aria-hidden />
+                <Image src="/whatsapp-icon-green.svg" alt="" width={24} height={24} className="h-6 w-6 object-contain" unoptimized aria-hidden />
               </div>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-2">
@@ -343,7 +344,7 @@ export default async function HomePage() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-xl font-semibold text-sm shadow-md hover:shadow-lg transition-all duration-200"
               >
-                <MessageCircle className="h-4 w-4 shrink-0" aria-hidden />
+                <Image src="/whatsapp-icon.svg" alt="" width={16} height={16} className="h-4 w-4 shrink-0 object-contain" unoptimized aria-hidden />
                 Contact us on WhatsApp
               </a>
             </div>
@@ -368,7 +369,7 @@ export default async function HomePage() {
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
             >
-              <MessageCircle className="h-5 w-5" />
+              <Image src="/whatsapp-icon.svg" alt="" width={20} height={20} className="h-5 w-5 object-contain shrink-0" unoptimized />
               Join WhatsApp Group
             </a>
             <a
@@ -377,7 +378,7 @@ export default async function HomePage() {
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-semibold border border-slate-200 transition-all duration-300 hover:-translate-y-0.5"
             >
-              <Users className="h-5 w-5" />
+              <Image src="/telegram-icon-dark.svg" alt="" width={20} height={20} className="h-5 w-5 object-contain shrink-0" unoptimized />
               Join Telegram Channel
             </a>
           </div>

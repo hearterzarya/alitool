@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -69,7 +70,10 @@ export function AdminSettingsForm(props: {
 
       <Card>
         <CardHeader>
-          <CardTitle>WhatsApp Support</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Image src="/whatsapp-icon-green.svg" alt="" width={24} height={24} className="h-6 w-6 object-contain shrink-0" unoptimized />
+            WhatsApp Support
+          </CardTitle>
           <CardDescription>
             This number is used for the floating WhatsApp button, contact links, and order emails. Leave empty to use env vars (WHATSAPP_NUMBER, WHATSAPP_DEFAULT_MESSAGE) or the built-in default.
           </CardDescription>
@@ -103,7 +107,10 @@ export function AdminSettingsForm(props: {
 
       <Card>
         <CardHeader>
-          <CardTitle>Telegram</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Image src="/telegram-icon-dark.svg" alt="" width={24} height={24} className="h-6 w-6 object-contain shrink-0" unoptimized />
+            Telegram
+          </CardTitle>
           <CardDescription>
             Telegram link or username for the floating Telegram button. Leave empty to hide the button. Use full URL (e.g. https://t.me/yourgroup) or username (e.g. yourgroup).
           </CardDescription>
