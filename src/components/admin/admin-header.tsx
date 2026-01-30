@@ -1,31 +1,37 @@
 'use client';
 
+import Link from "next/link";
+import Image from "next/image";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { LogOut, Shield, User, MessageCircle } from "lucide-react";
-import Link from "next/link";
 
 interface AdminHeaderProps {
   user: {
     name?: string | null;
     email?: string | null;
   };
+  whatsappSupportUrl?: string;
 }
 
-export function AdminHeader({ user }: AdminHeaderProps) {
+export function AdminHeader({ user, whatsappSupportUrl }: AdminHeaderProps) {
   return (
     <header className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-slate-200 dark:border-gray-700 shadow-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo and Title */}
-          <div className="flex items-center space-x-4">
-            <Link href="/admin" className="flex items-center space-x-2 group">
-              <div className="p-2 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg group-hover:shadow-lg transition-shadow">
-                <Shield className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-slate-900 dark:text-white">Admin Panel</h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Management Dashboard</p>
+          <div className="flex items-center gap-4">
+            <Link href="/admin" className="flex items-center gap-3 group shrink-0">
+              <Image
+                src="/logo-main-v2.png"
+                alt="AliDigitalSolution"
+                width={180}
+                height={44}
+                className="h-10 sm:h-11 w-auto object-contain object-center"
+              />
+              <div className="hidden sm:block border-l border-slate-200 dark:border-slate-600 pl-4 self-center">
+                <h1 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">Admin Panel</h1>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight">Management Dashboard</p>
               </div>
             </Link>
           </div>
@@ -54,7 +60,7 @@ export function AdminHeader({ user }: AdminHeaderProps) {
               className="bg-[#25D366] hover:bg-[#20BA5A] text-white border-[#25D366]"
             >
               <a
-                href={`https://wa.me/919155313223?text=${encodeURIComponent('Hello! I need admin support.')}`}
+                href={whatsappSupportUrl ?? "https://wa.me/919155313223?text=Hello!%20I%20need%20admin%20support."}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center space-x-2"

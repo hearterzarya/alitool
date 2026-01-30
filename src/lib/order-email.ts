@@ -1,5 +1,6 @@
 import { sendEmail, generateOrderConfirmationEmailHtml, generateBundleOrderConfirmationEmailHtml } from './email';
 import { prisma } from './prisma';
+import { getWhatsAppConfig, buildWhatsAppUrl } from './whatsapp-config';
 
 /**
  * Send order confirmation email after successful payment
@@ -88,6 +89,8 @@ export async function sendOrderConfirmationEmail(paymentId: string): Promise<voi
         }
       }
 
+      const whatsapp = await getWhatsAppConfig();
+      const whatsappSupportUrl = buildWhatsAppUrl(whatsapp.number, `Hi! I just purchased a Private Plan. Order: ${orderNumber}`);
       await sendEmail({
         to: payment.user.email,
         subject: `Order Confirmation - ${payment.tool.name}`,
@@ -101,6 +104,7 @@ export async function sendOrderConfirmationEmail(paymentId: string): Promise<voi
           activationStatus: activationStatus as 'ACTIVE' | 'PENDING',
           credentials,
           dashboardUrl,
+          whatsappSupportUrl,
         }),
       });
     } else if (payment.bundleId && payment.bundle) {

@@ -3,6 +3,15 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+function serializeBundle(bundle: { priceMonthly: bigint; priceSixMonth: bigint | null; priceYearly: bigint | null; [k: string]: unknown }) {
+  return {
+    ...bundle,
+    priceMonthly: Number(bundle.priceMonthly),
+    priceSixMonth: bundle.priceSixMonth != null ? Number(bundle.priceSixMonth) : null,
+    priceYearly: bundle.priceYearly != null ? Number(bundle.priceYearly) : null,
+  };
+}
+
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session || (session.user as any).role !== "ADMIN") {
@@ -13,23 +22,32 @@ export async function POST(req: Request) {
     const data = await req.json();
 
     const toolIds: string[] = Array.isArray(data.toolIds) ? data.toolIds : [];
+    const priceMonthly = typeof data.priceMonthly === "number" ? BigInt(Math.round(data.priceMonthly)) : BigInt(0);
+    const priceSixMonth =
+      data.priceSixMonth != null && Number(data.priceSixMonth) > 0
+        ? BigInt(Math.round(Number(data.priceSixMonth)))
+        : null;
+    const priceYearly =
+      data.priceYearly != null && Number(data.priceYearly) > 0
+        ? BigInt(Math.round(Number(data.priceYearly)))
+        : null;
 
     const bundle = await prisma.$transaction(async (tx) => {
       const created = await tx.bundle.create({
         data: {
-          name: data.name,
-          slug: data.slug,
-          description: data.description,
-          shortDescription: data.shortDescription || null,
-          icon: data.icon || null,
-          priceMonthly: data.priceMonthly,
-          priceSixMonth: data.priceSixMonth ?? null,
-          priceYearly: data.priceYearly ?? null,
-          features: data.features || null,
-          targetAudience: data.targetAudience || null,
+          name: String(data.name ?? "").trim(),
+          slug: String(data.slug ?? "").trim(),
+          description: String(data.description ?? "").trim(),
+          shortDescription: data.shortDescription ? String(data.shortDescription).trim() : null,
+          icon: data.icon ? String(data.icon).trim() : null,
+          priceMonthly,
+          priceSixMonth,
+          priceYearly,
+          features: data.features ? String(data.features).trim() : null,
+          targetAudience: data.targetAudience ? String(data.targetAudience).trim() : null,
           isActive: data.isActive ?? true,
           isTrending: data.isTrending ?? false,
-          sortOrder: data.sortOrder || 0,
+          sortOrder: Number(data.sortOrder) || 0,
         },
       });
 
@@ -47,7 +65,7 @@ export async function POST(req: Request) {
       return created;
     });
 
-    return NextResponse.json(bundle, { status: 201 });
+    return NextResponse.json(serializeBundle(bundle), { status: 201 });
   } catch (error: any) {
     console.error("Error creating bundle:", error);
     if (error.code === "P2002") {

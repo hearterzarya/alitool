@@ -79,7 +79,7 @@ export function TrendingBundlesSlider({ bundles }: TrendingBundlesSliderProps) {
   const colors = colorSchemes[currentIndex % colorSchemes.length];
 
   return (
-    <div className="mb-12 animate-fade-in-up relative overflow-hidden rounded-xl">
+    <div className="animate-fade-in-up relative overflow-hidden rounded-2xl shadow-lg">
       {/* Dynamic background */}
       <div className={`absolute inset-0 bg-gradient-to-br ${colors.bg}`} />
       <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:40px_40px]" />
@@ -140,10 +140,16 @@ export function TrendingBundlesSlider({ bundles }: TrendingBundlesSliderProps) {
           {/* Right Side - Icon/Visual */}
           <div className="relative flex justify-center lg:justify-end items-center">
             <div className="relative bg-white rounded-xl p-8 shadow-2xl z-10">
-              <div className="w-48 h-48 flex items-center justify-center">
-                <div className="text-7xl">
-                  {currentBundle.icon || "📦"}
-                </div>
+              <div className="relative w-48 h-48 flex items-center justify-center overflow-hidden rounded-lg bg-slate-50">
+                {currentBundle.icon && (currentBundle.icon.startsWith('/') || currentBundle.icon.startsWith('http')) ? (
+                  <img
+                    src={currentBundle.icon}
+                    alt={currentBundle.name}
+                    className="w-full h-full object-contain object-center"
+                  />
+                ) : (
+                  <span className="text-7xl">{currentBundle.icon || "📦"}</span>
+                )}
               </div>
             </div>
           </div>

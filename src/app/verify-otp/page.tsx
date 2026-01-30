@@ -4,10 +4,11 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sparkles, Mail, ArrowRight, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { Mail, ArrowRight, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 
 function VerifyOtpForm() {
   const router = useRouter();
@@ -219,11 +220,15 @@ function VerifyOtpForm() {
       <div className="relative z-10 w-full max-w-md animate-fade-in-up">
         {/* Logo Section */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center space-x-3 group mb-4">
-            <div className="relative">
-              <Sparkles className="h-10 w-10 text-purple-400 group-hover:text-purple-300 transition-colors animate-pulse" />
-            </div>
-            <span className="text-3xl font-bold gradient-text">AliDigitalSolution</span>
+          <Link href="/" className="inline-flex justify-center w-full mb-5 group transition-opacity hover:opacity-90">
+            <Image
+              src="/logo-main-v2.png"
+              alt="AliDigitalSolution"
+              width={280}
+              height={72}
+              className="h-16 sm:h-20 w-auto max-w-[min(280px,100%)] object-contain object-center"
+              priority
+            />
           </Link>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
             Verify Your Email

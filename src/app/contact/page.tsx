@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,8 +16,17 @@ import {
   Loader2
 } from "lucide-react";
 import Link from "next/link";
+import { buildWhatsAppUrl } from "@/lib/whatsapp-config";
 
 export default function ContactPage() {
+  const [whatsappNumber, setWhatsappNumber] = useState<string>("919155313223");
+  useEffect(() => {
+    fetch("/api/config/whatsapp")
+      .then((r) => r.json())
+      .then((c: { number?: string }) => c?.number && setWhatsappNumber(c.number))
+      .catch(() => {});
+  }, []);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -105,7 +114,7 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold mb-1">WhatsApp Support</h3>
                     <a 
-                      href="https://wa.me/919155313223" 
+                      href={buildWhatsAppUrl(whatsappNumber)} 
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-green-600 hover:text-green-700 text-sm"
@@ -123,10 +132,10 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold mb-1">Phone Support</h3>
                     <a 
-                      href="tel:+919155313223" 
+                      href={`tel:+${whatsappNumber.replace(/\D/g, "")}`}
                       className="text-blue-600 hover:text-blue-700 text-sm"
                     >
-                      +91 91553 13223
+                      +{whatsappNumber.replace(/(\d{2})(\d{3})(\d{5})/, "$1 $2 $3")}
                     </a>
                     <p className="text-xs text-slate-500 mt-1">Mon-Fri, 9 AM - 6 PM IST</p>
                   </div>

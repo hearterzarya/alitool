@@ -100,7 +100,16 @@ export async function checkToolAccess(toolId: string) {
     };
   }
 
-  // Check if subscription is active
+  // Check if subscription is active (PAUSED = no access)
+  if (subscription.status === 'PAUSED') {
+    return {
+      hasAccess: false,
+      userStatus: user.status,
+      subscription,
+      reason: 'Your subscription is paused. Resume it from your dashboard to access the tool.',
+    };
+  }
+
   if (subscription.status !== 'ACTIVE') {
     return {
       hasAccess: false,

@@ -1,6 +1,6 @@
 import { prisma } from './prisma';
 
-export type SubscriptionStatus = 'ACTIVE' | 'EXPIRING_SOON' | 'EXPIRED' | 'PENDING' | 'SUSPENDED';
+export type SubscriptionStatus = 'ACTIVE' | 'PAUSED' | 'EXPIRING_SOON' | 'EXPIRED' | 'PENDING' | 'SUSPENDED';
 
 export interface SubscriptionStatusInfo {
   status: SubscriptionStatus;
@@ -44,7 +44,17 @@ export function calculateSubscriptionStatus(
     };
   }
 
-  // Check subscription status
+  // Check subscription status (PAUSED = no access, not expired)
+  if (subscriptionStatus === 'PAUSED') {
+    return {
+      status: 'PAUSED' as SubscriptionStatus,
+      daysRemaining: null,
+      isExpired: false,
+      expiresAt: expiryDate,
+      message: 'Subscription paused',
+    };
+  }
+
   if (subscriptionStatus !== 'ACTIVE') {
     return {
       status: subscriptionStatus as SubscriptionStatus,
@@ -162,6 +172,12 @@ export function getSubscriptionBadgeInfo(statusInfo: SubscriptionStatusInfo): {
         variant: 'destructive',
         className: 'bg-red-100 text-red-800 border-red-300',
         text: 'Suspended',
+      };
+    case 'PAUSED':
+      return {
+        variant: 'outline',
+        className: 'bg-amber-100 text-amber-800 border-amber-300',
+        text: 'Paused',
       };
     default:
       return {

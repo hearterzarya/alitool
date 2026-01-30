@@ -1,9 +1,10 @@
 'use client';
 
 import Link from "next/link";
+import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, User, Wrench, Star, FileText, HelpCircle, Menu, X, Home, Shield } from "lucide-react";
+import { User, Wrench, Star, FileText, HelpCircle, Menu, X, Home, Shield } from "lucide-react";
 import { useState } from "react";
 
 export function Navbar() {
@@ -25,17 +26,16 @@ export function Navbar() {
           {/* Logo */}
           <Link 
             href="/" 
-            className="flex items-center space-x-2 group transition-all duration-300 hover:scale-105"
+            className="flex items-center justify-center group transition-all duration-300 hover:opacity-90 shrink-0"
           >
-            <div className="relative">
-              <Sparkles className="h-6 w-6 text-purple-400 group-hover:text-purple-300 transition-colors" />
-              <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent animate-gradient">
-              AliDigitalSolution
-
-
-            </span>
+            <Image
+              src="/logo-main-v2.png"
+              alt="AliDigitalSolution"
+              width={220}
+              height={52}
+              className="h-11 sm:h-12 w-auto object-contain object-center"
+              priority
+            />
           </Link>
 
           {/* Desktop Navigation Links */}

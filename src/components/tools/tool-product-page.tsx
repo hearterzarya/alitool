@@ -197,23 +197,26 @@ export function ToolProductPageClient({ tool, relatedTools }: ToolProductPagePro
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {/* Product Image/Icon */}
-          <div className="bg-white rounded-xl shadow-lg p-6 lg:p-8">
-            <div className="aspect-square flex items-center justify-center bg-gradient-to-br from-purple-100 to-blue-100 rounded-xl mb-6 border border-purple-200">
+          {/* Product Image Card - full image, bundle-style card */}
+          <div className="bg-white rounded-xl shadow-lg border-2 border-slate-200 overflow-hidden flex flex-col">
+            <div className="relative w-full aspect-square min-h-[280px] bg-slate-50 border-b border-slate-200">
               {tool.icon ? (
                 <Image
                   src={tool.icon}
                   alt={tool.name}
-                  width={320}
-                  height={320}
-                  className="rounded-lg object-contain"
+                  fill
+                  className="object-contain object-center p-4"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  unoptimized={tool.icon.startsWith('http')}
                 />
               ) : (
-                <ToolIcon icon={tool.icon} name={tool.name} size="xl" />
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-100 to-blue-100">
+                  <ToolIcon icon={null} name={tool.name} size="xl" />
+                </div>
               )}
             </div>
             {/* Social Share */}
-            <div className="flex items-center justify-center gap-3 pt-4 border-t border-slate-200">
+            <div className="flex items-center justify-center gap-3 p-4 bg-slate-50 border-t border-slate-200">
               <span className="text-sm text-slate-600 mr-2">Share:</span>
               <Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
                 <a
@@ -248,8 +251,8 @@ export function ToolProductPageClient({ tool, relatedTools }: ToolProductPagePro
             </div>
           </div>
 
-          {/* Product Details & Purchase Section */}
-          <div className="bg-white rounded-xl shadow-lg p-6 lg:p-8 sticky top-24 h-fit">
+          {/* Product Details & Purchase Section - card style like bundle */}
+          <div className="bg-white rounded-xl shadow-lg border-2 border-slate-200 p-6 lg:p-8 sticky top-24 h-fit">
             {/* Header */}
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-3">

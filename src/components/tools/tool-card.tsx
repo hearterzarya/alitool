@@ -97,9 +97,9 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
       <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-blue-600/0 group-hover:from-purple-600/10 group-hover:to-blue-600/10 transition-all duration-300 pointer-events-none" />
       
       <CardHeader className="flex-1 pb-4">
-        {/* Tool Icon/Logo */}
+        {/* Tool Icon/Logo - bundle-style card container */}
         <div className="flex items-center justify-between mb-3">
-          <div className="group-hover:scale-110 transition-transform duration-300">
+          <div className="flex items-center justify-center w-16 h-16 rounded-xl bg-slate-100 border border-slate-200 shrink-0 overflow-hidden group-hover:scale-105 transition-transform duration-300">
             <ToolIcon icon={tool.icon} name={tool.name} size="lg" />
           </div>
           <div className="flex items-center space-x-1 bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-medium">

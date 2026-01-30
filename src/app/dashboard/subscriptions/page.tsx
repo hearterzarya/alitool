@@ -6,9 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { formatPrice, formatDate, serializeTool } from "@/lib/utils";
 import { getMinimumStartingPrice } from "@/lib/price-utils";
 import { ToolIcon } from "@/components/tools/tool-icon";
-import { CreditCard, Calendar, DollarSign, AlertCircle } from "lucide-react";
+import { CreditCard, Calendar, DollarSign } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { PauseResumeButton } from "@/components/dashboard/pause-resume-button";
 
 export default async function SubscriptionsPage() {
   const session = await getServerSession(authOptions);
@@ -66,6 +67,7 @@ export default async function SubscriptionsPage() {
   }
 
   const activeSubscriptions = subscriptions.filter(s => s.status === 'ACTIVE');
+  const pausedSubscriptions = subscriptions.filter(s => s.status === 'PAUSED');
   const canceledSubscriptions = subscriptions.filter(s => s.status === 'CANCELED');
   const totalMonthlyCost = activeSubscriptions.reduce((sum, sub) => {
     const serializedTool = serializeTool(sub.tool);
@@ -175,12 +177,59 @@ export default async function SubscriptionsPage() {
                       </span>
                     </div>
                     {!isTestUser && (
-                      <div className="pt-2">
-                        <Button variant="outline" size="sm" className="w-full" disabled>
-                          Cancel Subscription
+                      <div className="pt-2 flex gap-2">
+                        <PauseResumeButton subscriptionId={subscription.id} status="ACTIVE" />
+                        <Button variant="outline" size="sm" className="flex-1" disabled>
+                          Cancel
                         </Button>
                       </div>
                     )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Paused Subscriptions */}
+      {pausedSubscriptions.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Paused Subscriptions</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Paused subscriptions do not grant access. Resume to use the tool again.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {pausedSubscriptions.map((subscription) => (
+              <Card key={subscription.id} className="border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800 hover:shadow-lg transition">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <ToolIcon icon={subscription.tool.icon} name={subscription.tool.name} size="md" />
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">{subscription.tool.name}</CardTitle>
+                        <CardDescription className="line-clamp-1">
+                          {subscription.tool.shortDescription || subscription.tool.description}
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <Badge className="bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/50 dark:text-amber-200 dark:border-amber-700">
+                      PAUSED
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        Resumes valid until
+                      </span>
+                      <span className="font-medium">
+                        {formatDate(subscription.currentPeriodEnd)}
+                      </span>
+                    </div>
+                    <PauseResumeButton subscriptionId={subscription.id} status="PAUSED" />
                   </div>
                 </CardContent>
               </Card>

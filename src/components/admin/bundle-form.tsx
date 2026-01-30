@@ -1,11 +1,13 @@
 'use client';
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Upload, X } from "lucide-react";
 
 type ToolPick = { id: string; name: string; slug: string };
 
@@ -31,8 +33,12 @@ export function BundleForm(props: {
   initialToolIds: string[];
 }) {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const isExistingImage = props.bundle?.icon && (props.bundle.icon.startsWith("/") || props.bundle.icon.startsWith("http"));
+  const [previewUrl, setPreviewUrl] = useState<string | null>(isExistingImage ? (props.bundle?.icon ?? null) : null);
 
   const [toolQuery, setToolQuery] = useState("");
   const [selectedToolIds, setSelectedToolIds] = useState<string[]>(props.initialToolIds || []);
@@ -74,6 +80,46 @@ export function BundleForm(props: {
     setForm((p) => ({ ...p, slug }));
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
+    if (!allowedTypes.includes(file.type)) {
+      setError("Invalid file type. Use PNG, JPG, GIF, WebP or SVG.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("File size exceeds 5MB limit.");
+      return;
+    }
+    setError(null);
+    setUploading(true);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", file);
+      const res = await fetch("/api/admin/bundles/upload-icon", { method: "POST", body: uploadFormData });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Upload failed");
+      }
+      const data = await res.json();
+      if (!data.url) throw new Error("No URL returned");
+      setForm((p) => ({ ...p, icon: data.url }));
+      setPreviewUrl(data.url);
+    } catch (err: any) {
+      setError(err.message || "Failed to upload image.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setForm((p) => ({ ...p, icon: "" }));
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -107,7 +153,8 @@ export function BundleForm(props: {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to save bundle");
+        const msg = data.details ? `${data.error}: ${data.details}` : (data.error || "Failed to save bundle");
+        throw new Error(msg);
       }
 
       router.push("/admin/bundles");
@@ -221,16 +268,78 @@ export function BundleForm(props: {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Bundle Image</Label>
             <div className="space-y-2">
-              <Label htmlFor="icon">Icon (emoji or URL)</Label>
-              <Input
-                id="icon"
-                value={form.icon}
-                onChange={(e) => setForm((p) => ({ ...p, icon: e.target.value }))}
-                placeholder="📦 or https://..."
-              />
+              {previewUrl ? (
+                <div className="relative inline-block">
+                  <div className="relative w-24 h-24 sm:w-28 sm:h-28 border-2 border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+                    <Image
+                      src={previewUrl}
+                      alt="Bundle icon preview"
+                      fill
+                      className="object-contain object-center"
+                      sizes="112px"
+                      unoptimized={previewUrl.startsWith("http")}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute -top-1 -right-1 h-6 w-6 rounded-full p-0 z-10"
+                    onClick={handleRemoveImage}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ) : form.icon && !form.icon.startsWith("/") && !form.icon.startsWith("http") ? (
+                <div className="border-2 border-slate-200 rounded-xl p-4 text-center bg-slate-50 w-24 h-24 flex items-center justify-center">
+                  <span className="text-4xl">{form.icon}</span>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center w-24 min-h-[96px] flex flex-col items-center justify-center">
+                  <Upload className="h-8 w-8 text-slate-400 mb-2" />
+                  <p className="text-xs text-slate-500">Upload image</p>
+                  <p className="text-xs text-slate-400">PNG, JPG, WebP (max 5MB)</p>
+                </div>
+              )}
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? "Uploading..." : previewUrl ? "Change Image" : "Upload Image"}
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/svg+xml"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
+              <div className="mt-1">
+                <Label htmlFor="iconUrl" className="text-xs text-slate-500">Or paste URL / emoji:</Label>
+                <Input
+                  id="iconUrl"
+                  value={form.icon}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setForm((p) => ({ ...p, icon: v }));
+                    if (v.startsWith("/") || v.startsWith("http")) setPreviewUrl(v); else setPreviewUrl(null);
+                  }}
+                  placeholder="https://... or 📦"
+                  className="mt-1"
+                />
+              </div>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="targetAudience">Target Audience</Label>
               <Input

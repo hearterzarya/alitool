@@ -15,14 +15,17 @@ export async function GET() {
 
   let metaPixelId: { value: string | null } | null = null;
   let metaPixelEnabled: { value: string | null } | null = null;
+  let whatsappNumber: { value: string | null } | null = null;
+  let whatsappDefaultMessage: { value: string | null } | null = null;
   try {
-    [metaPixelId, metaPixelEnabled] = await Promise.all([
+    [metaPixelId, metaPixelEnabled, whatsappNumber, whatsappDefaultMessage] = await Promise.all([
       prisma.appSetting.findUnique({ where: { key: "meta_pixel_id" } }),
       prisma.appSetting.findUnique({ where: { key: "meta_pixel_enabled" } }),
+      prisma.appSetting.findUnique({ where: { key: "whatsapp_number" } }),
+      prisma.appSetting.findUnique({ where: { key: "whatsapp_default_message" } }),
     ]);
   } catch (e: any) {
     if (e?.code === "P2021" || String(e?.message || "").includes("app_settings")) {
-      // Not migrated yet
       return NextResponse.json(
         { error: "Settings table missing. Run: npx prisma db push", code: "SETTINGS_TABLE_MISSING" },
         { status: 503 }
@@ -34,6 +37,8 @@ export async function GET() {
   return NextResponse.json({
     metaPixelId: metaPixelId?.value ?? "",
     metaPixelEnabled: (metaPixelEnabled?.value ?? "") === "true",
+    whatsappNumber: whatsappNumber?.value ?? "",
+    whatsappDefaultMessage: whatsappDefaultMessage?.value ?? "",
   });
 }
 
@@ -46,6 +51,8 @@ export async function PUT(req: Request) {
   const data = await req.json();
   const metaPixelId = String(data.metaPixelId ?? "").trim();
   const metaPixelEnabled = !!data.metaPixelEnabled;
+  const whatsappNumber = String(data.whatsappNumber ?? "").trim();
+  const whatsappDefaultMessage = String(data.whatsappDefaultMessage ?? "").trim();
 
   try {
     await prisma.$transaction([
@@ -58,6 +65,16 @@ export async function PUT(req: Request) {
         where: { key: "meta_pixel_enabled" },
         create: { key: "meta_pixel_enabled", value: metaPixelEnabled ? "true" : "false" },
         update: { value: metaPixelEnabled ? "true" : "false" },
+      }),
+      prisma.appSetting.upsert({
+        where: { key: "whatsapp_number" },
+        create: { key: "whatsapp_number", value: whatsappNumber || null },
+        update: { value: whatsappNumber || null },
+      }),
+      prisma.appSetting.upsert({
+        where: { key: "whatsapp_default_message" },
+        create: { key: "whatsapp_default_message", value: whatsappDefaultMessage || null },
+        update: { value: whatsappDefaultMessage || null },
       }),
     ]);
   } catch (e: any) {

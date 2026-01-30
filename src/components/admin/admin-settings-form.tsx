@@ -5,13 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export function AdminSettingsForm(props: {
   initialMetaPixelId: string;
   initialMetaPixelEnabled: boolean;
+  initialWhatsappNumber: string;
+  initialWhatsappDefaultMessage: string;
 }) {
   const [metaPixelId, setMetaPixelId] = useState(props.initialMetaPixelId);
   const [metaPixelEnabled, setMetaPixelEnabled] = useState(props.initialMetaPixelEnabled);
+  const [whatsappNumber, setWhatsappNumber] = useState(props.initialWhatsappNumber);
+  const [whatsappDefaultMessage, setWhatsappDefaultMessage] = useState(props.initialWhatsappDefaultMessage);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -25,7 +30,12 @@ export function AdminSettingsForm(props: {
       const res = await fetch("/api/admin/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ metaPixelId, metaPixelEnabled }),
+        body: JSON.stringify({
+          metaPixelId,
+          metaPixelEnabled,
+          whatsappNumber,
+          whatsappDefaultMessage,
+        }),
       });
 
       if (!res.ok) {
@@ -50,9 +60,43 @@ export function AdminSettingsForm(props: {
       )}
       {saved && (
         <div className="bg-green-50 text-green-800 text-sm p-3 rounded-md border border-green-200">
-          Settings saved. Refresh the site to verify the pixel loads.
+          Settings saved.
         </div>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>WhatsApp Support</CardTitle>
+          <CardDescription>
+            This number is used for the floating WhatsApp button, contact links, and order emails. Leave empty to use env vars (WHATSAPP_NUMBER, WHATSAPP_DEFAULT_MESSAGE) or the built-in default.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="whatsappNumber">WhatsApp number</Label>
+            <Input
+              id="whatsappNumber"
+              value={whatsappNumber}
+              onChange={(e) => setWhatsappNumber(e.target.value)}
+              placeholder="919155313223"
+            />
+            <p className="text-xs text-gray-500">
+              Country code + number, no spaces or plus (e.g. 919155313223 for India).
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="whatsappDefaultMessage">Default pre-filled message</Label>
+            <Textarea
+              id="whatsappDefaultMessage"
+              value={whatsappDefaultMessage}
+              onChange={(e) => setWhatsappDefaultMessage(e.target.value)}
+              placeholder="Hello! I need help with my subscription."
+              rows={2}
+              className="resize-none"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

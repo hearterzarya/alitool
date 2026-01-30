@@ -191,6 +191,9 @@ model ToolSubscription {
   cancelAtPeriodEnd Boolean   @default(false)
   canceledAt        DateTime?
 
+  // Pause: user can temporarily pause subscription
+  pausedAt          DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -208,6 +211,7 @@ enum PlanType {
 
 enum SubscriptionStatus {
   ACTIVE
+  PAUSED
   PAST_DUE
   CANCELED
   UNPAID

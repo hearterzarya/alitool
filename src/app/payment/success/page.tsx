@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle2, ArrowRight, Loader2, MessageCircle } from 'lucide-react';
+import { buildWhatsAppUrl } from '@/lib/whatsapp-config';
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
@@ -14,6 +15,14 @@ function PaymentSuccessContent() {
   const [loading, setLoading] = useState(true);
   const [paymentData, setPaymentData] = useState<any>(null);
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
+  const [whatsappNumber, setWhatsappNumber] = useState<string>('919155313223');
+
+  useEffect(() => {
+    fetch('/api/config/whatsapp')
+      .then((r) => r.json())
+      .then((c: { number?: string }) => c?.number && setWhatsappNumber(c.number))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!ref) {
@@ -129,7 +138,7 @@ function PaymentSuccessContent() {
                     </ul>
                   </div>
                   <a
-                    href="https://wa.me/919155313223?text=Hi! I just purchased a Private Plan. Payment Reference: {paymentData?.merchantReferenceId}"
+                    href={buildWhatsAppUrl(whatsappNumber, `Hi! I just purchased a Private Plan. Payment Reference: ${paymentData?.merchantReferenceId ?? ref}`)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-lg font-medium transition-all duration-300 hover:scale-105"
@@ -187,7 +196,7 @@ function PaymentSuccessContent() {
                     Please send your payment confirmation and your login credentials on WhatsApp to get your subscription activated.
                   </p>
                   <a
-                    href="https://wa.me/919155313223?text=Hi! I just made a payment. Here are my details:"
+                    href={buildWhatsAppUrl(whatsappNumber, "Hi! I just made a payment. Here are my details:")}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-lg font-medium transition-all duration-300 hover:scale-105"
@@ -196,7 +205,7 @@ function PaymentSuccessContent() {
                     Contact us on WhatsApp
                   </a>
                   <p className="text-sm text-slate-600 mt-2">
-                    WhatsApp Number: <span className="font-semibold">+91 91553 13223</span>
+                    WhatsApp: <span className="font-semibold">+{whatsappNumber.replace(/(\d{2})(\d{3})(\d{5})/, "$1 $2 $3")}</span>
                   </p>
                 </div>
               )}

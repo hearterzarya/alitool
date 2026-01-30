@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { AdminHeader } from "@/components/admin/admin-header";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { getWhatsAppConfig, buildWhatsAppUrl } from "@/lib/whatsapp-config";
 
 export default async function AdminLayout({
   children,
@@ -23,11 +24,13 @@ export default async function AdminLayout({
   // Ensure user data is available
   const userName = session.user?.name || null;
   const userEmail = session.user?.email || null;
+  const whatsapp = await getWhatsAppConfig();
+  const whatsappSupportUrl = buildWhatsAppUrl(whatsapp.number, "Hello! I need admin support.");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800">
       {/* Admin Header */}
-      <AdminHeader user={{ name: userName, email: userEmail }} />
+      <AdminHeader user={{ name: userName, email: userEmail }} whatsappSupportUrl={whatsappSupportUrl} />
       
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">

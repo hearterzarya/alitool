@@ -29,22 +29,20 @@ export function ToolIcon({ icon, name, size = 'md', className = '' }: ToolIconPr
   if (isImage) {
     try {
       return (
-        <div className={`relative ${sizeClass.container} rounded-lg overflow-hidden bg-gray-50 border border-gray-200 ${className}`}>
+        <div className={`relative ${sizeClass.container} aspect-square shrink-0 rounded-lg overflow-hidden bg-slate-50 border border-slate-200 ${className}`}>
           <Image
             src={icon}
             alt={name}
             fill
-            className="object-contain p-1"
+            className="object-contain object-center p-1.5"
             sizes={imageSizes[size]}
             unoptimized={icon.startsWith('http')}
           />
         </div>
       );
     } catch (error) {
-      // Fallback to emoji if image fails
-      console.warn(`Failed to load image: ${icon}`, error);
       return (
-        <div className={`flex items-center justify-center ${sizeClass.container} ${sizeClass.text} ${className}`}>
+        <div className={`flex items-center justify-center ${sizeClass.container} aspect-square shrink-0 ${sizeClass.text} ${className}`}>
           {icon || "🛠️"}
         </div>
       );
@@ -52,7 +50,7 @@ export function ToolIcon({ icon, name, size = 'md', className = '' }: ToolIconPr
   }
   
   return (
-    <div className={`flex items-center justify-center ${sizeClass.container} ${sizeClass.text} ${className}`}>
+    <div className={`flex items-center justify-center ${sizeClass.container} aspect-square shrink-0 ${sizeClass.text} ${className}`}>
       {icon || "🛠️"}
     </div>
   );

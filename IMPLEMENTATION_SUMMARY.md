@@ -1,168 +1,105 @@
-# Google Sign-in & Subscription Validation - Implementation Summary
+# Implementation Summary — Client Delivery
 
-## ✅ Implementation Complete
+## 1) SUMMARY OF FIXES
 
-### 1. Google Sign-in Authentication
+- **WhatsApp number (single source of truth):** Added `src/lib/whatsapp-config.ts` (env + optional `app_settings`). All WhatsApp links/buttons use this config. Optional env: `WHATSAPP_NUMBER`, `WHATSAPP_DEFAULT_MESSAGE`; optional DB keys: `whatsapp_number`, `whatsapp_default_message`.
+- **Bundle / subscription pause:** Added `PAUSED` to `SubscriptionStatus`, `pausedAt` on `ToolSubscription`, access logic treats PAUSED as no access, and dashboard Pause/Resume UI + `POST /api/subscriptions/pause`.
+- **Homepage spacing:** Consistent section padding (`py-16 md:py-20 lg:py-24`), hero content `max-w-6xl`, and adjusted vertical rhythm.
+- **Product images:** Tool icons use `aspect-square`, `object-contain`, `object-center`, and fixed bundle card icon container with aspect ratio.
 
-#### NextAuth Integration (Recommended)
-- ✅ Added Google OAuth provider to NextAuth
-- ✅ Automatic user creation/update on Google sign-in
-- ✅ Email verification auto-completed for Google accounts
-- ✅ Google Sign-in button on `/login` and `/register` pages
-- ✅ Seamless integration with existing auth system
+Google Login and Analytics were left as-is (no refactor). Responsiveness preserved.
 
-#### Firebase Client-Side Option (Alternative)
-- ✅ Created Firebase authentication utilities
-- ✅ Popup-based Google sign-in
-- ✅ localStorage storage for user data
-- ✅ Backend sync API endpoint
-- ✅ Firebase Google button component
+---
 
-### 2. Subscription Validation System
+## 2) FILES MODIFIED / CREATED
 
-#### Status Calculation
-- ✅ `calculateSubscriptionStatus()` function
-- ✅ Calculates days remaining
-- ✅ Determines status: ACTIVE, EXPIRING_SOON, EXPIRED, PENDING, SUSPENDED
-- ✅ Returns user-friendly messages
+**Created**
+- `src/lib/whatsapp-config.ts` — WhatsApp config + `buildWhatsAppUrl`
+- `src/app/api/config/whatsapp/route.ts` — GET config for client
+- `src/app/api/subscriptions/pause/route.ts` — POST pause/resume
+- `src/components/dashboard/pause-resume-button.tsx` — Pause/Resume button
+- `IMPLEMENTATION_SUMMARY.md` — This file
 
-#### Status Badges
-- ✅ `SubscriptionStatusBadge` component
-- ✅ Color-coded badges:
-  - **Active** (green): Subscription is active
-  - **Expiring Soon** (orange): 3 days or less remaining
-  - **Expired** (red): Subscription has expired
-  - **Pending** (yellow): Waiting for activation
-  - **Suspended** (red): Subscription suspended
+**Modified**
+- `src/lib/app-settings.ts` — Added `whatsapp_number`, `whatsapp_default_message` to `AppSettingKey`
+- `src/app/layout.tsx` — Async layout, `getWhatsAppConfig()`, pass to `WhatsAppButton`
+- `src/components/layout/whatsapp-button.tsx` — Props from config, use `buildWhatsAppUrl`
+- `src/components/admin/admin-header.tsx` — Optional `whatsappSupportUrl` prop
+- `src/app/admin/layout.tsx` — Fetch WhatsApp config, pass to header
+- `src/app/page.tsx` — WhatsApp config in links, homepage spacing, bundle icon container
+- `src/app/contact/page.tsx` — Fetch config from API, use `buildWhatsAppUrl`
+- `src/app/faq/page.tsx` — Fetch config from API, use `buildWhatsAppUrl`
+- `src/app/payment/success/page.tsx` — Fetch config, use `buildWhatsAppUrl` in links
+- `src/lib/email.ts` — Optional `whatsappSupportUrl` in order confirmation template
+- `src/lib/order-email.ts` — Pass `whatsappSupportUrl` from `getWhatsAppConfig()`
+- `prisma/schema.prisma` — `PAUSED` in `SubscriptionStatus`, `pausedAt` on `ToolSubscription`
+- `src/lib/access-control.ts` — Deny access when status is `PAUSED`
+- `src/lib/subscription-validation.ts` — Handle `PAUSED` in status and badge
+- `src/app/dashboard/subscriptions/page.tsx` — Paused section, Pause/Resume buttons
+- `src/components/tools/tool-icon.tsx` — `aspect-square`, `object-contain`, `object-center`
 
-#### Dashboard Integration
-- ✅ Dashboard shows subscription status badges
-- ✅ Displays "Expires on" date
-- ✅ Shows days remaining for active subscriptions
-- ✅ Visual indicators for subscription health
+---
 
-#### Access Control
-- ✅ `AccessToolButton` checks subscription expiry before allowing access
-- ✅ Blocks access for expired subscriptions
-- ✅ Shows warning for subscriptions expiring in 3 days
-- ✅ Checks activation status (PENDING, SUSPENDED)
+## 3) FEATURE IMPLEMENTATION DETAILS
 
-#### Automated Validation
-- ✅ API endpoint: `/api/subscriptions/validate`
-- ✅ Checks and reports expired subscriptions
-- ✅ Vercel cron job configuration (daily at midnight)
-- ✅ Can be triggered manually or via external cron
+### WhatsApp (single source of truth)
+- **Config:** `getWhatsAppConfig()` in `src/lib/whatsapp-config.ts` reads `app_settings` then env (`WHATSAPP_NUMBER`, `WHATSAPP_DEFAULT_MESSAGE`), fallback `919155313223` / default message.
+- **URL helper:** `buildWhatsAppUrl(number, message?)` builds `https://wa.me/<number>?text=...`.
+- **Usage:** Root layout (async) fetches config and passes to floating `WhatsAppButton`. Admin layout fetches and passes `whatsappSupportUrl` to header. Homepage (server) uses config in three links and footer. Contact, FAQ, payment success (client) call `GET /api/config/whatsapp` and use `buildWhatsAppUrl`. Order confirmation email gets `whatsappSupportUrl` from `order-email.ts` (from `getWhatsAppConfig()`).
 
-### 3. User Experience Enhancements
+### Bundle / subscription pause
+- **Schema:** `SubscriptionStatus` includes `PAUSED`; `ToolSubscription` has optional `pausedAt`.
+- **Access:** `src/lib/access-control.ts` returns no access when `subscription.status === 'PAUSED'` with message to resume from dashboard.
+- **Validation:** `subscription-validation.ts` maps `PAUSED` to status and amber “Paused” badge.
+- **API:** `POST /api/subscriptions/pause` with `{ subscriptionId }` toggles ACTIVE ↔ PAUSED and sets/clears `pausedAt`; user must own the subscription.
+- **UI:** Dashboard subscriptions page: “Active” cards have Pause + disabled Cancel; “Paused Subscriptions” section with Resume. `PauseResumeButton` calls the API and `router.refresh()`.
 
-#### Login/Register Pages
-- ✅ Google Sign-in button prominently displayed
-- ✅ "Or continue with" divider for clarity
-- ✅ Maintains existing email/password flow
+**Database migration:** Run `npx prisma migrate dev` (or deploy migration) so `tool_subscriptions.pausedAt` and enum `PAUSED` exist. Until then, dashboard/subscriptions may error when Prisma selects `pausedAt`.
 
-#### Dashboard
-- ✅ Subscription status badges on each tool card
-- ✅ Clear expiry date display
-- ✅ Days remaining shown for active subscriptions
-- ✅ Visual status indicators
+---
 
-#### Tool Access
-- ✅ Pre-access validation
-- ✅ User-friendly error messages
-- ✅ Renewal prompts for expired subscriptions
-- ✅ Warning dialogs for expiring subscriptions
+## 4) UI/UX CHANGES
 
-## Files Created/Modified
+- **Homepage:** Hero `pt-24 pb-16` → `md:pb-24`; content `max-w-6xl`; sections `py-16 md:py-20 lg:py-24`; consistent margins (`mb-10`/`mb-12`); footer `py-16 md:py-20`.
+- **Product images:** Tool icons: fixed aspect (`aspect-square`), `object-contain object-center`, `shrink-0`, padding; emoji fallback same aspect. Bundle cards on homepage: icon in a fixed-size container with `object-contain` when icon is an image URL.
+- **Paused subscriptions:** Amber card style, “PAUSED” badge, short copy that paused = no access, Resume button.
 
-### New Files:
-- `src/lib/subscription-validation.ts` - Subscription status calculation utilities
-- `src/components/dashboard/subscription-status-badge.tsx` - Status badge component
-- `src/components/auth/google-signin-button.tsx` - NextAuth Google button
-- `src/components/auth/firebase-google-button.tsx` - Firebase Google button (alternative)
-- `src/lib/firebase-auth.ts` - Firebase client-side auth utilities
-- `src/app/api/auth/google-sync/route.ts` - Backend sync for Firebase auth
-- `src/app/api/subscriptions/validate/route.ts` - Subscription validation endpoint
-- `GOOGLE_AUTH_SETUP.md` - Setup guide
-- `IMPLEMENTATION_SUMMARY.md` - This file
+---
 
-### Modified Files:
-- `src/lib/auth.ts` - Added Google OAuth provider
-- `src/app/login/page.tsx` - Added Google Sign-in button
-- `src/app/register/page.tsx` - Added Google Sign-in button
-- `src/app/dashboard/page.tsx` - Added subscription status badges
-- `src/components/dashboard/access-tool-button.tsx` - Added expiry checking
-- `vercel.json` - Added cron job configuration
-- `.env.example` - Added Google OAuth and Firebase config
+## 5) PATCHES (key snippets)
 
-## Environment Variables Required
+### `src/lib/whatsapp-config.ts` (new)
+- `getWhatsAppConfig()`: reads `whatsapp_number` / `whatsapp_default_message` from app_settings, then env, then defaults.
+- `buildWhatsAppUrl(number, message?)`: returns `https://wa.me/<digits>?text=...`.
 
-```env
-# Google OAuth (NextAuth)
-GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET="your-client-secret"
+### `src/app/layout.tsx`
+- Default export made `async`; `const whatsapp = await getWhatsAppConfig();`; `<WhatsAppButton phoneNumber={whatsapp.number} message={whatsapp.defaultMessage} />`.
 
-# Firebase (Optional - for client-side)
-NEXT_PUBLIC_FIREBASE_API_KEY="your-api-key"
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="your-project.firebaseapp.com"
-NEXT_PUBLIC_FIREBASE_PROJECT_ID="your-project-id"
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="your-project.appspot.com"
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="123456789"
-NEXT_PUBLIC_FIREBASE_APP_ID="1:123456789:web:abcdef"
+### `src/lib/access-control.ts`
+- After activation checks, if `subscription.status === 'PAUSED'` return `hasAccess: false` and reason “Your subscription is paused. Resume it from your dashboard to access the tool.”
 
-# Cron Job Secret
-CRON_SECRET="your-secret-key"
-```
+### `prisma/schema.prisma`
+- `enum SubscriptionStatus` add `PAUSED`.
+- `model ToolSubscription` add `pausedAt DateTime?`.
 
-## Next Steps
+### `src/components/tools/tool-icon.tsx`
+- Image container: add `aspect-square shrink-0`, `object-contain object-center p-1.5`.
+- Emoji container: add `aspect-square shrink-0`.
 
-1. **Set Up Google OAuth:**
-   - Follow `GOOGLE_AUTH_SETUP.md` guide
-   - Get credentials from Google Cloud Console
-   - Add to `.env` file
+---
 
-2. **Configure Cron Job:**
-   - Add `CRON_SECRET` to environment variables
-   - Vercel cron is already configured in `vercel.json`
-   - Or set up external cron service
+## 6) RESPONSIVE CHECKLIST
 
-3. **Test the Implementation:**
-   - Test Google sign-in on login/register pages
-   - Verify subscription status badges appear
-   - Test expiry blocking for expired subscriptions
-   - Verify cron job runs (check logs)
+- **Homepage:** Mobile (320–480), tablet (768), desktop (1024+). Sections stack; no horizontal scroll.
+- **Dashboard subscriptions:** Grid 1 col mobile, 2 col md+; Pause/Resume full width on small screens.
+- **Contact / FAQ / Payment success:** Single column on mobile; WhatsApp links work.
+- **Navbar / Admin header:** Logo and WhatsApp from config; layout unchanged.
+- **Tool cards / product page:** ToolIcon aspect ratio and alignment on all breakpoints.
 
-## Testing Checklist
+---
 
-- [ ] Google sign-in works on login page
-- [ ] Google sign-in works on register page
-- [ ] User is created/updated in database after Google sign-in
-- [ ] Dashboard shows subscription status badges
-- [ ] Days remaining is displayed correctly
-- [ ] Expiring soon warning appears (3 days or less)
-- [ ] Expired subscriptions are blocked from access
-- [ ] Status badges show correct colors
-- [ ] Cron job runs daily (check Vercel logs)
+## Post-deploy
 
-## Production Deployment
-
-1. **Add Environment Variables to Vercel:**
-   - Go to Vercel Dashboard > Project Settings > Environment Variables
-   - Add all required variables (Google OAuth, Firebase, CRON_SECRET)
-
-2. **Verify Cron Job:**
-   - Check Vercel Dashboard > Cron Jobs
-   - Verify `/api/subscriptions/validate` is scheduled
-   - Check logs after first run
-
-3. **Test in Production:**
-   - Test Google sign-in flow
-   - Verify subscription status display
-   - Check access blocking for expired subscriptions
-
-## Support
-
-For issues or questions:
-- Check `GOOGLE_AUTH_SETUP.md` for detailed setup instructions
-- Review server logs for authentication errors
-- Check Vercel cron job logs for validation errors
-- Verify environment variables are set correctly
+1. **DB:** Run `npx prisma migrate dev` (or apply migration in production) for `pausedAt` and `PAUSED`.
+2. **WhatsApp (optional):** Set `WHATSAPP_NUMBER` and/or `WHATSAPP_DEFAULT_MESSAGE` in env; or in DB `app_settings` set `whatsapp_number` / `whatsapp_default_message` for admin-controlled value.
+3. **Google / Analytics:** No code changes; confirm redirect URIs and env (e.g. Vercel) as per existing docs.

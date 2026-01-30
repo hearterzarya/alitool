@@ -180,22 +180,12 @@ export default async function ToolsPage({ searchParams }: PageProps) {
 
         {/* Main Content */}
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-          {/* Featured Tools Slider */}
-          {!validCategory && !searchQuery && (
-            <>
-              {featuredTools.length > 0 ? (
-                <FeaturedSlider 
-                  tools={featuredTools.map(t => serializeTool(t))} 
-                  categories={categories.map(c => ({ value: c.value, label: c.label }))}
-                />
-              ) : (
-                <div className="mb-12 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
-                  <p className="text-yellow-800 text-sm">
-                    No featured tools yet. Go to <Link href="/admin/tools" className="underline font-medium">Admin Panel</Link> to mark tools as featured.
-                  </p>
-                </div>
-              )}
-            </>
+          {/* Featured Tools Slider — only show when we have featured tools and no filter */}
+          {featuredTools.length > 0 && !validCategory && !searchQuery && (
+            <FeaturedSlider 
+              tools={featuredTools.map(t => serializeTool(t))} 
+              categories={categories.map(c => ({ value: c.value, label: c.label }))}
+            />
           )}
 
           {/* Category Sections */}

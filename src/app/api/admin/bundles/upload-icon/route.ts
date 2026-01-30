@@ -5,7 +5,7 @@ import { put } from "@vercel/blob";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
-const UPLOAD_DIR = "tool-icons";
+const UPLOAD_DIR = "bundle-icons";
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
 const MIME_TO_EXT: Record<string, string> = {
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     if (!fileExtension || fileExtension.length > 5) {
       fileExtension = MIME_TO_EXT[file.type] || "png";
     }
-    const baseFileName = `tool-icon-${timestamp}-${randomString}.${fileExtension}`;
+    const baseFileName = `bundle-icon-${timestamp}-${randomString}.${fileExtension}`;
 
     // Prefer Vercel Blob if token is set
     if (process.env.BLOB_READ_WRITE_TOKEN) {
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
         });
         return NextResponse.json({ url: blob.url }, { status: 200 });
       } catch (uploadError: any) {
-        console.error("Error uploading to Blob:", uploadError);
+        console.error("Error uploading bundle icon to Blob:", uploadError);
         return NextResponse.json(
           { error: uploadError.message || "Upload failed" },
           { status: 500 }
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Fallback: save to public/tool-icons/ (local or when Blob not configured)
+    // Fallback: save to public/bundle-icons/ (local or when Blob not configured)
     const publicDir = path.join(process.cwd(), "public", UPLOAD_DIR);
     await mkdir(publicDir, { recursive: true });
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -80,13 +80,10 @@ export async function POST(req: NextRequest) {
     const url = `/${UPLOAD_DIR}/${baseFileName}`;
     return NextResponse.json({ url }, { status: 200 });
   } catch (error: any) {
-    console.error("Error uploading icon:", error);
-    const errorMessage =
-      error?.code === "ENOENT"
-        ? "Upload directory not found"
-        : error?.code === "EACCES"
-          ? "Permission denied"
-          : error?.message ?? "Failed to upload icon";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    console.error("Error uploading bundle icon:", error);
+    return NextResponse.json(
+      { error: error?.message ?? "Failed to upload icon" },
+      { status: 500 }
+    );
   }
 }

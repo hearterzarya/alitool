@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,8 +39,21 @@ export default async function BundlesManagementPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">
+                    <div className="relative w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
+                      {b.icon && (String(b.icon).startsWith("/") || String(b.icon).startsWith("http")) ? (
+                        <Image
+                          src={String(b.icon)}
+                          alt={b.name}
+                          fill
+                          className="object-contain object-center p-0.5"
+                          sizes="40px"
+                          unoptimized={String(b.icon).startsWith("http")}
+                        />
+                      ) : (
+                        <span className="text-xl">{b.icon || "📦"}</span>
+                      )}
+                    </div>
                     <CardTitle className="text-lg">
-                      <span className="mr-2">{b.icon || "📦"}</span>
                       {b.name}
                     </CardTitle>
                     {b.isActive ? <Badge>Active</Badge> : <Badge variant="secondary">Inactive</Badge>}

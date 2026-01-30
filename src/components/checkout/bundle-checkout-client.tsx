@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -345,17 +346,30 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Bundle Info */}
           <div className="lg:col-span-2">
-            <Card className="mb-6">
-              <CardHeader>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="text-5xl">{bundle.icon || "📦"}</div>
-                  <div>
-                    <CardTitle className="text-3xl">{bundle.name}</CardTitle>
-                    <CardDescription className="text-base mt-2">
-                      {bundle.shortDescription || bundle.description}
-                    </CardDescription>
+            <Card className="mb-6 overflow-hidden">
+              {/* Full-width hero image (car-style) */}
+              <div className="relative w-full aspect-[21/9] min-h-[160px] sm:min-h-[200px] bg-slate-100 border-b border-slate-200 overflow-hidden">
+                {bundle.icon && (bundle.icon.startsWith('/') || bundle.icon.startsWith('http')) ? (
+                  <Image
+                    src={bundle.icon}
+                    alt={bundle.name}
+                    fill
+                    className="object-cover object-center"
+                    sizes="(max-width: 1024px) 100vw, 66vw"
+                    unoptimized={bundle.icon.startsWith('http')}
+                    priority
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center text-6xl sm:text-7xl bg-gradient-to-br from-slate-100 to-slate-200">
+                    {bundle.icon || "📦"}
                   </div>
-                </div>
+                )}
+              </div>
+              <CardHeader>
+                <CardTitle className="text-2xl sm:text-3xl">{bundle.name}</CardTitle>
+                <CardDescription className="text-base mt-2">
+                  {bundle.shortDescription || bundle.description}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {features.length > 0 && (
@@ -379,14 +393,15 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
                       {bundle.tools.map((bundleTool) => (
                         <div
                           key={bundleTool.id}
-                          className="flex flex-col items-center p-4 rounded-lg bg-slate-50 border border-slate-200"
+                          className="flex flex-col items-center p-4 rounded-xl bg-white border-2 border-slate-200 shadow-sm hover:border-purple-200 hover:shadow-md transition-all"
                         >
                           <ToolIcon
                             icon={bundleTool.tool.icon}
                             name={bundleTool.tool.name}
                             size="lg"
+                            className="rounded-xl border border-slate-200"
                           />
-                          <span className="text-sm font-medium text-slate-700 mt-2 text-center">
+                          <span className="text-sm font-medium text-slate-700 mt-3 text-center line-clamp-2">
                             {bundleTool.tool.name}
                           </span>
                         </div>
