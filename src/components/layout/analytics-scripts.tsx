@@ -1,18 +1,13 @@
 import Script from "next/script";
-import { getMetaPixelConfig } from "@/lib/app-settings";
 import { MetaPixelClient } from "@/components/analytics/meta-pixel-client";
 
-export async function AnalyticsScripts() {
-  let enabled = false;
-  let pixelId: string | null = null;
-  try {
-    const config = await getMetaPixelConfig();
-    enabled = config.enabled;
-    pixelId = config.pixelId;
-  } catch (_e) {
-    // Never crash layout
-  }
-  const gaId = process.env.NEXT_PUBLIC_GA_ID;
+// Use env only so we never touch the DB in layout — avoids crashes when DB is down
+const gaId = process.env.NEXT_PUBLIC_GA_ID;
+const metaPixelEnabled = process.env.NEXT_PUBLIC_META_PIXEL_ENABLED === "true" || process.env.NEXT_PUBLIC_META_PIXEL_ENABLED === "1";
+const pixelId = (typeof process.env.NEXT_PUBLIC_META_PIXEL_ID === "string" && process.env.NEXT_PUBLIC_META_PIXEL_ID.trim()) || null;
+
+export function AnalyticsScripts() {
+  const enabled = metaPixelEnabled && !!pixelId;
 
   return (
     <>
@@ -36,7 +31,7 @@ export async function AnalyticsScripts() {
 
       {/* Meta Pixel */}
       {enabled && pixelId && (() => {
-        const cleanedId = pixelId.trim();
+        const cleanedId = String(pixelId).trim();
         if (!cleanedId) return null;
 
         return (

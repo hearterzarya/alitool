@@ -12,11 +12,13 @@ export function AdminSettingsForm(props: {
   initialMetaPixelEnabled: boolean;
   initialWhatsappNumber: string;
   initialWhatsappDefaultMessage: string;
+  initialTelegramLink: string;
 }) {
   const [metaPixelId, setMetaPixelId] = useState(props.initialMetaPixelId);
   const [metaPixelEnabled, setMetaPixelEnabled] = useState(props.initialMetaPixelEnabled);
   const [whatsappNumber, setWhatsappNumber] = useState(props.initialWhatsappNumber);
   const [whatsappDefaultMessage, setWhatsappDefaultMessage] = useState(props.initialWhatsappDefaultMessage);
+  const [telegramLink, setTelegramLink] = useState(props.initialTelegramLink);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -35,6 +37,7 @@ export function AdminSettingsForm(props: {
           metaPixelEnabled,
           whatsappNumber,
           whatsappDefaultMessage,
+          telegramLink,
         }),
       });
 
@@ -94,6 +97,29 @@ export function AdminSettingsForm(props: {
               rows={2}
               className="resize-none"
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Telegram</CardTitle>
+          <CardDescription>
+            Telegram link or username for the floating Telegram button. Leave empty to hide the button. Use full URL (e.g. https://t.me/yourgroup) or username (e.g. yourgroup).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="telegramLink">Telegram link or username</Label>
+            <Input
+              id="telegramLink"
+              value={telegramLink}
+              onChange={(e) => setTelegramLink(e.target.value)}
+              placeholder="https://t.me/yourgroup or yourgroup"
+            />
+            <p className="text-xs text-gray-500">
+              Updates apply site-wide. You can also set TELEGRAM_LINK in env as fallback.
+            </p>
           </div>
         </CardContent>
       </Card>

@@ -8,14 +8,16 @@ export default async function AdminSettingsPage() {
   let metaPixelEnabled: { value: string | null } | null = null;
   let whatsappNumber: { value: string | null } | null = null;
   let whatsappDefaultMessage: { value: string | null } | null = null;
+  let telegramLink: { value: string | null } | null = null;
   let tableMissing = false;
 
   try {
-    [metaPixelId, metaPixelEnabled, whatsappNumber, whatsappDefaultMessage] = await Promise.all([
+    [metaPixelId, metaPixelEnabled, whatsappNumber, whatsappDefaultMessage, telegramLink] = await Promise.all([
       prisma.appSetting.findUnique({ where: { key: "meta_pixel_id" } }),
       prisma.appSetting.findUnique({ where: { key: "meta_pixel_enabled" } }),
       prisma.appSetting.findUnique({ where: { key: "whatsapp_number" } }),
       prisma.appSetting.findUnique({ where: { key: "whatsapp_default_message" } }),
+      prisma.appSetting.findUnique({ where: { key: "telegram_link" } }),
     ]);
   } catch (e: any) {
     if (e?.code === "P2021" || String(e?.message || "").includes("app_settings")) {
@@ -43,6 +45,7 @@ export default async function AdminSettingsPage() {
         initialMetaPixelEnabled={(metaPixelEnabled?.value ?? "") === "true"}
         initialWhatsappNumber={whatsappNumber?.value ?? ""}
         initialWhatsappDefaultMessage={whatsappDefaultMessage?.value ?? ""}
+        initialTelegramLink={telegramLink?.value ?? ""}
       />
     </div>
   );

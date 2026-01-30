@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-export type AppSettingKey = "meta_pixel_id" | "meta_pixel_enabled" | "whatsapp_number" | "whatsapp_default_message";
+export type AppSettingKey = "meta_pixel_id" | "meta_pixel_enabled" | "whatsapp_number" | "whatsapp_default_message" | "telegram_link";
 
 // Cache table existence check to avoid repeated queries
 let tableExistsCache: boolean | null = null;

@@ -35,14 +35,14 @@ export default async function AnalyticsPage() {
   }
 
   const totalRevenue = activeSubscriptions.reduce(
-    (sum, sub) => sum + sub.tool.priceMonthly,
+    (sum, sub) => sum + Number(sub.tool?.priceMonthly ?? 0),
     0
   );
 
   const toolsByRevenue = tools
     .map((tool) => ({
       ...tool,
-      revenue: tool.subscriptions.length * tool.priceMonthly,
+      revenue: tool.subscriptions.length * Number(tool.priceMonthly ?? 0),
     }))
     .sort((a, b) => b.revenue - a.revenue);
 
@@ -50,6 +50,7 @@ export default async function AnalyticsPage() {
     .map((tool) => ({
       ...tool,
       subscriberCount: tool.subscriptions.length,
+      minimumPrice: getMinimumStartingPrice(tool),
     }))
     .sort((a, b) => b.subscriberCount - a.subscriberCount)
     .slice(0, 5);

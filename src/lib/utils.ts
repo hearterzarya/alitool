@@ -97,13 +97,28 @@ export function serializeTool(tool: any): any {
   return serialized;
 }
 
-// Serialize bundle (similar to serializeTool but for bundles)
+// Serialize bundle (similar to serializeTool but for bundles). Never throws.
 export function serializeBundle(bundle: any): any {
-  if (!bundle) return bundle;
-  return {
-    ...bundle,
-    priceMonthly: safeConvertPrice(bundle.priceMonthly) ?? 0,
-    priceSixMonth: safeConvertPrice(bundle.priceSixMonth),
-    priceYearly: safeConvertPrice(bundle.priceYearly),
-  };
+  if (bundle == null || typeof bundle !== 'object') return bundle;
+  try {
+    return {
+      ...bundle,
+      priceMonthly: safeConvertPrice(bundle.priceMonthly) ?? 0,
+      priceSixMonth: safeConvertPrice(bundle.priceSixMonth) ?? null,
+      priceYearly: safeConvertPrice(bundle.priceYearly) ?? null,
+    };
+  } catch (_e) {
+    return {
+      id: bundle.id ?? '',
+      name: bundle.name ?? 'Unknown',
+      slug: bundle.slug ?? '',
+      description: bundle.description ?? '',
+      shortDescription: bundle.shortDescription ?? null,
+      priceMonthly: 0,
+      priceSixMonth: null,
+      priceYearly: null,
+      features: bundle.features ?? null,
+      icon: bundle.icon ?? null,
+    };
+  }
 }

@@ -17,12 +17,14 @@ export async function GET() {
   let metaPixelEnabled: { value: string | null } | null = null;
   let whatsappNumber: { value: string | null } | null = null;
   let whatsappDefaultMessage: { value: string | null } | null = null;
+  let telegramLink: { value: string | null } | null = null;
   try {
-    [metaPixelId, metaPixelEnabled, whatsappNumber, whatsappDefaultMessage] = await Promise.all([
+    [metaPixelId, metaPixelEnabled, whatsappNumber, whatsappDefaultMessage, telegramLink] = await Promise.all([
       prisma.appSetting.findUnique({ where: { key: "meta_pixel_id" } }),
       prisma.appSetting.findUnique({ where: { key: "meta_pixel_enabled" } }),
       prisma.appSetting.findUnique({ where: { key: "whatsapp_number" } }),
       prisma.appSetting.findUnique({ where: { key: "whatsapp_default_message" } }),
+      prisma.appSetting.findUnique({ where: { key: "telegram_link" } }),
     ]);
   } catch (e: any) {
     if (e?.code === "P2021" || String(e?.message || "").includes("app_settings")) {
@@ -39,6 +41,7 @@ export async function GET() {
     metaPixelEnabled: (metaPixelEnabled?.value ?? "") === "true",
     whatsappNumber: whatsappNumber?.value ?? "",
     whatsappDefaultMessage: whatsappDefaultMessage?.value ?? "",
+    telegramLink: telegramLink?.value ?? "",
   });
 }
 
@@ -53,6 +56,7 @@ export async function PUT(req: Request) {
   const metaPixelEnabled = !!data.metaPixelEnabled;
   const whatsappNumber = String(data.whatsappNumber ?? "").trim();
   const whatsappDefaultMessage = String(data.whatsappDefaultMessage ?? "").trim();
+  const telegramLink = String(data.telegramLink ?? "").trim();
 
   try {
     await prisma.$transaction([
@@ -75,6 +79,11 @@ export async function PUT(req: Request) {
         where: { key: "whatsapp_default_message" },
         create: { key: "whatsapp_default_message", value: whatsappDefaultMessage || null },
         update: { value: whatsappDefaultMessage || null },
+      }),
+      prisma.appSetting.upsert({
+        where: { key: "telegram_link" },
+        create: { key: "telegram_link", value: telegramLink || null },
+        update: { value: telegramLink || null },
       }),
     ]);
   } catch (e: any) {

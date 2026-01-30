@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, MessageCircle, Users, CheckCircle2 } from "lucide-react";
-import { prisma } from "@/lib/prisma";
 import { TrendingBundlesSlider } from "@/components/tools/trending-bundles-slider";
 import { ToolNamesSlider } from "@/components/tools/tool-names-slider";
 import { IndividualToolsSearch } from "@/components/tools/individual-tools-search";
@@ -12,51 +11,48 @@ import { getWhatsAppConfig, buildWhatsAppUrl } from "@/lib/whatsapp-config";
 
 export const dynamic = 'force-dynamic';
 
+const DEFAULT_WHATSAPP = { number: "919155313223", defaultMessage: "Hello! I need help with my subscription." };
+
+type BundleRow = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  shortDescription: string | null;
+  priceMonthly: number;
+  priceSixMonth: number | null;
+  priceYearly: number | null;
+  features: string | null;
+  icon: string | null;
+};
+
+type ToolRow = {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string | null;
+  description?: string;
+  sharedPlanFeatures?: string | null;
+  privatePlanFeatures?: string | null;
+};
+
 export default async function HomePage() {
-  let whatsapp = { number: "919155313223", defaultMessage: "Hello! I need help with my subscription." };
-  try {
-    whatsapp = await getWhatsAppConfig();
-  } catch (_e) {
-    // Fallback so page never crashes
-  }
-  // Fetch trending bundles
-  let trendingBundles: Array<{
-    id: string;
-    name: string;
-    slug: string;
-    description: string;
-    shortDescription: string | null;
-    priceMonthly: number;
-    priceSixMonth: number | null;
-    priceYearly: number | null;
-    features: string | null;
-    icon: string | null;
-  }> = [];
-
-  // Fetch all bundles
-  let allBundles: Array<{
-    id: string;
-    name: string;
-    slug: string;
-    description: string;
-    shortDescription: string | null;
-    priceMonthly: number;
-    priceSixMonth: number | null;
-    priceYearly: number | null;
-    features: string | null;
-    icon: string | null;
-  }> = [];
-
-  // Fetch active tools
-  let tools: Array<{
-    id: string;
-    name: string;
-    slug: string;
-    icon: string | null;
-  }> = [];
+  let whatsapp = DEFAULT_WHATSAPP;
+  let trendingBundles: BundleRow[] = [];
+  let allBundles: BundleRow[] = [];
+  let tools: ToolRow[] = [];
+  let dataError = false;
 
   try {
-    // Try to fetch bundles (may not exist yet)
+    try {
+      whatsapp = await getWhatsAppConfig();
+    } catch (_e) {
+      // Keep default
+    }
+
+    // Dynamic import so Prisma/DB failures don't crash the page
+    const { prisma } = await import("@/lib/prisma");
+
     try {
       if ('bundle' in prisma && typeof (prisma as any).bundle?.findMany === 'function') {
         trendingBundles = await (prisma as any).bundle.findMany({
@@ -96,30 +92,50 @@ export default async function HomePage() {
         });
       }
     } catch (error) {
-      console.warn('Bundles table may not exist yet:', error);
+      console.warn('Bundles fetch failed:', error);
     }
 
-    tools = await prisma.tool.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: 'asc' },
-      take: 20,
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        icon: true,
-        description: true,
-        sharedPlanFeatures: true,
-        privatePlanFeatures: true,
-      },
-    });
-  } catch (error: any) {
-    console.error('Database error:', error?.message);
-    tools = [];
+    try {
+      const rawTools = await prisma.tool.findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: 'asc' },
+        take: 20,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          icon: true,
+          description: true,
+          sharedPlanFeatures: true,
+          privatePlanFeatures: true,
+        },
+      });
+      // Ensure plain objects for client component (no BigInt/special types)
+      tools = rawTools.map((t) => ({
+        id: String(t.id),
+        name: String(t.name),
+        slug: String(t.slug),
+        icon: t.icon != null ? String(t.icon) : null,
+        description: t.description != null ? String(t.description) : undefined,
+        sharedPlanFeatures: t.sharedPlanFeatures != null ? String(t.sharedPlanFeatures) : null,
+        privatePlanFeatures: t.privatePlanFeatures != null ? String(t.privatePlanFeatures) : null,
+      }));
+    } catch (error: any) {
+      console.warn('Tools fetch failed:', error?.message);
+      tools = [];
+    }
+  } catch (err: any) {
+    console.error('Homepage data error:', err?.message);
+    dataError = true;
   }
 
   return (
     <div className="min-h-screen bg-white antialiased">
+      {dataError && (
+        <div className="bg-amber-50 border-b border-amber-200 text-amber-800 text-center py-2 px-4 text-sm">
+          Some content couldn’t be loaded. You can still browse. <a href="/" className="underline font-medium">Refresh</a> to try again.
+        </div>
+      )}
       {/* Hero Section — professional */}
       <section className="relative overflow-hidden pt-24 pb-18 sm:pt-28 sm:pb-20 md:pt-32 md:pb-24">
         <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-white" />
