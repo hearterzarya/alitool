@@ -23,8 +23,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const normalizedSlug = normalizeSlug(slug);
   
-  const tool = await prisma.tool.findUnique({
-    where: { slug: normalizedSlug },
+  const tool = await prisma.tool.findFirst({
+    where: {
+      slug: { equals: normalizedSlug, mode: "insensitive" },
+    },
     select: {
       name: true,
       shortDescription: true,
@@ -48,8 +50,10 @@ export default async function ToolProductPageRoute({ params }: PageProps) {
   const { slug } = await params;
   const normalizedSlug = normalizeSlug(slug);
 
-  const tool = await prisma.tool.findUnique({
-    where: { slug: normalizedSlug },
+  const tool = await prisma.tool.findFirst({
+    where: {
+      slug: { equals: normalizedSlug, mode: "insensitive" },
+    },
     include: {
       subscriptions: {
         where: { status: "ACTIVE" },
