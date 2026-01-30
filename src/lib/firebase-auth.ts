@@ -16,15 +16,15 @@ import {
   Auth
 } from 'firebase/auth';
 
-// Firebase configuration
+// Firebase configuration (alitool-a5847) — override via NEXT_PUBLIC_FIREBASE_* env vars in production
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCf7r76hx5_9mjKaN8lZNrJf1OnWdlNGAk",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "alitool-22bc4.firebaseapp.com",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "alitool-22bc4",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "alitool-22bc4.firebasestorage.app",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "271496020101",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:271496020101:web:69e21bd5f88bb864b7a9ec",
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-GGSQ1G3QQT",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyB6UYw3QF_chVvefgeWWlomarDf5eztk1o",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "alitool-a5847.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "alitool-a5847",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "alitool-a5847.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "173949694300",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:173949694300:web:e60b17d4d1c3b852101199",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-8JLJVTG8CF",
 };
 
 // Initialize Firebase (only once)
