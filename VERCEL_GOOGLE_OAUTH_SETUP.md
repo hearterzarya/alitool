@@ -2,6 +2,20 @@
 
 This guide will help you set up Google OAuth to work on both **localhost** and **Vercel production**.
 
+---
+
+## Google sign-in not working? Quick checks
+
+| Symptom | Fix |
+|--------|-----|
+| **"Sign in with Google" button is missing** | Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in Vercel (and locally in `.env.local`). No placeholders — use real values from Google Cloud Console. Redeploy. |
+| **Button shows but click does nothing / redirects to error** | Add the **exact** redirect URI in Google Cloud Console: `https://alidigitalsolution.in/api/auth/callback/google` (no trailing slash). Set `NEXTAUTH_URL=https://alidigitalsolution.in` in Vercel. Redeploy. |
+| **"redirect_uri_mismatch" on Google’s page** | In Google Cloud Console → Credentials → your OAuth client → **Authorized redirect URIs**, add exactly: `https://alidigitalsolution.in/api/auth/callback/google`. Save and wait 1–2 minutes. |
+| **"Access blocked" or "App not verified"** | If your OAuth consent screen is in **Testing** mode, add your Google account (and any test users) under **Test users**. Or publish the app for production use. |
+| **Works on localhost but not on Vercel** | Ensure all four vars are in Vercel: `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`. `NEXTAUTH_URL` must be `https://alidigitalsolution.in` (not localhost). Redeploy after changing env. |
+
+---
+
 ## Prerequisites
 
 - Vercel account with your project deployed

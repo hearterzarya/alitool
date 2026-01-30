@@ -35,7 +35,7 @@ function LoginForm() {
       setTimeout(() => setSuccess(""), 5000);
     }
     
-    // Handle OAuth errors
+    // Handle OAuth errors (from ?error=... when Google redirects back)
     const errorParam = searchParams.get('error');
     if (errorParam) {
       let errorMessage = 'An error occurred during sign-in. Please try again.';
@@ -43,7 +43,9 @@ function LoginForm() {
       switch (errorParam) {
         case 'Callback':
         case 'OAuthCallback':
-          errorMessage = 'OAuth callback failed. This might be due to a configuration issue. Please try again or contact support.';
+          errorMessage = 'Google sign-in failed. Check that in Google Cloud Console the redirect URI is exactly: ' +
+            (typeof window !== 'undefined' ? `${window.location.origin}/api/auth/callback/google` : 'https://alidigitalsolution.in/api/auth/callback/google') +
+            ' and that NEXTAUTH_URL in Vercel matches your site URL.';
           break;
         case 'OAuthAccountNotLinked':
           errorMessage = 'An account with this email already exists. Please sign in with your password instead.';
@@ -52,15 +54,17 @@ function LoginForm() {
           errorMessage = 'Failed to create account. Please try again or contact support.';
           break;
         case 'Configuration':
-          errorMessage = 'Authentication is not properly configured. Please contact support.';
+          errorMessage = 'Google sign-in is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Vercel (and NEXTAUTH_URL, NEXTAUTH_SECRET), then redeploy.';
+          break;
+        case 'AccessDenied':
+          errorMessage = 'You denied access or the app is in testing mode. If testing, add your Google account as a test user in Google Cloud Console.';
           break;
         default:
-          errorMessage = `Sign-in error: ${errorParam}. Please try again.`;
+          errorMessage = `Sign-in error: ${errorParam}. See VERCEL_GOOGLE_OAUTH_SETUP.md for setup.`;
       }
       
       setError(errorMessage);
-      // Clear error after 10 seconds
-      setTimeout(() => setError(""), 10000);
+      setTimeout(() => setError(""), 15000);
     }
   }, [searchParams]);
 

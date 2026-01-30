@@ -72,9 +72,23 @@ export function GoogleSignInButton({
     }
   };
 
-  // Don't render button if Google OAuth is not available
+  // Show disabled button with message when Google OAuth is not configured
   if (isAvailable === false) {
-    return null; // Or return a disabled button with error message
+    return (
+      <div className="space-y-2">
+        <Button
+          type="button"
+          disabled
+          className={`w-full bg-gray-100 text-gray-500 border border-gray-200 cursor-not-allowed ${className}`}
+          variant="outline"
+        >
+          <span>Sign in with Google (not configured)</span>
+        </Button>
+        <p className="text-xs text-amber-600 text-center">
+          Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in env. See VERCEL_GOOGLE_OAUTH_SETUP.md.
+        </p>
+      </div>
+    );
   }
 
   // Show loading state while checking availability
