@@ -13,7 +13,12 @@ import { getWhatsAppConfig, buildWhatsAppUrl } from "@/lib/whatsapp-config";
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const whatsapp = await getWhatsAppConfig();
+  let whatsapp = { number: "919155313223", defaultMessage: "Hello! I need help with my subscription." };
+  try {
+    whatsapp = await getWhatsAppConfig();
+  } catch (_e) {
+    // Fallback so page never crashes
+  }
   // Fetch trending bundles
   let trendingBundles: Array<{
     id: string;

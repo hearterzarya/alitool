@@ -21,13 +21,13 @@ export async function getWhatsAppConfig(): Promise<WhatsAppConfig> {
     const number = fromDbNumber ?? process.env.WHATSAPP_NUMBER ?? DEFAULT_NUMBER;
     const defaultMessage = fromDbMessage ?? process.env.WHATSAPP_DEFAULT_MESSAGE ?? DEFAULT_MESSAGE;
     return {
-      number: String(number).trim(),
-      defaultMessage: String(defaultMessage).trim(),
+      number: String(number ?? DEFAULT_NUMBER).trim(),
+      defaultMessage: String(defaultMessage ?? DEFAULT_MESSAGE).trim(),
     };
-  } catch {
+  } catch (_e) {
     return {
-      number: process.env.WHATSAPP_NUMBER ?? DEFAULT_NUMBER,
-      defaultMessage: process.env.WHATSAPP_DEFAULT_MESSAGE ?? DEFAULT_MESSAGE,
+      number: String(process.env.WHATSAPP_NUMBER ?? DEFAULT_NUMBER).trim(),
+      defaultMessage: String(process.env.WHATSAPP_DEFAULT_MESSAGE ?? DEFAULT_MESSAGE).trim(),
     };
   }
 }

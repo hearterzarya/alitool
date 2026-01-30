@@ -20,7 +20,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const whatsapp = await getWhatsAppConfig();
+  let whatsapp = { number: "919155313223", defaultMessage: "Hello! I need help with my subscription." };
+  try {
+    whatsapp = await getWhatsAppConfig();
+  } catch (_e) {
+    // Fallback so layout never crashes
+  }
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>

@@ -3,7 +3,15 @@ import { getMetaPixelConfig } from "@/lib/app-settings";
 import { MetaPixelClient } from "@/components/analytics/meta-pixel-client";
 
 export async function AnalyticsScripts() {
-  const { enabled, pixelId } = await getMetaPixelConfig();
+  let enabled = false;
+  let pixelId: string | null = null;
+  try {
+    const config = await getMetaPixelConfig();
+    enabled = config.enabled;
+    pixelId = config.pixelId;
+  } catch (_e) {
+    // Never crash layout
+  }
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
   return (
