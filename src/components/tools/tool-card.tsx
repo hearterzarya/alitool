@@ -48,6 +48,7 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
     PRODUCTIVITY: "Productivity",
     CODE_DEV: "Code & Dev",
     VIDEO_AUDIO: "Video & Audio",
+    LEARNING: "Learning",
     OTHER: "Other",
   };
 
@@ -95,13 +96,13 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
     >
       {/* Gradient overlay on hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-blue-600/0 group-hover:from-purple-600/10 group-hover:to-blue-600/10 transition-all duration-300 pointer-events-none" />
-      
+      {/* Full image area at top — no crop (object-contain) */}
+      <div className="w-full aspect-square min-h-[180px] rounded-t-lg bg-slate-50 border-b border-slate-200 flex items-center justify-center overflow-hidden p-4 group-hover:scale-[1.02] transition-transform duration-300">
+        <ToolIcon icon={tool.icon} name={tool.name} size="2xl" className="!w-full !h-full !max-w-full !max-h-full !rounded-lg !border-0" />
+      </div>
+
       <CardHeader className="flex-1 pb-4">
-        {/* Tool Icon/Logo - bundle-style card container */}
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center justify-center w-16 h-16 rounded-xl bg-slate-100 border border-slate-200 shrink-0 overflow-hidden group-hover:scale-105 transition-transform duration-300">
-            <ToolIcon icon={tool.icon} name={tool.name} size="lg" />
-          </div>
           <div className="flex items-center space-x-1 bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-medium">
             <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
             <span>4.9</span>

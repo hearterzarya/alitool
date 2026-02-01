@@ -72,21 +72,23 @@ export function IndividualToolsSearch({ tools: initialTools }: IndividualToolsSe
         )}
       </div>
 
-      {/* Tools Grid */}
+      {/* Tools Grid — big images, full view (no crop) */}
       {filteredTools.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-5">
           {filteredTools.map((tool) => (
             <Link
               key={tool.id}
               href={`/tools/${tool.slug}`}
-              className="group flex flex-col items-center p-4 sm:p-5 rounded-xl bg-white border border-slate-200/80 shadow-sm hover:shadow-lg hover:border-purple-200 hover:-translate-y-1 transition-all duration-300"
+              className="group flex flex-col rounded-xl bg-white border border-slate-200/80 shadow-sm hover:shadow-lg hover:border-purple-200 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
             >
-              <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden mb-3 group-hover:scale-105 transition-transform duration-300 shrink-0">
-                <ToolIcon icon={tool.icon} name={tool.name} size="xl" className="!w-full !h-full !rounded-2xl !border-0" />
+              <div className="w-full aspect-square min-h-[140px] sm:min-h-[160px] rounded-t-xl bg-slate-50 border-b border-slate-200 flex items-center justify-center overflow-hidden p-3 sm:p-4 group-hover:scale-[1.02] transition-transform duration-300">
+                <ToolIcon icon={tool.icon} name={tool.name} size="2xl" className="!w-full !h-full !max-w-full !max-h-full !rounded-xl !border-0" />
               </div>
-              <span className="text-sm font-semibold text-slate-800 text-center line-clamp-2 group-hover:text-purple-600 transition-colors">
-                {tool.name}
-              </span>
+              <div className="p-3 sm:p-4 flex-1 flex items-center justify-center min-h-[3rem]">
+                <span className="text-sm font-semibold text-slate-800 text-center line-clamp-2 group-hover:text-purple-600 transition-colors">
+                  {tool.name}
+                </span>
+              </div>
             </Link>
           ))}
         </div>

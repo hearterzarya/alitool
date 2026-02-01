@@ -3,7 +3,7 @@ import Image from "next/image";
 interface ToolIconProps {
   icon?: string | null;
   name: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   className?: string;
 }
 
@@ -12,6 +12,7 @@ const sizeClasses = {
   md: { container: 'w-12 h-12', text: 'text-3xl' },
   lg: { container: 'w-16 h-16', text: 'text-4xl' },
   xl: { container: 'w-20 h-20', text: 'text-5xl' },
+  '2xl': { container: 'w-28 h-28', text: 'text-6xl' },
 };
 
 const imageSizes = {
@@ -19,6 +20,7 @@ const imageSizes = {
   md: '48px',
   lg: '64px',
   xl: '80px',
+  '2xl': '112px',
 };
 
 export function ToolIcon({ icon, name, size = 'md', className = '' }: ToolIconProps) {
@@ -34,7 +36,7 @@ export function ToolIcon({ icon, name, size = 'md', className = '' }: ToolIconPr
             src={icon}
             alt={name}
             fill
-            className="object-contain object-center p-1.5"
+            className="object-contain object-center p-1"
             sizes={imageSizes[size]}
             unoptimized={icon.startsWith('http')}
           />

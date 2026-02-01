@@ -167,6 +167,7 @@ export function ToolProductPageClient({ tool, relatedTools }: ToolProductPagePro
     PRODUCTIVITY: "Productivity",
     CODE_DEV: "Code & Dev",
     VIDEO_AUDIO: "Video & Audio",
+    LEARNING: "Learning",
     OTHER: "Other",
   };
 
