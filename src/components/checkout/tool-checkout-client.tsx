@@ -84,6 +84,7 @@ interface Tool {
   sharedPlanEnabled?: boolean;
   privatePlanEnabled?: boolean;
   isActive: boolean;
+  isOutOfStock?: boolean;
 }
 
 interface ToolCheckoutClientProps {
@@ -93,7 +94,7 @@ interface ToolCheckoutClientProps {
   initialCouponId?: string;
 }
 
-const categoryLabels: Record<ToolCategory, string> = {
+const categoryLabels: Record<string, string> = {
   AI_WRITING: "AI Writing",
   SEO_TOOLS: "SEO & Marketing",
   DESIGN: "Design",
@@ -101,6 +102,7 @@ const categoryLabels: Record<ToolCategory, string> = {
   CODE_DEV: "Code & Dev",
   VIDEO_AUDIO: "Video & Audio",
   LEARNING: "Learning",
+  SOFTWARE: "Software",
   OTHER: "Other",
 };
 
@@ -584,6 +586,14 @@ export function ToolCheckoutClient({
   return (
     <div className="min-h-screen bg-white pt-20 pb-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Out of Stock Banner */}
+        {tool.isOutOfStock && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-amber-800 font-medium">Out of Stock</p>
+            <p className="text-amber-700 text-sm mt-1">This product is temporarily unavailable. Payment cannot be completed.</p>
+          </div>
+        )}
+
         {/* Coupon Banner - Only show before payment is created */}
         {!paymentCreated && !showCouponInput && (
           <div className="mb-6 flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg p-4">
@@ -924,7 +934,11 @@ export function ToolCheckoutClient({
                       {tool.sharedPlanEnabled && (
                         <button
                           type="button"
-                          onClick={() => setSelectedPlan('shared')}
+                          onClick={() => {
+                            setSelectedPlan('shared');
+                            const sharedDurations = getEnabledDurations(tool, 'shared');
+                            if (sharedDurations.length > 0) setSelectedDuration(sharedDurations[0]);
+                          }}
                           className={`p-4 border-2 rounded-lg text-left transition-all ${
                             selectedPlan === 'shared'
                               ? 'border-blue-500 bg-blue-50'
@@ -938,7 +952,11 @@ export function ToolCheckoutClient({
                     {tool.privatePlanEnabled && (
                         <button
                           type="button"
-                        onClick={() => setSelectedPlan('private')}
+                          onClick={() => {
+                            setSelectedPlan('private');
+                            const privateDurations = getEnabledDurations(tool, 'private');
+                            if (privateDurations.length > 0) setSelectedDuration(privateDurations[0]);
+                          }}
                           className={`p-4 border-2 rounded-lg text-left transition-all ${
                           selectedPlan === 'private'
                             ? 'border-purple-500 bg-purple-50'
@@ -965,6 +983,7 @@ export function ToolCheckoutClient({
                 </CardHeader>
                 <CardContent className="pt-6">
                   <Select
+                    key={selectedPlan}
                     value={selectedDuration}
                     onValueChange={(value: '1month' | '3months' | '6months' | '1year') => {
                       setSelectedDuration(value);
@@ -1097,10 +1116,12 @@ export function ToolCheckoutClient({
 
                     <Button
                       type="submit"
-                      disabled={loading || planPrice <= 0 || finalPrice <= 0}
+                      disabled={loading || tool.isOutOfStock || planPrice <= 0 || finalPrice <= 0}
                       className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white h-12 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {loading ? (
+                      {tool.isOutOfStock ? (
+                        <>Out of Stock</>
+                      ) : loading ? (
                         <>
                           <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                           Processing...
@@ -1146,8 +1167,8 @@ export function ToolCheckoutClient({
 
           {/* Right Column - Your Order and Payment Options */}
           <div className="space-y-6">
-            {/* YOUR ORDER */}
-            <Card className="border-slate-200 shadow-sm sticky top-24">
+            {/* YOUR ORDER — key so price updates when plan/duration change */}
+            <Card key={`order-${selectedPlan}-${selectedDuration}`} className="border-slate-200 shadow-sm sticky top-24">
               <CardHeader className="border-b border-slate-200">
                 <CardTitle className="text-slate-900 text-lg font-bold uppercase tracking-wide">
                   Your Order

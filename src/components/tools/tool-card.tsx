@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
 import { getMinimumStartingPrice, getBasePrice, getOneMonthPrice, type PlanType } from "@/lib/price-utils";
+import { getCardBillingSuffix } from "@/lib/plan-billing";
 import { ArrowRight, Star, ShoppingCart, Eye } from "lucide-react";
 import { ToolIcon } from "./tool-icon";
 
@@ -35,6 +36,7 @@ interface ToolCardProps {
     sharedPlanEnabled?: boolean;
     privatePlanEnabled?: boolean;
     isActive: boolean;
+    isOutOfStock?: boolean;
   };
   showSubscribeButton?: boolean;
 }
@@ -49,6 +51,7 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
     CODE_DEV: "Code & Dev",
     VIDEO_AUDIO: "Video & Audio",
     LEARNING: "Learning",
+    SOFTWARE: "Software",
     OTHER: "Other",
   };
 
@@ -175,7 +178,7 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
                 ? 'Shared plan' 
                 : tool.privatePlanEnabled 
                   ? 'Private plan' 
-                  : ''} per month
+                  : ''} {getCardBillingSuffix(tool)}
           </div>
           {tool.sharedPlanEnabled && tool.privatePlanEnabled && (() => {
             // Use proper price calculation functions to get validated 1-month prices
@@ -207,7 +210,7 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
 
         {/* Action Buttons */}
         <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
-          {showSubscribeButton && tool.isActive ? (
+          {showSubscribeButton && tool.isActive && !tool.isOutOfStock ? (
             <>
               <Button 
                 size="sm"
@@ -232,6 +235,10 @@ export function ToolCard({ tool, showSubscribeButton = true }: ToolCardProps) {
                 <Eye className="h-3 w-3" />
               </Button>
             </>
+          ) : tool.isOutOfStock ? (
+            <Badge variant="secondary" className="w-full glass border-amber-300 bg-amber-100 text-amber-800 justify-center cursor-not-allowed">
+              Out of Stock
+            </Badge>
           ) : !tool.isActive ? (
             <Badge variant="destructive" className="w-full glass border-red-300 bg-red-100 text-red-700 justify-center">
               Unavailable

@@ -157,6 +157,7 @@ enum ToolCategory {
   CODE_DEV
   VIDEO_AUDIO
   LEARNING
+  SOFTWARE
   OTHER
 }
 

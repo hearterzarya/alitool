@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -39,7 +40,7 @@ export async function PUT(
     const baseUpdateData: any = {
       name: data.name,
       slug: data.slug,
-      description: data.description,
+      description: typeof data.description === 'string' ? data.description : (data.description ?? ''),
       shortDescription: data.shortDescription || null,
       category: data.category,
       icon: data.icon || null,
@@ -91,6 +92,9 @@ export async function PUT(
         where: { id },
         data: updateDataWithPlans,
       });
+      revalidatePath(`/tools/${tool.slug}`);
+      revalidatePath("/tools");
+      revalidatePath("/admin/tools");
     } catch (planError: any) {
       // If plan fields don't exist, update without them
       if (planError.message?.includes('Unknown argument') || 
@@ -101,6 +105,11 @@ export async function PUT(
           where: { id },
           data: baseUpdateData,
         });
+        if (tool?.slug) {
+          revalidatePath(`/tools/${tool.slug}`);
+          revalidatePath("/tools");
+          revalidatePath("/admin/tools");
+        }
       } else {
         throw planError;
       }

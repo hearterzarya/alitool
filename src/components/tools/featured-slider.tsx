@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { ToolIcon } from './tool-icon';
 import { Sparkles, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
-import { getBasePrice, getOneMonthPrice, type PlanType } from '@/lib/price-utils';
+import { getBasePrice, getOneMonthPrice, getPriceForDuration, getEnabledDurations, type PlanType } from '@/lib/price-utils';
+import { getBillingPriceSuffix } from '@/lib/plan-billing';
 
 interface FeaturedTool {
   id: string;
@@ -112,6 +113,11 @@ export function FeaturedSlider({ tools, categories }: FeaturedSliderProps) {
         badge: 'bg-amber-100/90 border-amber-300 text-amber-800',
         button: 'bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700'
       },
+      'SOFTWARE': { 
+        bg: 'from-sky-600 via-blue-500 to-violet-600', 
+        badge: 'bg-sky-100/90 border-sky-300 text-sky-800',
+        button: 'bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700'
+      },
       'OTHER': { 
         bg: 'from-gray-600 via-slate-500 to-zinc-600', 
         badge: 'bg-gray-100/90 border-gray-300 text-gray-800',
@@ -141,17 +147,14 @@ export function FeaturedSlider({ tools, categories }: FeaturedSliderProps) {
   };
 
 
-  // Get price based on selected plan
-  // Use proper price calculation functions to get validated prices
-  const getPrice = () => {
-    const plan: PlanType = selectedPlan;
-    const basePrice = getBasePrice(currentTool, plan);
-    const oneMonthPrice = getOneMonthPrice(currentTool, plan, basePrice);
-    return oneMonthPrice;
-  };
+  // Get price and duration for selected plan: use first enabled duration so label matches (monthly vs yearly)
+  const enabledDurations = getEnabledDurations(currentTool, selectedPlan);
+  const firstDuration = enabledDurations.length > 0 ? enabledDurations[0] : '1month';
+  const basePrice = getBasePrice(currentTool, selectedPlan);
+  const oneMonthPrice = getOneMonthPrice(currentTool, selectedPlan, basePrice);
+  const displayPrice = getPriceForDuration(currentTool, selectedPlan, firstDuration, oneMonthPrice);
 
   const features = getFeatures();
-  const displayPrice = getPrice();
 
   const goToSlide = (index: number) => {
     setCurrentIndex(index);
@@ -240,7 +243,7 @@ export function FeaturedSlider({ tools, categories }: FeaturedSliderProps) {
               {displayPrice > 0 ? (
                 <>
                   <div className="text-4xl font-bold text-white">
-                    {formatPrice(displayPrice)}/month
+                    {formatPrice(displayPrice)}{getBillingPriceSuffix(firstDuration)}
                   </div>
                   {(currentTool.sharedPlanEnabled || currentTool.privatePlanEnabled) && (
                     <div className="text-sm text-white/70 mt-1">

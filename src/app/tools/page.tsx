@@ -22,6 +22,7 @@ const VALID_CATEGORIES: ToolCategory[] = [
   'CODE_DEV',
   'VIDEO_AUDIO',
   'LEARNING',
+  'SOFTWARE',
   'OTHER',
 ];
 
@@ -157,6 +158,11 @@ export default async function ToolsPage({ searchParams }: PageProps) {
         value: 'LEARNING', 
         label: 'Learning', 
         count: await prisma.tool.count({ where: { category: 'LEARNING', isActive: true } }) 
+      },
+      { 
+        value: 'SOFTWARE', 
+        label: 'Software', 
+        count: await prisma.tool.count({ where: { category: 'SOFTWARE', isActive: true } }) 
       },
       { 
         value: 'OTHER', 

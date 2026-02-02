@@ -218,8 +218,9 @@ export function calculateDiscountPercent(
 }
 
 /**
- * Check if a duration is enabled for a plan
- * A duration is enabled if it has a price set and the price is greater than 0
+ * Check if a duration is enabled for a plan.
+ * A duration is enabled only when it has a price set and the price is greater than 0.
+ * When admin disables a duration (unchecks it / sets price to 0), it will not appear in the UI.
  */
 export function isDurationEnabled(
   tool: ToolPriceFields,
@@ -229,8 +230,7 @@ export function isDurationEnabled(
   if (plan === 'shared') {
     switch (duration) {
       case '1month':
-        // 1 month is always enabled if the plan itself is enabled
-        return true;
+        return tool.sharedPlanPrice1Month ? toNumber(tool.sharedPlanPrice1Month) > 0 : false;
       case '3months':
         return tool.sharedPlanPrice3Months ? toNumber(tool.sharedPlanPrice3Months) > 0 : false;
       case '6months':
@@ -243,8 +243,7 @@ export function isDurationEnabled(
   } else {
     switch (duration) {
       case '1month':
-        // 1 month is always enabled if the plan itself is enabled
-        return true;
+        return tool.privatePlanPrice1Month ? toNumber(tool.privatePlanPrice1Month) > 0 : false;
       case '3months':
         return tool.privatePlanPrice3Months ? toNumber(tool.privatePlanPrice3Months) > 0 : false;
       case '6months':

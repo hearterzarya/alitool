@@ -22,23 +22,16 @@ export default async function ToolCheckoutPage({
     const plan = search.plan as string | undefined;
     const duration = search.duration as string | undefined;
     const couponId = search.couponId as string | undefined;
-    
-    console.log('ToolCheckoutPage - toolId:', toolId);
 
     if (!toolId) {
-      console.log('ToolCheckoutPage - No toolId provided');
       notFound();
     }
 
-    console.log('ToolCheckoutPage - Fetching tool from database...');
     const tool = await prisma.tool.findUnique({
       where: { id: toolId },
     });
 
-    console.log('ToolCheckoutPage - Tool found:', tool ? tool.name : 'NOT FOUND');
-
     if (!tool) {
-      console.log('ToolCheckoutPage - Tool not found in database');
       notFound();
     }
 

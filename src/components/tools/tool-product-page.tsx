@@ -21,6 +21,7 @@ import {
   type PlanType,
   type Duration
 } from '@/lib/price-utils';
+import { getBillingLabel } from '@/lib/plan-billing';
 import { 
   ShoppingCart, 
   CheckCircle2, 
@@ -76,7 +77,6 @@ interface ToolProductPageProps {
     shortDescription: string | null;
     icon: string | null;
     priceMonthly: number;
-    // Duration-specific prices
     sharedPlanPrice1Month?: number | null;
     sharedPlanPrice3Months?: number | null;
     sharedPlanPrice6Months?: number | null;
@@ -85,11 +85,11 @@ interface ToolProductPageProps {
     privatePlanPrice3Months?: number | null;
     privatePlanPrice6Months?: number | null;
     privatePlanPrice1Year?: number | null;
-    // Legacy fields
     sharedPlanPrice: number | null;
     privatePlanPrice: number | null;
     sharedPlanEnabled: boolean;
     privatePlanEnabled: boolean;
+    isOutOfStock?: boolean;
   }>;
 }
 
@@ -168,6 +168,7 @@ export function ToolProductPageClient({ tool, relatedTools }: ToolProductPagePro
     CODE_DEV: "Code & Dev",
     VIDEO_AUDIO: "Video & Audio",
     LEARNING: "Learning",
+    SOFTWARE: "Software",
     OTHER: "Other",
   };
 
@@ -271,8 +272,8 @@ export function ToolProductPageClient({ tool, relatedTools }: ToolProductPagePro
               )}
             </div>
 
-            {/* Price Display - Professional */}
-            <div className="mb-6 p-5 bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl border border-purple-200">
+            {/* Price Display — key forces re-render when plan/duration change so price always updates */}
+            <div key={`price-${selectedPlan}-${selectedDuration}`} className="mb-6 p-5 bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl border border-purple-200">
               <div className="flex items-baseline gap-3 mb-2">
                 {finalPrice > 0 ? (
                   <span className="text-4xl font-bold text-purple-600">
@@ -294,10 +295,7 @@ export function ToolProductPageClient({ tool, relatedTools }: ToolProductPagePro
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-slate-600">
-                  {selectedDuration === '1month' ? 'per month' :
-                   selectedDuration === '3months' ? 'for 3 months' :
-                   selectedDuration === '6months' ? 'for 6 months' :
-                   'for 1 year'}
+                  {getBillingLabel(selectedDuration)}
                 </span>
                 {selectedDuration !== '1month' && (() => {
                   const originalPrice = oneMonthPrice * (selectedDuration === '3months' ? 3 : selectedDuration === '6months' ? 6 : 12);
@@ -322,13 +320,18 @@ export function ToolProductPageClient({ tool, relatedTools }: ToolProductPagePro
               </div>
             )}
 
-            {/* Plan Selection */}
+            {/* Plan Selection — on change, sync duration so price flow updates immediately */}
             {tool.sharedPlanEnabled && tool.privatePlanEnabled && (
               <div className="mb-6">
                 <Label className="mb-3 block text-sm font-semibold text-slate-700">Select Plan</Label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
-                    onClick={() => setSelectedPlan('shared')}
+                    type="button"
+                    onClick={() => {
+                      setSelectedPlan('shared');
+                      const sharedDurations = getEnabledDurations(tool, 'shared');
+                      if (sharedDurations.length > 0) setSelectedDuration(sharedDurations[0]);
+                    }}
                     className={`p-4 rounded-lg border-2 transition-all text-left ${
                       selectedPlan === 'shared'
                         ? 'border-blue-500 bg-blue-50 shadow-md'
@@ -339,7 +342,12 @@ export function ToolProductPageClient({ tool, relatedTools }: ToolProductPagePro
                     <div className="text-xs text-slate-600">Instant Access</div>
                   </button>
                   <button
-                    onClick={() => setSelectedPlan('private')}
+                    type="button"
+                    onClick={() => {
+                      setSelectedPlan('private');
+                      const privateDurations = getEnabledDurations(tool, 'private');
+                      if (privateDurations.length > 0) setSelectedDuration(privateDurations[0]);
+                    }}
                     className={`p-4 rounded-lg border-2 transition-all text-left ${
                       selectedPlan === 'private'
                         ? 'border-purple-500 bg-purple-50 shadow-md'
@@ -353,10 +361,11 @@ export function ToolProductPageClient({ tool, relatedTools }: ToolProductPagePro
               </div>
             )}
 
-            {/* Duration Selection */}
+            {/* Duration Selection — key by plan so dropdown shows correct prices for selected plan */}
             <div className="mb-6">
               <Label className="mb-3 block text-sm font-semibold text-slate-700">Subscription Duration</Label>
               <Select
+                key={selectedPlan}
                 value={selectedDuration}
                 onValueChange={(value: '1month' | '3months' | '6months' | '1year') => {
                   setSelectedDuration(value);
@@ -465,7 +474,11 @@ export function ToolProductPageClient({ tool, relatedTools }: ToolProductPagePro
                 disabled={tool.isOutOfStock || finalPrice <= 0}
               >
                 <ShoppingCart className="h-5 w-5 mr-2" />
-                {finalPrice > 0 ? `Buy Now - ${formatPrice(finalPrice)}` : 'Price Not Available'}
+                {tool.isOutOfStock
+                  ? 'Out of Stock'
+                  : finalPrice > 0
+                    ? `Buy Now - ${formatPrice(finalPrice)}`
+                    : 'Price Not Available'}
               </Button>
               {!session && (
                 <p className="text-sm text-center text-slate-600">
@@ -520,37 +533,45 @@ export function ToolProductPageClient({ tool, relatedTools }: ToolProductPagePro
 
         {/* Related Products */}
         {relatedTools.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-bold mb-6">Related Products</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">Related Products</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {relatedTools.map((relatedTool) => {
-                // Use professional price calculation for related tools
                 const displayPrice = getMinimumStartingPrice(relatedTool);
+                const outOfStock = relatedTool.isOutOfStock === true;
                 return (
                   <Link
                     key={relatedTool.id}
-                    href={`/tools/${relatedTool.slug}`}
-                    className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+                    href={outOfStock ? '#' : `/tools/${relatedTool.slug}`}
+                    className={`block group ${outOfStock ? 'pointer-events-none opacity-80' : ''}`}
+                    onClick={outOfStock ? (e) => e.preventDefault() : undefined}
                   >
-                    <div className="p-6">
-                      <div className="flex items-center justify-center h-32 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg mb-4">
-                        <ToolIcon icon={relatedTool.icon} name={relatedTool.name} size="lg" />
+                    <Card className="h-full overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                      <div className="w-full aspect-square bg-slate-50 border-b border-slate-200 flex items-center justify-center overflow-hidden p-4">
+                        <ToolIcon icon={relatedTool.icon} name={relatedTool.name} size="2xl" className="!w-full !h-full object-contain" />
                       </div>
-                      <h3 className="font-semibold text-lg mb-2 line-clamp-2">{relatedTool.name}</h3>
-                      {relatedTool.shortDescription && (
-                        <p className="text-sm text-slate-600 mb-3 line-clamp-2">
-                          {relatedTool.shortDescription}
-                        </p>
-                      )}
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-purple-600">
-                          {displayPrice > 0 ? formatPrice(displayPrice) : 'Price not set'}
-                        </span>
-                        <Button size="sm" variant="outline">
-                          View <ArrowRight className="h-4 w-4 ml-1" />
-                        </Button>
-                      </div>
-                    </div>
+                      <CardContent className="p-4 flex flex-col flex-1">
+                        {outOfStock && (
+                          <Badge variant="secondary" className="mb-2 w-fit bg-amber-100 text-amber-800 border-amber-200">
+                            Out of Stock
+                          </Badge>
+                        )}
+                        <h3 className="font-semibold text-lg text-slate-900 mb-2 line-clamp-2">{relatedTool.name}</h3>
+                        {relatedTool.shortDescription && (
+                          <p className="text-sm text-slate-600 mb-3 line-clamp-2 flex-1">
+                            {relatedTool.shortDescription}
+                          </p>
+                        )}
+                        <div className="flex items-center justify-between mt-auto pt-2">
+                          <span className="text-lg font-bold text-purple-600">
+                            {displayPrice > 0 ? formatPrice(displayPrice) : 'Price not set'}
+                          </span>
+                          <Button size="sm" variant="outline" className="shrink-0">
+                            View <ArrowRight className="h-4 w-4 ml-1" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </Link>
                 );
               })}
