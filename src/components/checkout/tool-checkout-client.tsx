@@ -300,13 +300,15 @@ export function ToolCheckoutClient({
           const status = data.payment.status || data.payment.txnStatus;
           
           if (status === 'SUCCESS') {
-          setPaymentStatus('success');
+            setPaymentStatus('success');
             setCheckingStatus(false);
-          clearInterval(interval);
-            
-            // Show success message and redirect after 3 seconds
-          setTimeout(() => {
-            router.push(`/payment/success?ref=${merchantReferenceId}`);
+            clearInterval(interval);
+            // Shared plan → dashboard; Private plan → instructions page
+            const redirectUrl = selectedPlan === 'shared'
+              ? '/dashboard'
+              : `/payment/success?ref=${merchantReferenceId}`;
+            setTimeout(() => {
+              router.push(redirectUrl);
             }, 3000);
           } else if (status === 'FAILED' || status === 'EXPIRED') {
           setPaymentStatus('failed');
@@ -325,7 +327,7 @@ export function ToolCheckoutClient({
     }, 3000); // Check every 3 seconds
 
     return () => clearInterval(interval);
-  }, [merchantReferenceId, paymentCreated, paymentStatus, router]);
+  }, [merchantReferenceId, paymentCreated, paymentStatus, router, selectedPlan]);
 
   // Quantity state (for display purposes, subscriptions are typically 1)
   // Must be declared before early returns to maintain hook order
@@ -546,8 +548,11 @@ export function ToolCheckoutClient({
         
         if (status === 'SUCCESS') {
           setPaymentStatus('success');
+          const redirectUrl = selectedPlan === 'shared'
+            ? '/dashboard'
+            : `/payment/success?ref=${merchantReferenceId}`;
           setTimeout(() => {
-            router.push(`/payment/success?ref=${merchantReferenceId}`);
+            router.push(redirectUrl);
           }, 2000);
         } else if (status === 'FAILED' || status === 'EXPIRED') {
           setPaymentStatus('failed');
@@ -754,26 +759,37 @@ export function ToolCheckoutClient({
                   <div className="flex items-center gap-2">
                     <QrCode className="h-5 w-5 text-purple-600" />
                     <CardTitle className="text-slate-900 text-lg font-bold">
-                      Pay with UPI QR Code
-                      </CardTitle>
-                        </div>
+                      Pay with UPI
+                    </CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <p className="text-sm text-slate-600 mb-6">
-                    It uses UPI apps like BHIM, Paytm, Google Pay, PhonePe or any Banking UPI app to make payment.
+                  <p className="text-sm text-slate-600 mb-2">
+                    <strong>On desktop or laptop?</strong> Scan the QR code below with your phone using Google Pay, PhonePe, Paytm, BHIM, or any bank UPI app.
+                  </p>
+                  <p className="text-sm text-slate-500 mb-6">
+                    On your phone? You can scan the QR or use the payment app links below.
                   </p>
                   
-                  {/* QR Code */}
-                  {paymentLinks?.upiIntent && (
+                  {/* QR Code - prefer UPI intent (client-rendered), fallback to gateway dynamicQR image */}
+                  {(paymentLinks?.upiIntent || paymentLinks?.dynamicQR) && (
                     <div className="flex justify-center p-6 bg-white rounded-lg border-2 border-slate-200">
-                      <QRCodeSVG
-                        value={paymentLinks.upiIntent}
-                        size={300}
-                        level="H"
-                        includeMargin={true}
-                        className="rounded-lg"
-                      />
-                      </div>
+                      {paymentLinks.upiIntent ? (
+                        <QRCodeSVG
+                          value={paymentLinks.upiIntent}
+                          size={280}
+                          level="H"
+                          includeMargin={true}
+                          className="rounded-lg flex-shrink-0"
+                        />
+                      ) : paymentLinks.dynamicQR ? (
+                        <img
+                          src={paymentLinks.dynamicQR}
+                          alt="Scan to pay via UPI"
+                          className="w-[280px] h-[280px] object-contain rounded-lg"
+                        />
+                      ) : null}
+                    </div>
                   )}
 
                   {/* Payment Status - Show in QR section */}
@@ -826,63 +842,71 @@ export function ToolCheckoutClient({
                 </CardContent>
             </Card>
 
-                {/* Payment Options - Below QR Code */}
+                {/* Payment Options - App links (work best on phone) */}
                 <Card className="border-slate-200 shadow-sm">
                   <CardHeader className="border-b border-slate-200">
                     <CardTitle className="text-slate-900 text-lg font-bold">
-                      Payment Options
+                      Or pay via app (mobile)
                     </CardTitle>
-                </CardHeader>
+                    <p className="text-sm text-slate-500 font-normal mt-1">
+                      These links open your UPI app. On desktop, use the QR code above.
+                    </p>
+                  </CardHeader>
                   <CardContent className="p-6">
                     {paymentLinks && (
                       <div className="space-y-4">
                         {paymentLinks.upiIntent && (
-                          <Button
-                            onClick={() => handleUPIPayment(paymentLinks.upiIntent!)}
-                            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white h-14 text-base font-semibold"
+                          <a
+                            href={paymentLinks.upiIntent}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center w-full gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white h-14 text-base font-semibold rounded-md px-4"
                           >
-                            <Smartphone className="h-5 w-5 mr-2" />
+                            <Smartphone className="h-5 w-5" />
                             Pay with UPI
-                            <ExternalLink className="h-4 w-4 ml-2" />
-                          </Button>
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
                         )}
 
                         <div className="grid grid-cols-1 gap-3">
                           {paymentLinks.phonePe && (
-                            <Button
-                              onClick={() => handleUPIPayment(paymentLinks.phonePe!)}
-                              variant="outline"
-                              className="w-full border-2 border-slate-300 hover:border-blue-400 hover:bg-blue-50 h-14 text-base font-medium"
+                            <a
+                              href={paymentLinks.phonePe}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-center w-full border-2 border-slate-300 hover:border-blue-400 hover:bg-blue-50 h-14 text-base font-medium rounded-md px-4"
                             >
                               <div className="flex items-center justify-center gap-2">
                                 <span>PhonePe</span>
                                 <ExternalLink className="h-4 w-4" />
-                          </div>
-                            </Button>
+                              </div>
+                            </a>
                           )}
                           {paymentLinks.paytm && (
-                            <Button
-                              onClick={() => handleUPIPayment(paymentLinks.paytm!)}
-                              variant="outline"
-                              className="w-full border-2 border-slate-300 hover:border-blue-400 hover:bg-blue-50 h-14 text-base font-medium"
+                            <a
+                              href={paymentLinks.paytm}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-center w-full border-2 border-slate-300 hover:border-blue-400 hover:bg-blue-50 h-14 text-base font-medium rounded-md px-4"
                             >
                               <div className="flex items-center justify-center gap-2">
                                 <span>Paytm</span>
                                 <ExternalLink className="h-4 w-4" />
-                        </div>
-                            </Button>
+                              </div>
+                            </a>
                           )}
                           {paymentLinks.gpay && (
-                            <Button
-                              onClick={() => handleUPIPayment(paymentLinks.gpay!)}
-                              variant="outline"
-                              className="w-full border-2 border-slate-300 hover:border-blue-400 hover:bg-blue-50 h-14 text-base font-medium"
+                            <a
+                              href={paymentLinks.gpay}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-center w-full border-2 border-slate-300 hover:border-blue-400 hover:bg-blue-50 h-14 text-base font-medium rounded-md px-4"
                             >
                               <div className="flex items-center justify-center gap-2">
                                 <span>Google Pay</span>
                                 <ExternalLink className="h-4 w-4" />
-                        </div>
-                            </Button>
+                              </div>
+                            </a>
                           )}
                         </div>
 

@@ -34,19 +34,26 @@ export default async function AnalyticsPage() {
     activeSubscriptions = [];
   }
 
-  const totalRevenue = activeSubscriptions.reduce(
+  // Serialize tools so BigInt price fields become numbers (avoids RSC serialization error)
+  const serializedTools = tools.map((t) => serializeTool(t));
+  const serializedSubs = activeSubscriptions.map((sub) => ({
+    ...sub,
+    tool: sub.tool ? serializeTool(sub.tool) : null,
+  }));
+
+  const totalRevenue = serializedSubs.reduce(
     (sum, sub) => sum + Number(sub.tool?.priceMonthly ?? 0),
     0
   );
 
-  const toolsByRevenue = tools
+  const toolsByRevenue = serializedTools
     .map((tool) => ({
       ...tool,
       revenue: tool.subscriptions.length * Number(tool.priceMonthly ?? 0),
     }))
     .sort((a, b) => b.revenue - a.revenue);
 
-  const popularTools = tools
+  const popularTools = serializedTools
     .map((tool) => ({
       ...tool,
       subscriberCount: tool.subscriptions.length,

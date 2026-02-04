@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { QRCodeSVG } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle2, AlertCircle, ArrowRight, X, Tag } from 'lucide-react';
@@ -347,20 +348,21 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
           {/* Left Column - Bundle Info */}
           <div className="lg:col-span-2">
             <Card className="mb-6 overflow-hidden">
-              {/* Full-width hero image (car-style) */}
-              <div className="relative w-full aspect-[21/9] min-h-[160px] sm:min-h-[200px] bg-slate-100 border-b border-slate-200 overflow-hidden">
+              {/* Full-width hero image - fills width, full image visible (no crop) */}
+              <div className="relative w-full bg-slate-100 border-b border-slate-200 overflow-hidden">
                 {bundle.icon && (bundle.icon.startsWith('/') || bundle.icon.startsWith('http')) ? (
                   <Image
                     src={bundle.icon}
                     alt={bundle.name}
-                    fill
-                    className="object-cover object-center"
+                    width={1200}
+                    height={600}
+                    className="w-full h-auto block"
                     sizes="(max-width: 1024px) 100vw, 66vw"
                     unoptimized={bundle.icon.startsWith('http')}
                     priority
                   />
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-6xl sm:text-7xl bg-gradient-to-br from-slate-100 to-slate-200">
+                  <div className="flex items-center justify-center min-h-[200px] text-6xl sm:text-7xl bg-gradient-to-br from-slate-100 to-slate-200">
                     {bundle.icon || "📦"}
                   </div>
                 )}
@@ -642,12 +644,36 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
                   </form>
                 )}
 
-                {/* Payment Links */}
+                {/* Payment Links & QR */}
                 {paymentStatus === 'pending' && paymentLinks && (
                   <div className="space-y-4">
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      {/* QR Code - primary for desktop */}
+                      {(paymentLinks.upiIntent || paymentLinks.dynamicQR) && (
+                        <div className="mb-4 p-4 bg-white rounded-lg border border-slate-200">
+                          <p className="text-sm font-medium text-slate-700 mb-1">Scan QR code to pay</p>
+                          <p className="text-xs text-slate-500 mb-3">On desktop or laptop? Scan with your phone using Google Pay, PhonePe, Paytm, BHIM or any UPI app.</p>
+                          <div className="flex justify-center">
+                            {paymentLinks.upiIntent ? (
+                              <QRCodeSVG
+                                value={paymentLinks.upiIntent}
+                                size={220}
+                                level="H"
+                                includeMargin
+                                className="rounded-lg"
+                              />
+                            ) : (
+                              <img
+                                src={paymentLinks.dynamicQR}
+                                alt="Scan to pay via UPI"
+                                className="w-[220px] h-[220px] object-contain rounded-lg"
+                              />
+                            )}
+                          </div>
+                        </div>
+                      )}
                       <p className="text-sm text-blue-800 mb-4">
-                        Choose your preferred payment method:
+                        On your phone? Tap an app below to pay. (On desktop, use the QR above.)
                       </p>
                       <div className="space-y-2">
                         {paymentLinks.upiIntent && (
@@ -690,13 +716,13 @@ export function BundleCheckoutClient({ bundle }: BundleCheckoutClientProps) {
                             Pay via Google Pay
                           </a>
                         )}
-                        {paymentLinks.dynamicQR && (
+                        {paymentLinks.dynamicQR && !paymentLinks.upiIntent && (
                           <div className="mt-4">
-                            <p className="text-sm text-slate-600 mb-2">Or scan QR code:</p>
+                            <p className="text-sm text-slate-600 mb-2">Scan QR code:</p>
                             <img
                               src={paymentLinks.dynamicQR}
                               alt="Payment QR Code"
-                              className="w-full rounded-lg border border-slate-200"
+                              className="max-w-[220px] mx-auto rounded-lg border border-slate-200 object-contain"
                             />
                           </div>
                         )}

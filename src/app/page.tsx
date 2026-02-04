@@ -222,11 +222,11 @@ export default async function HomePage() {
                     key={serializedBundle.id}
                     className="group relative overflow-hidden rounded-2xl border border-slate-200/90 hover:border-purple-200 bg-white shadow-sm hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300 hover:-translate-y-1 h-full flex flex-col"
                   >
-                    <div className="relative w-full aspect-[4/3] min-h-[160px] bg-slate-100 overflow-hidden rounded-t-2xl">
+                    <div className="relative w-full bg-slate-100 overflow-hidden rounded-t-2xl min-h-[120px]">
                       {serializedBundle.icon && (serializedBundle.icon.startsWith('/') || serializedBundle.icon.startsWith('http')) ? (
-                        <img src={serializedBundle.icon} alt={serializedBundle.name} className="absolute inset-0 w-full h-full object-cover object-center" />
+                        <img src={serializedBundle.icon} alt={serializedBundle.name} className="w-full h-auto block" />
                       ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-4xl sm:text-5xl bg-gradient-to-br from-slate-100 to-slate-200">
+                        <div className="flex items-center justify-center min-h-[160px] text-4xl sm:text-5xl bg-gradient-to-br from-slate-100 to-slate-200">
                           {serializedBundle.icon || "📦"}
                         </div>
                       )}
