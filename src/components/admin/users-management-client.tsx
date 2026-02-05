@@ -29,23 +29,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  Users, 
-  Search, 
-  Filter, 
-  CheckCircle2, 
-  XCircle, 
-  Clock, 
-  Mail, 
+import {
+  Users,
+  Search,
+  Filter,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Mail,
   Phone,
   Eye,
   EyeOff,
   Loader2,
   Pencil,
-  Save
+  Save,
+  Plus,
+  Gift
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { GrantAccessModal } from './grant-access-modal';
 
 interface User {
   id: string;
@@ -93,12 +96,16 @@ interface UsersManagementClientProps {
   users: User[];
   pendingSubscriptions: PendingSubscription[];
   adminId: string;
+  tools: Array<{ id: string; name: string }>;
+  bundles: Array<{ id: string; name: string }>;
 }
 
-export function UsersManagementClient({ 
-  users: initialUsers, 
+export function UsersManagementClient({
+  users: initialUsers,
   pendingSubscriptions: initialPending,
-  adminId 
+  adminId,
+  tools,
+  bundles
 }: UsersManagementClientProps) {
   const [users, setUsers] = useState(initialUsers);
   const [pendingSubscriptions, setPendingSubscriptions] = useState(initialPending);
@@ -114,17 +121,21 @@ export function UsersManagementClient({
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [editFormData, setEditFormData] = useState({ name: '', email: '', status: '', role: '' });
   const [editLoading, setEditLoading] = useState(false);
+  const [createUserOpen, setCreateUserOpen] = useState(false);
+  const [grantAccessOpen, setGrantAccessOpen] = useState(false);
+  const [createUserForm, setCreateUserForm] = useState({ name: '', email: '', password: '', role: 'USER' });
+  const [creatingUser, setCreatingUser] = useState(false);
   const { toast } = useToast();
 
   // Filter users
   const filteredUsers = users.filter(user => {
-    const matchesSearch = 
+    const matchesSearch =
       user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (user.name && user.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+
     const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-    
-    const matchesPlan = planFilter === 'all' || 
+
+    const matchesPlan = planFilter === 'all' ||
       (planFilter === 'SHARED' && user.subscriptions.some(s => s.planType === 'SHARED')) ||
       (planFilter === 'PRIVATE' && user.subscriptions.some(s => s.planType === 'PRIVATE'));
 
@@ -162,15 +173,15 @@ export function UsersManagementClient({
           title: 'Success',
           description: 'Subscription activated successfully',
         });
-        
+
         // Remove from pending list
-        setPendingSubscriptions(prev => 
+        setPendingSubscriptions(prev =>
           prev.filter(s => s.id !== selectedSubscription.id)
         );
-        
+
         // Update user status
-        setUsers(prev => prev.map(user => 
-          user.id === selectedSubscription.user.id 
+        setUsers(prev => prev.map(user =>
+          user.id === selectedSubscription.user.id
             ? { ...user, status: 'ACTIVE' }
             : user
         ));
@@ -195,6 +206,65 @@ export function UsersManagementClient({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCreateUser = async () => {
+    if (!createUserForm.email || !createUserForm.password) return;
+
+    setCreatingUser(true);
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createUserForm),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: 'Success',
+          description: 'User created successfully',
+        });
+
+        // Add new user to list (optimistic update or re-fetch would be better, but appending works for now if we match the shape)
+        // Note: New user has no subscriptions/payments yet
+        const newUser: User = {
+          ...data.user,
+          createdAt: new Date(data.user.createdAt),
+          subscriptions: [],
+          payments: [],
+          _count: { subscriptions: 0, payments: 0 }
+        };
+
+        setUsers(prev => [newUser, ...prev]);
+        setCreateUserOpen(false);
+        setCreateUserForm({ name: '', email: '', password: '', role: 'USER' });
+      } else {
+        toast({
+          title: 'Error',
+          description: data.error || 'Failed to create user',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error creating user:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create user',
+        variant: 'destructive',
+      });
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
+  const onGrantSuccess = () => {
+    // Refresh page or update local state
+    // Since grants affect subscriptions count and potentially status, refreshing is safest or we can just show toast
+    // Ideally we re-fetch users. For now, let's just show success toast (already done in modal)
+    // and maybe reload the page to see changes?
+    window.location.reload();
   };
 
   const handleEditUser = (user: User) => {
@@ -226,9 +296,9 @@ export function UsersManagementClient({
           title: 'Success',
           description: 'User updated successfully',
         });
-        
-        setUsers(prev => prev.map(user => 
-          user.id === selectedUser.id 
+
+        setUsers(prev => prev.map(user =>
+          user.id === selectedUser.id
             ? { ...user, ...data.user }
             : user
         ));
@@ -270,8 +340,8 @@ export function UsersManagementClient({
           title: 'Success',
           description: 'User suspended successfully',
         });
-        
-        setUsers(prev => prev.map(user => 
+
+        setUsers(prev => prev.map(user =>
           user.id === userId ? { ...user, status: 'SUSPENDED' } : user
         ));
       } else {
@@ -314,7 +384,13 @@ export function UsersManagementClient({
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Users Management</h1>
+        <div className="flex justify-between items-center mb-2">
+          <h1 className="text-3xl font-bold">Users Management</h1>
+          <Button onClick={() => setCreateUserOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create User
+          </Button>
+        </div>
         <p className="text-slate-600">Manage users, subscriptions, and activations</p>
       </div>
 
@@ -498,6 +574,18 @@ export function UsersManagementClient({
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setGrantAccessOpen(true);
+                          }}
+                          className="text-green-600 hover:text-green-700"
+                        >
+                          <Gift className="h-3 w-3 mr-1" />
+                          Grant
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
@@ -698,6 +786,93 @@ export function UsersManagementClient({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Create User Dialog */}
+      <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New User</DialogTitle>
+            <DialogDescription>
+              Add a new user manually. They will be able to login with these credentials.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="create-name">Name</Label>
+              <Input
+                id="create-name"
+                value={createUserForm.name}
+                onChange={(e) => setCreateUserForm({ ...createUserForm, name: e.target.value })}
+                placeholder="John Doe"
+              />
+            </div>
+            <div>
+              <Label htmlFor="create-email">Email</Label>
+              <Input
+                id="create-email"
+                type="email"
+                value={createUserForm.email}
+                onChange={(e) => setCreateUserForm({ ...createUserForm, email: e.target.value })}
+                placeholder="john@example.com"
+              />
+            </div>
+            <div>
+              <Label htmlFor="create-password">Password</Label>
+              <Input
+                id="create-password"
+                type="text"
+                value={createUserForm.password}
+                onChange={(e) => setCreateUserForm({ ...createUserForm, password: e.target.value })}
+                placeholder="Enter password"
+              />
+            </div>
+            <div>
+              <Label htmlFor="create-role">Role</Label>
+              <Select
+                value={createUserForm.role}
+                onValueChange={(value) => setCreateUserForm({ ...createUserForm, role: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USER">USER</SelectItem>
+                  <SelectItem value="ADMIN">ADMIN</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateUserOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleCreateUser}
+              disabled={creatingUser || !createUserForm.email || !createUserForm.password}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {creatingUser ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create User
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Grant Access Modal */}
+      <GrantAccessModal
+        open={grantAccessOpen}
+        onOpenChange={setGrantAccessOpen}
+        user={selectedUser}
+        tools={tools}
+        bundles={bundles}
+        onSuccess={onGrantSuccess}
+      />
     </div>
   );
 }

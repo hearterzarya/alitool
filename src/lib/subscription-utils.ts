@@ -269,3 +269,101 @@ export async function suspendSubscription(subscriptionId: string, adminId: strin
 
   return { success: true };
 }
+
+/**
+ * Manually grants a subscription (Admin function)
+ * Supports custom duration and plan type
+ */
+export async function grantManualSubscription(
+  userId: string,
+  toolId: string,
+  planType: PlanTypeEnum,
+  durationDays: number,
+  adminId: string
+) {
+  const now = new Date();
+  const periodEnd = new Date(now);
+  periodEnd.setDate(periodEnd.getDate() + durationDays);
+
+  // Check if subscription already exists
+  const existingSubscription = await prisma.toolSubscription.findUnique({
+    where: {
+      userId_toolId: {
+        userId,
+        toolId,
+      },
+    },
+  });
+
+  if (existingSubscription) {
+    // Update existing subscription
+    const updateData: any = {
+      planType,
+      status: 'ACTIVE',
+      currentPeriodStart: now,
+      currentPeriodEnd: periodEnd,
+      canceledAt: null,
+      cancelAtPeriodEnd: null,
+    };
+
+    if (planType === 'SHARED') {
+      updateData.activationStatus = ActivationStatus.ACTIVE;
+    } 
+    // For PRIVATE manual grant, we usually want it ACTIVE immediately if we are granting it manually.
+    // However, private plans need credentials. 
+    // If we make it ACTIVE, we expect credentials to be set.
+    // For now, let's set access as ACTIVE but activationStatus as PENDING if private credentials are missing?
+    // User request: "admin can be give the access"
+    // We will mimic the payment flow: SHARED -> ACTIVE, PRIVATE -> PENDING (needs activation with creds)
+    
+    if (planType === 'PRIVATE') {
+       updateData.activationStatus = ActivationStatus.PENDING; 
+    }
+
+    return await prisma.toolSubscription.update({
+      where: { id: existingSubscription.id },
+      data: updateData,
+    });
+  }
+
+  // Create new subscription
+  if (planType === 'SHARED') {
+    const sharedCredentials = await getOrCreateSharedCredentials(toolId);
+    
+    return await prisma.toolSubscription.create({
+      data: {
+        userId,
+        toolId,
+        planType: PlanType.SHARED,
+        status: 'ACTIVE',
+        activationStatus: ActivationStatus.ACTIVE, // Instant activation
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+        activatedBy: adminId, // Tracking who granted it
+        sharedCredentials: {
+          create: {
+            email: sharedCredentials.email,
+            password: sharedCredentials.password,
+            sharedAccountId: sharedCredentials.sharedAccountId,
+            maxUsers: 5,
+            currentUsers: sharedCredentials.currentUsers + 1,
+          },
+        },
+      },
+    });
+  } else {
+    // PRIVATE
+    return await prisma.toolSubscription.create({
+      data: {
+        userId,
+        toolId,
+        planType: PlanType.PRIVATE,
+        status: 'ACTIVE',
+        activationStatus: ActivationStatus.PENDING, // Needs credentials
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+        activatedBy: adminId, // Tracking who granted it
+      },
+    });
+  }
+}

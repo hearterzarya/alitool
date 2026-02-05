@@ -21,7 +21,7 @@ function PaymentSuccessContent() {
     fetch('/api/config/whatsapp')
       .then((r) => r.json())
       .then((c: { number?: string }) => c?.number && setWhatsappNumber(c.number))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ function PaymentSuccessContent() {
         const data = await response.json();
         if (data.success) {
           setPaymentData(data.payment);
-          
+
           // Fetch subscription details if payment is successful
           if (data.payment.status === 'SUCCESS' && data.payment.toolId) {
             try {
@@ -65,6 +65,17 @@ function PaymentSuccessContent() {
 
     fetchPayment();
   }, [ref, router]);
+
+  // Auto-redirect to dashboard for successful payments
+  useEffect(() => {
+    if (paymentData?.status === 'SUCCESS' && (paymentData.bundleId || paymentData.toolId)) {
+      const timer = setTimeout(() => {
+        router.push('/dashboard');
+      }, 5000); // Redirect after 5 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [paymentData, router]);
 
   if (loading) {
     return (
@@ -212,6 +223,11 @@ function PaymentSuccessContent() {
               <p className="text-sm text-slate-600">
                 A confirmation email has been sent to your registered email address.
               </p>
+              {(paymentData?.bundleId || paymentData?.toolId) && paymentData?.status === 'SUCCESS' && (
+                <p className="text-sm text-purple-600 font-medium animate-pulse">
+                  Redirecting to dashboard in 5 seconds...
+                </p>
+              )}
             </div>
 
             <div className="flex gap-4 justify-center pt-4">
